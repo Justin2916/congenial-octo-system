@@ -1,0 +1,10 @@
+# build outputs (build.sh)
+ext.o
+ext.elf
+ext.bin
+patch.log
+CritterKeep.gba
+emu
+__pycache__/
+*.wav
+*.mp3
