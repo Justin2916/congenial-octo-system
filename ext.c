@@ -631,6 +631,9 @@ typedef struct { s16 x,y; s8 vx,vy; u8 k,t,live,wait,turn,pad; } Fly;   // v8.1:
 typedef struct { Patch p[3]; u8 seeds, vis_day, vis_n, news; u8 vis[3], ok; u32 found; u16 blooms, visits; u16 spare[6]; } Garden;
   // found: bits 0-8 the flowers (GK_*), 9-18 the visitors - kept forever, like the journal
 
+#define SPR_MAX 24
+#define SPR_AFF 12
+#define SPR_PALS 12
 typedef struct {
   u32 magic;
   u16 prev, suppress;
@@ -699,11 +702,14 @@ typedef struct {
   u8 ex_yard, jt_first, v81pad[2];
   Fly fly[8]; u16 fly_t, fly_kinds, fly_night, fly_rel, fly_key;   // v8.1: a firefly round; tonight's lantern (fly_night: day+1)
   u8 fly_n, fly_rn, fly_state, fly_card, fly_cool, fly_pop, fly_popk, jx, jy, jfly, fpad[2];   // v8.1: the SELECT menu opened over the night yard; the first journal tab shown   // (weak_warned: v8.1 low-health warning given)                // (what was last drawn into SCRATCH_BG: words are slow to draw)   // farewell: held mosaic, slow zoom out; the runaway scene
+  // v8.2: hardware sprites. The render fills this shadow; the next update (in vblank) copies it to OAM/palette
+  u16 so[SPR_MAX][3]; s16 sa[SPR_AFF][4]; u16 sp[SPR_PALS][16];
+  u8 spr_n, spr_naff, spr_npal, spr_ready, spr_live, spr_shown, spr_win, spr_pad; u8 win[4];   // win: x0,x1,y0,y1
 } State;
 
 #define G (*(State*)0x0203E000u)
 static void fly_update(u16 pr,u16 keys); static void fly_screen_draw(void); static void fly_start(void); static int fly_rounds_left(void);
-static void lantern_draw(void); static void fly_dance(void); static void fly_morning(void); static void fly_palette(void); static void jr_fly_keys(u16 pr);
+static void lantern_draw(void); static void win_open_pre(void); static void win_open_post(void); static void fly_dance(void); static void fly_morning(void); static void fly_palette(void); static void jr_fly_keys(u16 pr);
 #define HELP_PAGES 5
 
 // ------------------------------------------------------------------ small utils
@@ -818,6 +824,7 @@ static const Note SEQ_RUNAWAY[] = {{523,10,0},{440,10,0},{392,10,0},{330,24,0},{
 #include "baricons.h"
 #include "minis.h"
 #include "title.h"
+#include "sprfx.h"
 
 // ---- background music on the wave channel (the original only uses the two square channels)
 #define REG16(a) (*(volatile u16*)(a))
@@ -1371,6 +1378,68 @@ static void fx_watch(void){
   G.fx_scene=sc; G.fx_out=out; G.fx_mode=mode; G.fx_light=light; G.fx_stage=st;
   fx_tick();
 }
+
+// ================================================================== HARDWARE SPRITES (v8.2)
+// Small glowing effects drawn by the GBA itself over the bitmap: the fireflies flying home and the farewell star.
+// The render fills a shadow (spr_*); the next update copies it to OAM, the OBJ palette and the window registers.
+// That update runs just after the original's vblank flip, which also rewrites DISPCNT every frame: we set the
+// OBJ (and window) bits again each time, so the sprites switch themselves off as soon as nothing asks for them.
+// Every sprite is semi-transparent and blended additively (EVA=EVB=16): it only ever adds light, and a sprite
+// fades by darkening its own 16-colour palette bank. OBJs are never a brightness target, so the farewell's
+// white-out leaves them sharp.
+#define REG_DISPCNT (*(volatile u16*)0x04000000)
+#define OAM16   ((volatile u16*)0x07000000)
+#define OBJ_PAL ((volatile u16*)0x05000200)
+#define OBJ_VRAM ((volatile u32*)0x06014000)
+// sin in Q8 over 64 steps (a full turn)
+static const s16 SIN64[64]={0,25,50,74,98,121,142,162,181,198,213,226,237,245,251,255,256,255,251,245,237,226,213,198,181,162,142,121,98,74,50,25,
+  0,-25,-50,-74,-98,-121,-142,-162,-181,-198,-213,-226,-237,-245,-251,-255,-256,-255,-251,-245,-237,-226,-213,-198,-181,-162,-142,-121,-98,-74,-50,-25};
+static void spr_sync(void){
+  if(G.spr_ready){
+    G.spr_ready=0;
+    if(G.spr_n && !G.spr_live){   // switching on: fresh tiles, and every OAM entry hidden first
+      for(int i=0;i<SPR_TILE_WORDS;i++) OBJ_VRAM[i]=SPR_TILES[i];
+      for(int i=0;i<128;i++) OAM16[i*4]=0x0200;
+      G.spr_shown=0; }
+    for(int i=0;i<G.spr_n;i++){ OAM16[i*4]=G.so[i][0]; OAM16[i*4+1]=G.so[i][1]; OAM16[i*4+2]=G.so[i][2]; }
+    for(int i=G.spr_n;i<G.spr_shown;i++) OAM16[i*4]=0x0200;
+    for(int j=0;j<G.spr_naff;j++) for(int k=0;k<4;k++) OAM16[(j*4+k)*4+3]=(u16)G.sa[j][k];
+    for(int b=0;b<G.spr_npal;b++) for(int c=0;c<16;c++) OBJ_PAL[b*16+c]=G.sp[b][c];
+    if(G.spr_win){ REG16(0x04000040)=(u16)((G.win[0]<<8)|G.win[1]); REG16(0x04000044)=(u16)((G.win[2]<<8)|G.win[3]);
+      REG16(0x04000048)=0x0034;    // inside window 0 (the open window): BG2, OBJ, blending
+      REG16(0x0400004A)=0x0024; }  // everywhere else: BG2 and blending, no OBJ
+    G.spr_shown=G.spr_n; G.spr_live=G.spr_n? 1 : 0;
+  }
+  if(G.spr_live){
+    REG_DISPCNT|=(u16)(0x1040 | (G.spr_win? 0x2000 : 0));   // OBJ on, 1D tile mapping, window 0
+    REG_BLDCNT|=0x2400;                                       // BG2 and the backdrop sit under the blended OBJs
+    REG16(0x04000052)=0x1010;                                 // EVA=16, EVB=16: add the light
+  }
+}
+static void spr_begin(void){ G.spr_n=0; G.spr_naff=0; G.spr_npal=0; G.spr_win=0; G.spr_ready=1; }
+// a palette bank: 16 colours from 0 (transparent)
+static int spr_pal(void){ if(G.spr_npal>=SPR_PALS) return -1; int b=G.spr_npal++; for(int c=0;c<16;c++) G.sp[b][c]=0; return b; }
+static u16 rgb_scale(u16 c,int k){   // k: 0..256
+  int r=(c&31)*k>>8, g=((c>>5)&31)*k>>8, b=((c>>10)&31)*k>>8; return (u16)RGB(r>31?31:r,g>31?31:g,b>31?31:b); }
+static u16 rgb_mix(u16 a,u16 b,int k){   // a..b, k: 0..256
+  int r=(a&31)+(((b&31)-(a&31))*k>>8), g=((a>>5)&31)+((((b>>5)&31)-((a>>5)&31))*k>>8), bl=((a>>10)&31)+((((b>>10)&31)-((a>>10)&31))*k>>8);
+  return (u16)RGB(r,g,bl); }
+// an affine matrix: scale (Q8, 256 = full size) and turn (0..63)
+static int spr_aff(int scale,int turn){
+  if(G.spr_naff>=SPR_AFF || scale<8) return -1;
+  int j=G.spr_naff++, inv=(256*256)/scale, c=SIN64[(turn+16)&63], s=SIN64[turn&63];
+  G.sa[j][0]=(s16)(c*inv>>8); G.sa[j][1]=(s16)(-s*inv>>8); G.sa[j][2]=(s16)(s*inv>>8); G.sa[j][3]=(s16)(c*inv>>8);
+  return j; }
+// one sprite: size 0/1/2 (8/16/32 square), centred on (cx,cy); aff<0: plain; dbl: affine double-size box
+static void spr_add(int cx,int cy,int size,int tile,int bank,int aff,int dbl,int opaque){
+  if(G.spr_n>=SPR_MAX || bank<0) return;
+  int half=(8<<size)>>1; if(aff>=0 && dbl) half*=2;
+  int x=cx-half, y=cy-half; if(x<=-2*half || x>=240 || y<=-2*half || y>=160) return;
+  u16 a0=(u16)((y&255) | (opaque? 0 : 0x0400)), a1=(u16)((x&511) | (size<<14));
+  if(aff>=0){ a0|=(u16)(dbl? 0x0300 : 0x0100); a1|=(u16)(aff<<9); }
+  u16 *o=G.so[G.spr_n++]; o[0]=a0; o[1]=a1; o[2]=(u16)(tile | (bank<<12));
+}
+
 
 static void keep_from_v9(void);
 static void journal_from_album(void);
@@ -2298,6 +2367,27 @@ static int rise_sc(int y){ return y>50? 3 : y>24? 2 : 1; }
 static int story_kind(const Story *s); static int story_colour(const Story *s); static void jr_star(int x,int y,int c,int kind,int tw);
 static void dot_ring(int cx,int cy,int r,int c,int ph){ for(int i=0;i<16;i++) pset(cx+SINE16[(i+4+ph)&15]*r/8, cy+SINE16[(i+ph)&15]*r/8, c); }
 static const u8 SKY_OLD[9][2]={{24,36},{62,44},{96,32},{150,30},{186,42},{218,34},{40,74},{204,72},{170,86}};
+// v8.2: the farewell star as hardware sprites: a soft halo and a heart of rays. The light gathers on the critter as
+// it rises, stays sharp through the white-out (sprites are never a brightness target), glides to its place in the
+// night sky, then breathes and slowly turns. A sad goodbye leaves a small, faint star.
+static void star_sprites(u32 t,int k,int col){
+  if(t<300) return;
+  int sad= k==E_SAD, big= k==E_WONDER? 256 : k==E_GOOD? 216 : 150, cy, gs, rs, br;
+  if(t<560){ int y=81-(int)((t-220)*72/340), sc=rise_sc(y); cy=y+8*sc;
+    gs=64+(int)(t-300)*(big-64)/260; rs= t<400? 0 : (int)(t-400)*big*4/(5*160);
+    br=clampi((int)(t-300)*256/120,0,256); }
+  else { int u=(int)t-560; cy= u>=40? 58 : 17+(58-17)*(u*(80-u))/1600;
+    int b=SIN64[(t>>1)&63]; gs=big+big*b/2560; rs=big*9/10+big*b/3200; br=256; }
+  if(sad) br=br*150>>8;
+  int lvl= G.fx_kind==FX_WHITE? G.fx_lvl>>8 : 0, washed= lvl>6;
+  int b=spr_pal(); if(b<0) return;
+  u16 sc=PAL[col];
+  static const u8 SG[7]={0,14,32,56,90,135,190};
+  for(int L=1;L<=6;L++) G.sp[b][L]=rgb_scale(sc,SG[L]*br>>8);
+  for(int L=9;L<=12;L++){ u16 c=rgb_scale(rgb_mix(sc,0x7FFF,(L-8)*64),br); if(washed) c=rgb_mix(c,0x7FFF,lvl*16); G.sp[b][L]=c; }
+  if(rs>=16) spr_add(120,cy,2,SPT_SRAYS,b,spr_aff(rs,(int)(t>>4)&63),1,washed);   // the rays, on top
+  if(!washed) spr_add(120,cy,2,SPT_SGLOW,b,spr_aff(gs,0),1,0);                    // the halo
+}
 static void rise_draw(u32 t){
   int k=G.sendoff, sad= k==E_SAD; const char *nm=pet_name(); char l1[40], l2[40], *p;
   const void *spr=CRITTER_SPR(PET[P_STAGE]);
@@ -2316,6 +2406,7 @@ static void rise_draw(u32 t){
         for(int x=cx-w+((dy+cx-w)&1);x<=cx+w;x+=2) pset(x,yy,hc2); }
       dot_ring(cx,cy,R+3,hc,(int)(t>>3)); }
     sprite(spr, cx-8*sc, y, sc, 0, 99);
+    star_sprites(t,k,col);
     int n= sad? 2 : 2+g/2;
     for(int i=0;i<n;i++){ int q=((int)t*2+i*23)&63; art(ART_SPARK,5,5,cx-24+((i*37+q)%48),cy+20-(q>>1),1,5); }
     if(t<220){ p=scpy(l1,nm); scpy(p, k==E_WONDER? " HAS GROWN UP SO WELL!" : k==E_GOOD? " IS ALL GROWN UP." : " LOOKS UP AT THE SKY...");
@@ -2326,11 +2417,7 @@ static void rise_draw(u32 t){
   }
   // the night sky: the critters before it, and its new star
   for(int i=0;i<9 && i+1<G.jr.n;i++){ const Story *o=&G.jr.s[G.jr.n-2-i]; jr_star(SKY_OLD[i][0],SKY_OLD[i][1],story_colour(o),story_kind(o),((G.sky_t+i*29)>>3)%10==0); }
-  if(!sad){ int r=10+((t>>3)&3); dot_ring(120,58,r,col,0); if(k==E_WONDER) dot_ring(120,58,r+5,C_HINT,(int)(t>>4)); }
-  { int a= k==E_WONDER? 10 : k==E_GOOD? 7 : 4, c2= k==E_SAD? C_HINT : C_WHITE;   // its new star, bigger than the rest
-    for(int i=1;i<=a;i++){ int c= i>a-3? C_HINT : col; pset(120-i,58,c); pset(120+i,58,c); pset(120,58-i,c); pset(120,58+i,c); }
-    if(k!=E_SAD){ fill(118,56,5,5,col); for(int i=3;i<=a/2+1;i++){ pset(120-i,58-i,C_HINT); pset(120+i,58-i,C_HINT); pset(120-i,58+i,C_HINT); pset(120+i,58+i,C_HINT); } }
-    fill(119,57,3,3,c2); if((t>>4)&1) pset(120,58,col); }
+  star_sprites(t,k,col);   // v8.2: its new star is a hardware sprite
   if(k==E_WONDER){ for(int i=0;i<4;i++){ int q=((int)t+i*16)&63; pset(120+SINE16[(i*4+2)&15]*(8+q/4)/8, 58+SINE16[(i*4+6)&15]*(8+q/4)/8, C_WHITE); } }
   if(t>=680 && t<780){
     O_BOX(10,108,220,44);
@@ -3707,6 +3794,7 @@ static void story_draw(void){
 void hook_update(u32 keys){
   init_once();
   fx_watch();   // (v8 phase 6: near the start of the frame, where register changes don't tear)
+  spr_sync();   // (v8.2: the sprites the last render asked for)
   flush_crit_palette();
   // the original reloads the palette every vblank (40-63 to black): put the food's colours back straight away, so
   // they are right for the whole frame on hardware, not only from wherever the draw gets to
@@ -3967,7 +4055,7 @@ void hook_bg_copy(void *dst, const void *src){
   if(G.bg_state!=want) build_bg(want);
   O_DMACOPY(dst, YARD_BG);
   if(G.outside){ draw_sky(0); if(SCENE!=3) garden_draw(G.yard_night); draw_decor(1); draw_outside_extras(); }
-  else { draw_sky(1); draw_decor(1); lantern_draw(); }
+  else { win_open_pre(); draw_sky(1); win_open_post(); draw_decor(1); lantern_draw(); }
 }
 
 // ---- HOW TO PLAY pages (drawn in the original's style)
@@ -4502,22 +4590,62 @@ static void fly_screen_draw(void){
 #define LANT_X 40
 #define LANT_Y 64
 static void fly_morning(void){ if(G.fly_n && G.fly_night==G.ext.day){ G.fly_rel=1; } else { G.fly_n=0; G.fly_kinds=0; } }
+// v8.2: in the morning the window swings open, the cork pops and the fireflies float out as glowing hardware
+// sprites, shrinking and fading into the distance (window 0 keeps them inside the open window); then it shuts.
+#define FLY_GONE 112                       // frames from leaving the jar to gone
+#define WIN_SWING 32                       // frames to open (and to shut) the window
+static int fly_rel_n(void){ return G.fly_n<10? G.fly_n : 10; }
+static int fly_rel_last(void){ int n=fly_rel_n(); return 40+(n>0? n-1 : 0)*12+FLY_GONE; }   // the last one is gone
+static int win_open_amt(void){   // 0 shut .. WIN_SWING wide open
+  if(!G.fly_rel || G.outside) return 0;
+  int r=G.fly_rel, rl=fly_rel_last();
+  return r<=WIN_SWING? r : r<rl? WIN_SWING : r<rl+WIN_SWING? rl+WIN_SWING-r : 0; }
+static void win_pane_geom(int o,int *w,int *k){   // how wide a pane looks, and how much its far edge shrinks
+  int a=o*13/WIN_SWING;                          // up to 13/64 of a turn (about 73 degrees)
+  *w=(23*SIN64[(a+16)&63]+128)>>8; *k=(4*SIN64[a&63]+128)>>8; }
+static void vline(int x,int y0,int y1,int c){ for(int y=y0;y<=y1;y++) pset(x,y,c); }
+static void sline(int x0,int y0,int x1,int y1,int c){   // a short line (Bresenham: no divides)
+  int dx=x1>x0? x1-x0 : x0-x1, dy=y1>y0? y0-y1 : y1-y0, sx=x0<x1? 1 : -1, sy=y0<y1? 1 : -1, e=dx+dy;
+  for(;;){ pset(x0,y0,c); if(x0==x1 && y0==y1) break; int e2=2*e; if(e2>=dy){ e+=dy; x0+=sx; } if(e2<=dx){ e+=dx; y0+=sy; } } }
+static void win_open_pre(void){   // before the sky: the middle frame bars swing away, leaving open sky
+  int o=win_open_amt(); if(!o) return;
+  for(int y=40;y<=79;y++){ int c=sky_band(y-10); if(y==59 || y==60) fill(22,y,48,1,c); else fill(45,y,2,1,c); }
+}
+static void win_open_post(void){  // after the sky: the two panes, seen edge-on as they swing outwards
+  int o=win_open_amt(); if(!o) return;
+  int fc=YARD_BG[50*240+45], w, k; win_pane_geom(o,&w,&k);
+  for(int s=0;s<2;s++){ int h= s? 69 : 22, xf= s? 69-w : 22+w;
+    sline(h,40,xf,40+k,fc); sline(h,79,xf,79-k,fc); vline(xf,40+k,79-k,fc); sline(h,59,xf,59,fc); sline(h,60,xf,60,fc); }
+}
+static void fly_rel_sprites(int r){
+  int ks[FK_N], m=0; for(int k=0;k<FK_N;k++) if((G.fly_kinds>>k)&1) ks[m++]=k;
+  int n=fly_rel_n(), t=(int)G.sky_t, w, kk; win_pane_geom(WIN_SWING,&w,&kk);
+  int show= G.mode==M_NONE && SCENE==1;   // (not over a menu or a box)
+  for(int i=0;i<n && show;i++){ int a=r-40-i*12; if(a<0 || a>=FLY_GONE) continue;
+    int y=LANT_Y+2-a/4, x=LANT_X+6+SINE16[((a>>3)+i*5)&15]*(5+i%3)/8+(i-n/2)*3; if(y<44) continue;
+    int far=clampi((a-12)*256/96,0,256), scale=256-far*3/4, fade=256-far*7/8;
+    int pulse=192+(SINE16[((t>>2)+i*5)&15]*8);    // a gentle flicker, 128..256
+    fade=fade*pulse>>8;
+    int b=spr_pal(); if(b<0) break;
+    u16 kc=PAL[FK[m? ks[i%m] : 0].col];
+    static const u8 GL[5]={0,18,50,100,170};   // the glow's falloff: faint at the rim, so it has no hard edge
+    for(int L=1;L<=4;L++) G.sp[b][L]=rgb_scale(kc,GL[L]*fade>>8);
+    G.sp[b][5]=rgb_scale(kc,fade); G.sp[b][6]=rgb_scale(rgb_mix(kc,0x7FFF,180),fade);
+    if(far<110) spr_add(x,y,0,far<50? SPT_FCORE : SPT_FCORE2,b,-1,0,0);   // the bright heart, on top
+    spr_add(x,y,1,SPT_FGLOW,b,spr_aff(scale,0),0,0);                      // its glow
+  }
+  G.spr_win=1; G.win[0]=(u8)(22+w+1); G.win[1]=(u8)(69-w); G.win[2]=45; G.win[3]=80;
+}
 static void lantern_draw(void){
   if(G.outside) return;
   int t=(int)G.sky_t;
-  if(G.fly_rel){   // morning: the cork pops and they drift out of the window, home
+  if(G.fly_rel){   // morning: the window opens, the cork pops and they drift out, home
     int r=G.fly_rel++;
     if(r==40){ set_msg("BYE, FIREFLIES! THEY FLEW HOME."); sfx(0,SEQ_POP); }
     if(r<40){ lantern_glow(LANT_X+6,LANT_Y+9,G.fly_n,G.fly_kinds,t); fly_jar(LANT_X,LANT_Y,G.fly_n,G.fly_kinds,0); return; }
     fly_jar(LANT_X,LANT_Y,0,0,1); fill(LANT_X-6,LANT_Y+12,6,2,250);   // the cork, set down beside it
-    int ks[FK_N], m=0; for(int k=0;k<FK_N;k++) if((G.fly_kinds>>k)&1) ks[m++]=k;
-    int n= G.fly_n<10? G.fly_n : 10, done=1;
-    for(int i=0;i<n;i++){ int a=r-40-i*12; if(a<0){ done=0; continue; }
-      int y=LANT_Y+2-a/4, x=LANT_X+6+SINE16[((a>>3)+i*5)&15]*(5+i%3)/8+(i-n/2)*3;
-      if(y<41) continue; done=0;   // (gone out of the window)
-      pset(x-1,y-2,FLY_DARK); pset(x+1,y-2,FLY_DARK);   // dark little wings, so they show against the dawn
-      fly_dot(x,y,(a>>3)&1? 2 : 3,m? ks[i%m] : 0,t+i*7); }
-    if(done || r>400){ G.fly_rel=0; G.fly_n=0; G.fly_kinds=0; }
+    fly_rel_sprites(r);
+    if(r>=fly_rel_last()+WIN_SWING || r>400){ G.fly_rel=0; G.fly_n=0; G.fly_kinds=0; }
     return; }
   if(!is_night() || !G.fly_n || G.fly_night!=(u16)(G.ext.day+1)) return;
   lantern_glow(LANT_X+6,LANT_Y+9,G.fly_n,G.fly_kinds,t);
@@ -4618,6 +4746,7 @@ static void title_draw(void){
 }
 void hook_render(void){
   init_once();
+  spr_begin();
   G.sky_t++;
   if((G.sky_t&63)==1) check_window_panes();
   set_extra_palette(); set_special_cmap();

@@ -1,3 +1,17 @@
+Starfall Meadow v8.2 - test build (Nov 11, 2026)
+
+What v8.2 adds over v8.1
+- Hardware sprites (the game's first): small glowing effects drawn by the GBA itself over the picture.
+- The firefly release: in the morning the window swings open, the cork pops, and the night's fireflies float out
+  as soft glowing lights, shrinking and fading into the sky (the GBA's window keeps them inside the open window);
+  then the window shuts.
+- The farewell star: a light gathers on the critter as it rises, stays sharp through the white-out, glides into
+  its place in the night sky and then gently breathes and turns. A sad goodbye leaves a small, faint star.
+- No changes to stats, prices or balance. Save version unchanged (15).
+- Tools: gen/sprfx.py (sprite art -> sprfx.h), tools/mgba_shot.c (screenshots on the real mGBA core), and 11 new
+  `sprites` tests (186 checks in all).
+
+----------------------------------------------------------------------------------------------------------------
 Starfall Meadow v8.1 - release (Nov 10, 2026)
 
 What is in this package

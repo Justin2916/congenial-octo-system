@@ -41,14 +41,14 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 175 checks, and every section passed in v8.1. Run them in
-batches, each taking up to about 10 minutes:
+`python3 tests/run_tests.py <sections...>`. There are 186 checks (175 from v8.1 plus 11 `sprites` checks in v8.2).
+Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: compares the clock against v7, byte for byte, by day only (on its own, it's slow)
 2. `growth secrets care save fast rebal`
 3. `games fixes unlocks journal b1 stories health`
 4. `garden budget fuzz`
-5. `fly`
+5. `fly sprites`
 
 Other details:
 - `CUR_VER = 15` is the save version. `BASE14 = tests/baseline_v81b2.gba` is a save-version-14 build used for
@@ -57,7 +57,12 @@ Other details:
   character, so cache static text in `SCRATCH_BG` and copy it each frame (see `garden_words` and `fly_words`).
 - The struct offsets used in pokes come from parsing `ext.c`, via `g('field')` and the `OFF` map in
   `run_tests.py`. Add new fields to that map.
-- `tests/shots.py` is a screenshot helper. The script command `shot file.png` also works.
+- `tests/shots.py` is a screenshot helper. The script command `shot file.ppm` also works (the emulator's script
+  arguments are cut at 63 characters, so use short or relative paths).
+- The test emulator does **not** draw hardware sprites (OBJ), windows or alpha blending. For screenshots of those, use
+  the real mGBA core: `apt-get install libmgba-dev`, then
+  `cc -O2 tools/mgba_shot.c -o mgba_shot -lmgba` and `./mgba_shot rom.gba script.txt save.sav` (the same script
+  commands: `wait`, `press`, `poke8`, `poke32`, `peek`, `shot`). The `sprites` tests check OAM and the registers.
 
 ## Code map (`ext.c`, about 4,700 lines)
 
@@ -146,15 +151,33 @@ Other details:
     critter toward Fluffbud.
 - **Fixes:** no name on the status card before naming, and a darker tree trunk with no green stripe.
 
-## Pinned for later (not started)
+## v8.2: hardware sprites (built; test ROM sent for review)
 
-1. **Hardware sprites** for small effects: the firefly release (a soft glow that shrinks toward the window, using
-   the GBA window feature) and the farewell star rising and fading. Limits: one alpha value is shared by every
-   blended sprite, and a sprite is either in front of or behind the whole bitmap layer.
-2. **The critter walking in front of floor decor** in the room's corners. The idea is to keep its wandering out
-   of a corner that has decor in it.
-3. **If happiness feels too hard:** fun decor (the TV, arcade and disco ball) could cheer it up only when its
-   happiness is empty.
+- **How sprites work here:** the game is a Mode 4 bitmap, and the original never used OBJs. `hook_render` calls
+  `spr_begin()` and the draws fill a shadow in `State` (`so`, `sa`, `sp`, `spr_*`, `win`). The next `hook_update`
+  calls `spr_sync()` right after `fx_watch()`: that runs just after the original's vblank flip, which rewrites
+  `DISPCNT` every frame, so `spr_sync` sets OBJ (0x1000), 1D mapping (0x40) and WIN0 (0x2000) again each time.
+  When nothing asks for sprites the bits simply stay off. Tiles (`gen/sprfx.py` -> `sprfx.h`, 38 tiles) load to
+  0x06014000 (tile 512) when sprites switch on; the OBJ palette (0x05000200) is free for us.
+- **Blending:** every sprite is semi-transparent and blended additively (`BLDALPHA` 16/16, BG2 and the backdrop as
+  second targets, ORed into `BLDCNT` after `fx_tick`). A sprite fades by darkening its own palette bank. OBJs are
+  never a brightness target, so the farewell's white-out leaves them sharp (the star's rays switch to solid,
+  pre-whitened colours while the picture is mostly white, and its halo hides).
+- **Firefly release:** at dawn the window swings open (`win_open_pre/post`: the middle bars give way to sky and the
+  two panes are drawn edge-on), the cork pops at frame 40 and each firefly is a heart (8x8) plus an affine glow
+  (16x16) that shrinks and fades as it flies out; WIN0 limits the sprites to the open window. Then the window shuts.
+  The release is only drawn in the room with no menu open.
+- **Farewell star (the shared rise only; the five original secret-form farewells are unchanged):**
+  `star_sprites()` - a halo (32x32, double-size affine) and turning rays. The light gathers on the critter as it
+  rises, glides to (120,58) in the sky, then breathes and turns. Wonderful/happy/sad set its size; sad is faint.
+- **Avoid software divides** in per-frame code: `/` by a variable costs a few hundred cycles on the GBA
+  (`__aeabi_idiv`). A per-pixel divide in the first window-pane line drawer cost about 60k cycles a frame.
+
+## Decided against (owner, Nov 11 2026)
+
+- Keeping the critter out of decorated room corners, or drawing decor in front of it: the critter covering decor
+  now and then stays as it is.
+- A happiness boost from fun decor when happiness is empty.
 
 ## Shared docs (on claude.ai; Claude Code can't open them, so ask the owner to paste anything needed)
 
