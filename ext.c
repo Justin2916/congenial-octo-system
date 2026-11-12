@@ -4639,19 +4639,33 @@ static void fly_rel_sprites(int r){
   }
   G.spr_win=1; G.win[0]=(u8)(22+w+1); G.win[1]=(u8)(69-w); G.win[2]=45; G.win[3]=80;
 }
+// v8.2b: the jar's light is a soft glow (a hardware sprite, added to the picture) instead of specks round it: its
+// colour drifts slowly through the kinds inside, it breathes, and more fireflies make it bigger and brighter
+static void jar_glow(int t){
+  if(G.mode!=M_NONE || SCENE!=1 || !G.fly_n) return;
+  int ks[FK_N], m=0; for(int k=0;k<FK_N;k++) if((G.fly_kinds>>k)&1) ks[m++]=k; if(!m) return;
+  int ph=t>>2, a=(ph>>6)%m, b=(a+1)%m, f=(ph&63)*4;                     // the colour drifts from one kind to the next
+  u16 col=rgb_mix(PAL[FK[ks[a]].col],PAL[FK[ks[b]].col],f);
+  int n=G.fly_n>9? 9 : G.fly_n, br=190+n*8, sc=170+n*12;               // more fireflies, a bigger, brighter glow
+  int s=SIN64[(t>>1)&63]; br+=br*s/2048; sc+=sc*s/3072;                   // it breathes
+  int bk=spr_pal(); if(bk<0) return;
+  static const u8 JG[7]={0,18,40,66,100,145,200};
+  for(int L=1;L<=6;L++) G.sp[bk][L]=rgb_scale(col,JG[L]*br>>8);
+  spr_add(LANT_X+6,LANT_Y+9,2,SPT_SGLOW,bk,spr_aff(sc,0),1,0);
+}
 static void lantern_draw(void){
   if(G.outside) return;
   int t=(int)G.sky_t;
   if(G.fly_rel){   // morning: the window opens, the cork pops and they drift out, home
     int r=G.fly_rel++;
     if(r==40){ set_msg("BYE, FIREFLIES! THEY FLEW HOME."); sfx(0,SEQ_POP); }
-    if(r<40){ lantern_glow(LANT_X+6,LANT_Y+9,G.fly_n,G.fly_kinds,t); fly_jar(LANT_X,LANT_Y,G.fly_n,G.fly_kinds,0); return; }
+    if(r<40){ jar_glow(t); fly_jar(LANT_X,LANT_Y,G.fly_n,G.fly_kinds,0); return; }
     fly_jar(LANT_X,LANT_Y,0,0,1); fill(LANT_X-6,LANT_Y+12,6,2,250);   // the cork, set down beside it
     fly_rel_sprites(r);
     if(r>=fly_rel_last()+WIN_SWING || r>400){ G.fly_rel=0; G.fly_n=0; G.fly_kinds=0; }
     return; }
   if(!is_night() || !G.fly_n || G.fly_night!=(u16)(G.ext.day+1)) return;
-  lantern_glow(LANT_X+6,LANT_Y+9,G.fly_n,G.fly_kinds,t);
+  jar_glow(t);
   fly_jar(LANT_X,LANT_Y,G.fly_n,G.fly_kinds,0);
 }
 static void fly_dance(void){   // all twelve found: they dance outside the window every night (sky coordinates)
