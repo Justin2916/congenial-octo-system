@@ -1,8 +1,8 @@
 # Starfall Meadow (GBA) — notes for Claude Code
 
 Starfall Meadow is a Tamagotchi-style Game Boy Advance game, formerly "Critter Keep". It is built by patching a
-C extension (`ext.c`) onto an original GBA ROM (`CritterKeep_original.gba`). The current release is **v8.1**
-(Nov 10, 2026). See `README.txt` for the feature history and `MANUAL.md` for the player's manual.
+C extension (`ext.c`) onto an original GBA ROM (`CritterKeep_original.gba`). The current release is **v8.2**
+(Nov 12, 2026; `StarfallMeadow_v8.2.gba`). See `README.txt` for the feature history and `MANUAL.md` for the player's manual.
 
 ## Working agreement (the owner's standing rules)
 
@@ -153,7 +153,7 @@ Other details:
     critter toward Fluffbud.
 - **Fixes:** no name on the status card before naming, and a darker tree trunk with no green stripe.
 
-## v8.2: hardware sprites (built; test ROM sent for review)
+## v8.2: hardware sprites (released in v8.2)
 
 - **How sprites work here:** the game is a Mode 4 bitmap, and the original never used OBJs. `hook_render` calls
   `spr_begin()` and the draws fill a shadow in `State` (`so`, `sa`, `sp`, `spr_*`, `win`). The next `hook_update`
@@ -175,7 +175,7 @@ Other details:
 - **Avoid software divides** in per-frame code: `/` by a variable costs a few hundred cycles on the GBA
   (`__aeabi_idiv`). A per-pixel divide in the first window-pane line drawer cost about 60k cycles a frame.
 
-## v8.2b: fixes and changes (built; Nov 12 2026)
+## v8.2b: fixes and changes (released in v8.2)
 
 - **Yard mess:** the original's poop counter `PET[P_POOP]` always holds the mess where the critter is; `More.pad0`
   holds the other place's. `poop_sync()` (start of every update and render) swaps them when `G.outside` changes, and
@@ -198,7 +198,7 @@ Other details:
 - **Length:** `LIFESPAN` 8 grown-up days (was 12); `shop_level()` opens a level every 2 grown-up days so all six
   still open. Every secret form needs only its first 2 grown-up days. (Teen, child and day length unchanged.)
 
-## v8.2c (built; Nov 12 2026)
+## v8.2c (released in v8.2)
 
 - **Journal flowers:** the double-size flower and its stem are placed so the stem ends in the soil (`oy=98-2h`).
 - **RECORDS scrolls** (UP/DOWN, `G.jrec`): 10 of `REC_ROWS` rows show, with arrows; add rows in `jr_records`.

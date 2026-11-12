@@ -1,4 +1,9 @@
-Starfall Meadow v8.2 - test build (Nov 11, 2026)
+Starfall Meadow v8.2 - release (Nov 12, 2026)
+
+What is in this package
+- StarfallMeadow_v8.2.gba : the game (plays in any GBA emulator; it saves to 32 KB SRAM). Saves from v8.1 carry on.
+- MANUAL.md, CLAUDE.md (notes for working on the game), ext.c and the generators in gen/, tests/run_tests.py
+  (202 checks), build.sh / patch.py / link.ld (./build.sh builds it)
 
 What v8.2 adds over v8.1
 - Hardware sprites (the game's first): small glowing effects drawn by the GBA itself over the picture.
