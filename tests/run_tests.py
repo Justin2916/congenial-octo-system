@@ -109,40 +109,18 @@ def check(name, cond, detail=''):
 
 # ---------------------------------------------------------------- tests
 def t_fidelity():
-    """No input, fixed random seed: the new clock must leave the critter record exactly as v7's did (by day: v8.1's
-    nights are longer on purpose)."""
-    if not os.path.exists(BASE):
-        print('  (skipped: no baseline_v7.gba)'); return
-    cases = {
-        'neglect: baby -> child, night, mess, sickness, health runs out':
-            (['poke32 03000000 1234abcd', 'poke32 03000024 0'], 75, None),
-        'cared for: egg hatches, calls, sleep and morning':
-            (['poke32 03000000 1234abcd', 'poke32 03000024 0', p8(PET + 4, 0), p32(PET + 0x20, 0)], 78,
-             ['poke8 0300002e 4', 'poke8 0300002f 4', 'poke8 03000033 0', 'poke8 03000032 0']),
-    }
-    for name, (setup, n, care) in cases.items():
-        sc = BOOT + setup + [p32(PET + 0x1C, 0), 'poke32 03000018 1000']; sn = list(sc)   # (and the frame count: it can differ by a
-        # frame at boot, whenever the title happens to run a little longer, and the original times its animations by it)
-        for i in range(n):
-            if care:   # pokes must land at the same clock step on both ROMs: wait for the step, not for a frame count
-                step = [f'waitw {PET + 0x1C:08x} {10 * (i + 1)}', 'wait 1', f'peek {PET:08x} 76']
-                sc += step; sn += step
-                if i == 2:   # close the hatch box (naming is skipped here: it has its own test, and this one is about the clock)
-                    sc += ['press A', 'wait 2']; sn += [p8(g('want_name'), 0), 'press A', 'wait 2']
-                if i % 3 == 2: sc += care; sn += care
-            else: sc += ['wait 900', f'peek {PET:08x} 76']; sn += ['wait 900', f'peek {PET:08x} 76']
-        pa = [b for _, b in peeks(run(BASE, sc, copy_save('hatched')))]
-        pb = [b for _, b in peeks(run(ROM, sn, copy_save('hatched')))]
-        # compare by clock step, not by frame: a frame that runs long on one ROM shifts its timing by a frame
-        # without changing the order of updates, so the record at the same step count must match exactly
-        A = {struct.unpack('<I', x[0x1C:0x20])[0]: x for x in pa}; B = {struct.unpack('<I', x[0x1C:0x20])[0]: x for x in pb}
-        common = sorted(set(A) & set(B))
-        # v8.1: the night's clock moves 2 steps in 3, on purpose, so the records follow v7 only until the first nightfall
-        night = [t for t in common if struct.unpack('<I', A[t][0x24:0x28])[0] >= 480 or struct.unpack('<I', B[t][0x24:0x28])[0] >= 480]
-        if night: common = [t for t in common if t < night[0]]
-        bad = [t for t in common if A[t] != B[t]]
-        check(f'fidelity: {name}', len(common) >= 20 and not bad,
-              f'{len(common)} common steps, first difference at step {bad[0] if bad else None}')
+    """v8.3: the clock is faster (a tick every second, an 11-minute day), so the old check that it matched v7 step for
+    step is retired. What must not change is how fast care is needed in real time: a grown-up still loses a hunger
+    heart every 3 minutes and a happy heart every 3 1/4 minutes, a baby a hunger heart every 75 seconds."""
+    def frames(save, idx, cnt, rate_s):
+        sc = BOOT + DAY + [p8(PET + 12, 0), p8(PET + 6, 4), p8(PET + 7, 4), *p16(PET + cnt, 0), 'scene', f'waitb {PET + idx:08x} 3', 'scene']
+        f = [int(m) for m in re.findall(r'frame (\d+) scene', run(ROM, sc, copy_save(save)))]
+        return (f[1] - f[0]) / 60.0 if len(f) == 2 else -1
+    for save, idx, cnt, want, what in (('adult', 6, 0x28, 180, 'a grown-up loses a hunger heart every 3 minutes'),
+                                       ('adult', 7, 0x2A, 195, 'a grown-up loses a happy heart every 3 1/4 minutes'),
+                                       ('hatched', 6, 0x28, 75, 'a baby loses a hunger heart every 75 seconds')):
+        s = frames(save, idx, cnt, want)
+        check(f'pace: {what} (as before the faster clock): {s:.0f} s', want - 2 <= s <= want + 2, f'{s:.1f} s')
 
 def grow(side, setup_extra, expect, note):
     """A teen two days old, awake in its room by day: the next clock step grows it up."""
@@ -306,7 +284,7 @@ def t_save():
     check('save: a damaged newest copy falls back to the previous one', seq == min(seqA, seqB), f'loaded seq {seq}, copies {seqA}/{seqB}')
 
 def t_fast():
-    for fast, per in ((0, 90), (1, 36)):
+    for fast, per in ((0, 60), (1, 24)):   # (v8.3: a tick every second, 2.5x on FAST)
         sav = copy_save('teen')
         sc = BOOT + [p8(PET + 0x12, fast), 'poke32 03000024 0', f'peek {PET + 0x1C:08x} 4', 'wait 1800', f'peek {PET + 0x1C:08x} 4']
         pk = peeks(run(ROM, sc, sav))
@@ -704,8 +682,8 @@ def t_fly():
     sc = BOOT + ['poke32 0300004c 1e0', p8(PET + 12, 1), 'wait 2', 'peek 0300004c 4', 'peek 03000044 4', 'wait 2700', 'peek 0300004c 4', 'peek 03000044 4',
                  'poke32 0300004c 64', p8(PET + 12, 0), 'wait 2', 'peek 0300004c 4', 'wait 2700', 'peek 0300004c 4']
     c = [struct.unpack('<I', x[1])[0] for x in peeks(run(ROM, sc, copy_save('adult')))]
-    check('clock: at night it moves 2 steps in 3 (a 4.5 minute night); the critter\'s timer keeps its pace', c[2] - c[0] == 20 and c[3] - c[1] == 30, str(c))
-    check('clock: the daytime is unchanged', c[5] - c[4] == 30, str(c))
+    check('clock: at night it moves a step every 2 ticks (a 4 minute night); the critter\'s timer keeps its pace', 22 <= c[2] - c[0] <= 23 and c[3] - c[1] == 45, str(c))
+    check('clock: by day it moves 8 steps every 7 ticks (7 minutes of daylight)', 51 <= c[5] - c[4] <= 52, str(c))
     sc = BOOT + ['poke32 0300004c 24e', p8(PET + 12, 1), 'wait 4'] + yard + ['peek 0300004c 4', 'wait 1500', 'peek 0300004c 4', f'peek {MODE:08x} 1']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('clock: it runs in the yard at night, and dawn sends you back in', struct.unpack('<I', v[1])[0] < 20 and v[2][0] == 0, str(v))

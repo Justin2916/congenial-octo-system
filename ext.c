@@ -1998,11 +1998,12 @@ static void decor_tick(void){
 // FLUFFBUD (lots of games), else FRILLO. Less-care side: THORNHOG (sad a lot), SMOGWOOL (lived in a mess), else GUNKBILL.
 static int has_item(int it,int s0,int s1){ for(int s=s0;s<s1;s++) if(G.deco.slot[s]==it) return 1; return 0; }
 // what a teen grows into: good care - the kind of care it got most, measured against a target for each
-// (OUTSIDE: 10 minutes in the yard; PLANTS: 15 minutes with a plant inside and flowers or a garden outside;
-// PLAY: 4 minigames or lots of play). None reached: FRILLO, the all-rounder. Less care - the need it missed most.
-#define T_YARD   40
-#define T_GARDEN 120
-#define T_PLAY   16
+// (OUTSIDE: about 7 minutes in the yard; PLANTS: 10 minutes with a plant inside and flowers or a garden outside;
+// PLAY: about 3 minigames or lots of play - v8.3: a third less, as growing up takes a third less time).
+// None reached: FRILLO, the all-rounder. Less care - the need it missed most.
+#define T_YARD   27
+#define T_GARDEN 80
+#define T_PLAY   11
 #define T_GLIMMER 80   // v8.3: a Dunerose's 10 minutes with its plants as a grown-up (was T_GARDEN, 15 minutes)
 static void care_lean(const CareWin *w,u32 *yard,u32 *garden,u32 *play){
   *yard=(u32)w->yard*1000u/T_YARD; *garden=(u32)w->garden*1000u/T_GARDEN; *play=(u32)w->play*1000u/T_PLAY; }
@@ -2232,7 +2233,7 @@ static void sim_tick(void){
   int sick=0;
   if(PET[P_SICK]){ sick=1; if(P16(0x3C)<1000){ if(++P16(0x3C)==180) mistake(); } }
   if(PET[P_MEDS]){ if(++P16(0x42)>=135){ P16(0x42)=0; PET[P_MEDS]--; } }
-  if(P16(0x40)) P16(0x40)--;
+  if(P16(0x40) && (P32(0x1C)%3)) P16(0x40)--;   // PET's cooldown (the original sets 60): 2 ticks in 3, so still 90 s (v8.3)
   u16 ht=++P16(0x44);
   int sv_starve= starve>45, dmg= (sick && P16(0x3C)>45)? (sv_starve? 2 : 1) : (sv_starve? 1 : 0), healed=0;
   if(dmg){ dmg*=2; if(ht>=9){ P16(0x44)=0; u16 h=P16(0x16); P16(0x16)=(u16)(h>dmg? h-dmg : 0); } }   // (v8.3: 2x the loss every 9 ticks = the old pace)

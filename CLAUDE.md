@@ -41,10 +41,10 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 204 checks (176 in the v8.1 sections, 12 `sprites` and 16 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 205 checks (177 in the v8.1 sections, 12 `sprites` and 16 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
-1. `fidelity`: compares the clock against v7, byte for byte, by day only (on its own, it's slow)
+1. `fidelity`: since v8.3, the real-time care pace (hunger and happy hearts per minute); the old v7 clock match is retired
 2. `growth secrets care save fast rebal`
 3. `games fixes unlocks journal b1 stories health`
 4. `garden budget fuzz`
@@ -73,16 +73,18 @@ Other details:
   - `hook_render`: the per-mode draw.
   - `hook_bg_copy`: draws the room or yard background with sky and decor animations, plus the firefly lantern.
 - **Core:**
-  - `sim_tick` runs every 90 frames (36 on FAST), and handles needs, health and the clock.
+  - `sim_tick` runs every 60 frames (24 on FAST; v8.3, was 90/36), and handles needs, health and the clock.
   - `life_watch` handles mornings, cries and the bed's happy morning.
   - `decor_tick` handles decor use (messages and kind boosts; no happiness since v8.1).
 - **Original game addresses:** `PET` at `0x03000028` (the health is `P16(0x16)`, 0–100), `SCENE` at
   `0x03000020`, `MSG_BUF` at `0x030002A4`, `MSG_TIMER` at `0x0300001C`, `FRAMES` at `0x03000018` and the clock
   `PET_CLOCK` at `0x0300004C`.
 - **Time:**
-  - A day is 600 clock steps; night is steps 480–599.
-  - At night the clock advances on only 2 of every 3 ticks, so the night lasts 4.5 minutes, while the critter's
-    own counters keep their usual pace.
+  - A day is 600 clock steps; night is steps 480–599. A tick is 1 s (v8.3).
+  - By day the clock moves 8 steps every 7 ticks (7 minutes); at night 1 step every 2 ticks (4 minutes): an 11-minute
+    day. The critter's own counters count every tick, and every care timer in `sim_tick` counts 1.5x the ticks it
+    did before v8.3, so care keeps the same real-time pace (the `fidelity` checks). PET's cooldown (`P16(0x40)`, set
+    to 60 by the original when petting raises happiness) counts down 2 ticks in 3, so it stays 90 s.
   - The clock runs in `M_NONE`, `M_EXTRAS`, `M_NAME`, `M_GARDEN` and `M_FLY`. It is paused everywhere else.
 - **Display:**
   - The game uses Mode 4 (8-bit bitmap) with page flipping. Draw through `DRAW_TARGET`.
@@ -229,6 +231,9 @@ Other details:
   weight at least that (every update: growing up, old saves), and salad and Hop Hop stop there. The overweight line
   (`overfed`, the original's `MIN_W*2+24`: 34/44/60/80) is deliberately unchanged.
 - **Secret forms** can't appear before the 4th grown-up day (`check_special`: `day - adult_day < 3`).
+- **Faster clock (~2-hour life):** see Time above. Stages keep their step/day counts (egg 20 ticks, baby 240, child 600,
+  teen 2 mornings, grown-up 8 days), so they take 2/3 the real time. Growth targets a third lower (`T_YARD` 27,
+  `T_GARDEN` 80, `T_PLAY` 11); Sunpuff 40 yard samples (10 min), Glimmer `T_GLIMMER` 80 (10 min with its plants).
 
 ## Decided against (owner, Nov 11 2026)
 
