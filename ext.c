@@ -1107,6 +1107,9 @@ static int decor_entry(int it){
   if(it==IT_PLANT){ int g=(u8)((u8)G.ext.day - G.deco.plant_day); return g>=2? 31 : g==1? 30 : 2; }
   return it-IT_BED;
 }
+// v8.2b: the pinwheel, the sprinkler and the resting frisbee stand here, in the free strip between the first two
+// moonflower patches (x 80 and 132), clear of every decor piece (by the tree: up to x 88; by the house: from x 168)
+#define TOY_X 108
 static int toy_of(int it){ return it==IT_BALL? TOY_BALL : it==IT_KITE? TOY_KITE : it==IT_FRISBEE? TOY_FRISBEE : it==IT_SPRINKLER? TOY_SPRINKLER : it==IT_PINWHEEL? TOY_PINWHEEL : -1; }
 static void decor_palettes(int night){
   int yard=G.bgx_yard, s0= yard? 4 : 0, s1= yard? 6 : 4;
@@ -1558,7 +1561,7 @@ static void outside_tick(void){
   }
   // sprinkler: a sweeping arc of water; running through the spray counts as play
   if(toy_on(IT_SPRINKLER)){
-    int p=(int)(G.sky_t>>3)&31, L=(p<16? p : 31-p)*7-52, land=151+L, cx=G.room_cx;
+    int p=(int)(G.sky_t>>3)&31, L=(p<16? p : 31-p)*7-52, land=TOY_X+L, cx=G.room_cx;
     if(G.room_cy && land+10>cx+8 && land-10<cx+56){ if(++G.bubble_timer>=100){ G.bubble_timer=0; sfx(0,SEQ_POP); outside_play(1); *(volatile u16*)(PET+0x3A)=0; } }
   }
 }
@@ -1579,19 +1582,19 @@ static void draw_outside_extras(void){
     if(G.bvy){ int x=G.bx>>8, y=G.by>>8;
       fill(x+1,129,8,1,G.yard_night?C_NGRASS2:C_DKGREEN);
       toy_draw(TOY_FRISBEE,0,x,y); }
-    else toy_draw(TOY_FRISBEE,1,150,123);
+    else toy_draw(TOY_FRISBEE,1,TOY_X-1,123);
     if(G.bub[0].type) art(ART_SPARK,5,5,G.bub[0].x+3,G.bub[0].y-6-((40-G.bub[0].type)>>2),1,5);
   }
   if(toy_on(IT_SPRINKLER)){
     static const u8 AY[9]={0,13,22,28,30,28,22,13,0};
     int p=(int)(G.sky_t>>3)&31, L=(p<16? p : 31-p)*7-52, ph=(int)(G.sky_t>>1)&1;
-    for(int i=1;i<=8;i++){ if(((i+ph)&1)) continue; int x=151+((L*i)>>3), y=120-AY[i]; fill(x,y,2,2,C_SKY); pset(x,y,C_WHITE); }
-    for(int i=1;i<=8;i++){ if(!((i+ph)&1)) continue; int x=151-((L*i)>>4), y=120-(AY[i]>>1); pset(x,y,C_PALEBLUE); }
-    toy_draw(TOY_SPRINKLER,0,147,120);
+    for(int i=1;i<=8;i++){ if(((i+ph)&1)) continue; int x=TOY_X+((L*i)>>3), y=120-AY[i]; fill(x,y,2,2,C_SKY); pset(x,y,C_WHITE); }
+    for(int i=1;i<=8;i++){ if(!((i+ph)&1)) continue; int x=TOY_X-((L*i)>>4), y=120-(AY[i]>>1); pset(x,y,C_PALEBLUE); }
+    toy_draw(TOY_SPRINKLER,0,TOY_X-4,120);
   }
   if(toy_on(IT_PINWHEEL)){
-    fill(151,99,1,30,C_WOOD_DK);
-    int f=(int)(G.sky_t>>2)&1, cx=151, cy=98;
+    fill(TOY_X,99,1,30,C_WOOD_DK);
+    int f=(int)(G.sky_t>>2)&1, cx=TOY_X, cy=98;
     toy_draw(TOY_PINWHEEL,f,cx,cy);
   }
 }
