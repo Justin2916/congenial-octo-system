@@ -667,7 +667,7 @@ def t_fly():
          put(2, 120, 92, 0, 100) + ['wait 1', 'press A', 'wait 6', f'peek {g("fly_n"):08x} 1',
          'wait 1850', f'peek {g("fly_state"):08x} 1', f'peek {SP + 8:08x} 2', 'press B', 'wait 8', f'peek {MODE:08x} 1', f'savesram {TMP}/fly.sav']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
-    check('fly: R in the night yard starts a 30 s round', v[0][0] == 14 and 1770 <= struct.unpack('<H', v[1])[0] <= 1800, str(v[:2]))
+    check('fly: R in the night yard starts a 20 s round', v[0][0] == 14 and 1170 <= struct.unpack('<H', v[1])[0] <= 1200, str(v[:2]))
     check('fly: scooping a lit one catches it; a new kind shows its card and goes in the guide', v[2][0] == 1 and v[2][1] == 4 and struct.unpack('<H', v[3])[0] & 16, str(v[2:4]))
     check('fly: a kind already found just goes in the jar', v[4][0] == 0 and v[5][0] == 2, str(v[4:6]))
     check('fly: an unlit one gets away', v[6][0] == 2, str(v[6]))

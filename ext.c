@@ -33,6 +33,7 @@ typedef unsigned int u32; typedef int s32;
 #define PET_CLOCK   (*(volatile u32*)0x0300004C)
 #define DRAW_TARGET (*(u16* volatile*)0x03000074)
 #define TITLE_CUR   (*(volatile u32*)0x03000284)
+#define ICON_CUR    (*(volatile u32*)0x030002D8)   // the icon bar's cursor (0 FEED, 1 LIGHTS, ...)
 #define MSG_BUF     ((volatile char*)0x030002A4)
 #define HELP_PAGE   (*(volatile u32*)0x030003AC)
 #define CMAP        ((volatile u8*)0x030003B0)
@@ -708,6 +709,13 @@ typedef struct {
 } State;
 
 #define G (*(State*)0x0203E000u)
+// v8.2b: the yard keeps its own mess. The original's poop counter (PET[P_POOP]) always holds the mess where the
+// critter is; More.pad0 holds the other place's. More.pad1 bit 1: they are swapped (outside); bit 0: it was saved
+// and quit from the yard. Every save writes them back the room's way round, so a save never holds them swapped.
+static void poop_swap(void){ u8 t=PET[P_POOP]; PET[P_POOP]=(u8)G.more.pad0; G.more.pad0=t; G.more.pad1^=2; }
+static void poop_sync(void){ if(((G.more.pad1>>1)&1)!=(G.outside? 1 : 0)) poop_swap(); }
+#define POOP_CANON_BEGIN int sw_=G.more.pad1&2; if(sw_) poop_swap();
+#define POOP_CANON_END   if(sw_) poop_swap();
 static void fly_update(u16 pr,u16 keys); static void fly_screen_draw(void); static void fly_start(void); static int fly_rounds_left(void);
 static void lantern_draw(void); static void win_open_pre(void); static void win_open_post(void); static void fly_dance(void); static void fly_morning(void); static void fly_palette(void); static void jr_fly_keys(u16 pr);
 #define HELP_PAGES 5
@@ -955,7 +963,7 @@ static void album_add(int name,int form){
   G.album.n++; album_save();
 }
 #define LIFE_MAGIC 0x314C4B43u /* "CKL1" */
-#define LIFESPAN 12           /* in-game days as a grown-up before the send-off (it leaves at noon on day 12) */
+#define LIFESPAN 8            /* in-game days as a grown-up before the send-off (it leaves at noon on day 8; v8.2b: was 12) */
 #define LIFESPAN_NOON 180     /* clock step for 12:00 */
 static void life_save(void){ save_all(); }
 static void dex_load(void){
@@ -994,7 +1002,7 @@ static void deco_load(void){
   G.deco.seed=0;                                    // picked on the first live frame
   deco_save();
 }
-static void pet_save(void){ u32 h=0x5EED; for(int i=0;i<0x48;i++) h=h*31+PET[i]; *(volatile u32*)(PET+0x48)=h; O_SAVE(PET,0x4C); ext_save(); }
+static void pet_save(void){ POOP_CANON_BEGIN u32 h=0x5EED; for(int i=0;i<0x48;i++) h=h*31+PET[i]; *(volatile u32*)(PET+0x48)=h; O_SAVE(PET,0x4C); ext_save(); POOP_CANON_END }
 static void add_coins(int n){ if(n>0) G.jr.coins+=(u32)n; int c=G.ext.coins+n; if(c>9999) c=9999; G.ext.coins=(u16)c; ext_save(); }
 
 // ------------------------------------------------------------------ v8 save: one versioned block, kept in two copies
@@ -1025,6 +1033,7 @@ static u8 *save_part(int i,u32 *n){
 static u32 save_size_v(int ver){ u32 t=SAVE_HDR+4, n; int parts= ver>=15? 11 : ver>=14? 10 : ver>=12? 9 : ver>=11? 8 : ver>=10? 7 : ver>=9? 6 : 5; for(int i=0;i<parts;i++){ save_part(i,&n); t+=n; } return t; }
 static u32 save_size(void){ return save_size_v(SAVE_VERSION); }
 static void save_all(void){
+  POOP_CANON_BEGIN
   u32 seq=G.save_seq+1, size=save_size(), h=0x5EED, o=0, n;
   volatile u8 *d=(volatile u8*)((seq&1)? SRAM_SAVE2_B : SRAM_SAVE2_A);
   u8 hdr[SAVE_HDR]={0};
@@ -1034,6 +1043,7 @@ static void save_all(void){
   for(int k=0;k<SAVE_PARTS;k++){ const u8 *p=save_part(k,&n); for(u32 i=0;i<n;i++){ d[o++]=p[i]; h=h*31+p[i]; } }
   for(int i=0;i<4;i++) d[o++]=(u8)(h>>(8*i));
   G.save_seq=seq;
+  POOP_CANON_END
 }
 static u32 rd32s(volatile u8 *s){ return s[0]|(s[1]<<8)|(s[2]<<16)|((u32)s[3]<<24); }
 static int save_valid(volatile u8 *s,u32 *seq){   // returns the block's version (8, 9 or 10), 0 if it is not a good save
@@ -1173,7 +1183,7 @@ static int garden_palette_on(void);
 static void set_extra_palette(void){
   PAL[C_DKGREEN]=RGB(6,17,6); PAL[C_DEEPGREEN]=RGB(4,13,8); PAL[C_NGRASS]=RGB(4,10,10); PAL[C_NGRASS2]=RGB(2,7,8);
   PAL[C_LTGREEN]=RGB(15,26,10); PAL[C_NWOOD]=RGB(10,7,6); PAL[C_NWALL]=RGB(12,11,17); PAL[C_TERRA]=RGB(25,11,6); PAL[C_GLASS]=RGB(22,29,31);
-  { const u16 *pp = PAL[C_WALL]!=RGB(30,27,22)? PIC_PAL_NIGHT : PIC_PAL_DAY; for(int i=0;i<24;i++) PAL[C_PIC+i]=pp[i]; }   // 120-143 now belong to the critter
+  if(!G.outside){ const u16 *pp = PAL[C_WALL]!=RGB(30,27,22)? PIC_PAL_NIGHT : PIC_PAL_DAY; for(int i=0;i<24;i++) PAL[C_PIC+i]=pp[i]; }   // (outside: the food's)   // 120-143 now belong to the critter
   { int night = PAL[C_WALL]!=RGB(30,27,22);
     const u16 *q = G.bgx_yard? (night? BGX_YARD_NIGHTPAL : BGX_YARD_DAYPAL) : (night? BGX_ROOM_NIGHTPAL : BGX_ROOM_DAYPAL);
     if(G.mode==M_SHOP || (G.mode==M_DEX && G.jtab==JT_ITEMS)){ for(int i=0;i<ICON_N;i++) PAL[ICON_FIRST+i]=ICON_PAL[i]; }   // the shop shows no room: its icons borrow the range
@@ -1502,8 +1512,6 @@ static void outside_play(int weight){
 static void outside_tick(void){
   u8 st=PET[P_STAGE];
   if(SCENE==0 || st<2 || st>7){ G.outside=0; return; }
-  if(PET[P_POOP]>G.poop_hold) PET[P_POOP]=G.poop_hold;      // no pooping outside
-  if(PET[P_POOP]<G.poop_hold) G.poop_hold=PET[P_POOP];      // (cleaning still works)
   if(SCENE<1 || SCENE>5) return;
   if(PET[P_ASLEEP]){ go_inside(" GOT SLEEPY..."); return; }
   if(PET[P_SICK]){ go_inside(" FEELS SICK..."); return; }
@@ -2027,6 +2035,7 @@ static void track_stage(void){
   if(st==8 && prev>=1 && prev<=7) journal_end(0);   // it ran out of health and ran away: counted, but no star
   if(st==0 && prev==8){ life_reset(0,0); G.ext.prev_stage=0; }
   if(st==0){ G.ext.special=0; G.ext.stars=0; G.ext.yard_mins=0; new_unlock_seed();
+    if(!(G.more.pad1&2)){ G.more.pad0=0; G.more.pad1&=(u8)~1; }   // v8.2b: a new egg, a clean yard
     G.dex.gender=(u8)rnd(2); G.dex.phase=PH_GROW; G.dex.side=0; G.dex.adult=0; G.dex.games=0; G.dex.yard=0;   // a new egg: boy or girl,
     G.dex.c_good=G.dex.c_bad=G.dex.c_sad=G.dex.c_mess=0; memset(&G.care,0,sizeof(Care));
     G.more.rn[0]=G.more.rn[1]=0; memset(G.more.rmiss,0,sizeof(G.more.rmiss)); G.more.spare[2]=0; memset(G.names.cur,0,8); garden_reset(); dex_save(); }        // and a fresh care record
@@ -2109,7 +2118,7 @@ static u32 xs_back(u32 y){   // the step before y (xorshift is reversible)
 static void mistake(void){ if(PET[P_MISTAKES]<250) PET[P_MISTAKES]++; if(PET[P_MISTAKES2]<250) PET[P_MISTAKES2]++; }
 static void sim_msg(const char *s){ int i=0; while(s[i] && i<37){ MSG_BUF[i]=s[i]; i++; } MSG_BUF[i]=0; MSG_TIMER=101; }
 static void sim_save(void){   // the critter record only, like the original (the extension's own data saves when it changes)
-  P32(0)=PET_MAGIC; u32 h=0x5EED; for(int i=0;i<0x48;i++) h=h*31+PET[i]; P32(0x48)=h; O_SAVE(PET,0x4C); }
+  POOP_CANON_BEGIN P32(0)=PET_MAGIC; u32 h=0x5EED; for(int i=0;i<0x48;i++) h=h*31+PET[i]; P32(0x48)=h; O_SAVE(PET,0x4C); POOP_CANON_END }
 static void evolve_to(int target){ ANIM_T=0; ANIM_KIND=7; ANIM_ARG=(u32)target; SCENE=3; sfx(1,SEQ_EVOLVE); }
 static int rate_index(u8 st){
   if(st<=2) return st? st-1 : 0;
@@ -2170,8 +2179,8 @@ static void sim_tick(void){
   else { starve=P16(0x36); if(starve<1000){ starve=++P16(0x36); if(starve==60) mistake(); } }
   u8 happy=PET[P_HAPPY];
   if(happy) P16(0x38)=0; else if(P16(0x38)<1000){ if(++P16(0x38)==60) mistake(); }
-  u8 poop=PET[P_POOP];
-  if(poop<2) P16(0x3A)=0;
+  u8 poop=PET[P_POOP]; int mess=poop+G.more.pad0;   // (v8.2b: the room's and the yard's mess both count)
+  if(mess<2) P16(0x3A)=0;
   else if(++P16(0x3A)>=80){                                   // a messy room can make it sick
     P16(0x3A)=0;
     if(!(orng()&0x80000000u) && !PET[P_SICK]){ P16(0x3C)=0; PET[P_SICK]=(u8)((orng()>>31)+1); sfx(0,SEQ_ALERT); P16(0x46)=0; }
@@ -2551,6 +2560,7 @@ static void dex_update(u16 pr,u16 keys);
 static void menu_update(u16 pr, u16 keys){
   if(G.confirm){
     if(pr&K_A){
+      G.more.pad1=(u16)((G.more.pad1&~1)|(G.outside? 1 : 0)); save_all();   // (v8.2b: remember the yard)
       pet_save(); silence(); sfx(0,SEQ_CONFIRM);
       MSG_TIMER=0; TITLE_CUR=0; SCENE=0; G.mode=M_NONE; G.suppress=keys; G.confirm=0; G.outside=0;
     } else if(pr&K_B){ G.confirm=0; sfx(0,SEQ_BLIP); }
@@ -2706,7 +2716,7 @@ static int shop_level(void){
   if(st<=1) return 1;
   if(st==2) return 2;
   if(st>7) return G.deco.unlock_lvl>=1 && G.deco.unlock_lvl<=6? G.deco.unlock_lvl : 1;
-  int l=3+grown_days()/3; return l>6? 6 : l;
+  int l=3+grown_days()/2; return l>6? 6 : l;   // (v8.2b: a level every 2 grown-up days, so all of them open in 8)
 }
 static void new_unlock_seed(void){ G.deco.seed=rnd32()^(PET_CLOCK*2654435761u)^FRAMES; if(!G.deco.seed) G.deco.seed=1; G.deco.unlock_lvl=0;
   G.keep.un0=0; G.keep.un1=0; G.keep.best=0; G.keep.ok=1; deco_save(); }   // a new egg: its own shop, its own best stack
@@ -2903,11 +2913,13 @@ static void eat_update(u16 keys){
   }
 }
 // v8 phase 5 fixes: food is drawn with its own 24 colours (palette 40-63, unused by the game), dimmed with the room
+// v8.2b: in the yard the moonflowers keep 40-63, so the food borrows the wall picture's 96-119 (no wall outside)
+static int food_base(void){ return G.outside? C_PIC : FOOD_PAL0; }
 static void food_palette(int f){
   int dim = PAL[C_WALL]!=RGB(30,27,22);
   for(int i=0;i<24;i++){ u16 c=FOOD_PAL[f][i];
     if(dim){ int r=c&31, g=(c>>5)&31, b=(c>>10)&31; r=r*5/8+1; g=g*5/8+1; b=b*5/8+3; if(b>31) b=31; c=(u16)(r|(g<<5)|(b<<10)); }
-    PAL[FOOD_PAL0+i]=c; }
+    PAL[food_base()+i]=c; }
 }
 // keep10: how much is left (10 = all); the bites come off the side facing the critter, with a scalloped edge
 static void food_draw(int f,int x,int y,int keep10,int bite_left){
@@ -2919,7 +2931,7 @@ static void food_draw(int f,int x,int y,int keep10,int bite_left){
     int nb= keep10<10? BITE[r%6] : 0;
     int lo= bite_left? I->w-keep+nb : 0, hi= bite_left? I->w-1 : keep-1-nb;
     if(a<lo) a=lo; if(z>hi) z=hi;
-    for(int c=a;c<=z;c++) if(pix[c]) pset(x+c,y+r,FOOD_PAL0-1+pix[c]); }
+    for(int c=a;c<=z;c++) if(pix[c]) pset(x+c,y+r,food_base()-1+pix[c]); }
 }
 static void eat_draw(void){
   int left = G.t<28? 10 : G.t<56? 7 : 4;
@@ -3415,6 +3427,7 @@ static void flush_crit_palette(void);
 // four nights, then drops a seed. Blooms are purely to look at; while they glow, night visitors come to see them.
 // The colour comes from the care the critter gets; four rare forms come from how it was grown (or luck).
 #include "garden.h"
+#include "can.h"
 #define GV_FIRST 9                 // Garden.found: bits 0-8 flowers, 9-18 visitors
 #define G_FOUND_N (GK_N+GV_N)
 // v8.1: the three patches are scattered through the middle of the yard, at different depths (B5c), behind the decor
@@ -3430,7 +3443,9 @@ static void g_find(int b){ G.gdn.found|=1u<<b; }
 static int g_blooms(void){ int n=0; for(int i=0;i<3;i++) n+= G.gdn.p[i].stage==4; return n; }
 static void garden_palette(void){ for(int i=0;i<GP_N;i++) PAL[GP_IDX[i]]=GP_PAL[i]; PAL[255]=RGB(31,15,5); }   // (255: the ember firefly)
 static int garden_palette_on(void){ return G.mode==M_GARDEN || G.mode==M_FLY || (G.mode==M_MINI && G.outside) ||   // (v8.1: games in the yard show its flowers)
-   G.ex_yard || (G.mode==M_DEX && (G.jtab==JT_GARDEN || G.jtab==JT_FLY)) || (G.outside && G.mode==M_NONE && SCENE!=3); }
+   G.ex_yard || (G.mode==M_DEX && (G.jtab==JT_GARDEN || G.jtab==JT_FLY)) ||
+   // v8.2b: every screen over the yard keeps the flowers' colours (menus, the bag, feeding and petting too)
+   (G.outside && SCENE>=1 && SCENE<=5 && (G.mode==M_NONE || G.mode==M_MENU || G.mode==M_EXTRAS || G.mode==M_BAG || G.mode==M_EAT || G.mode==M_SURE)); }
 // the colour a flower takes from the care the critter is getting: a weighted pick, so the care it gets most shows most
 static int care_colour(void){
   const CareWin *w= G.dex.phase>=PH_ADULT? &G.care.adult : &G.care.grow; u32 n=w->n? w->n : 1;
@@ -3447,9 +3462,9 @@ static void garden_bloom(Patch *p){
   int wish = (u8)(G.more.spare[0]-1)==p->pday && G.more.spare[0], moon = (p->pday&7)==0;
   int k;
   if(rnd(20)==0) k=GK_AURORA;
-  else if(moon && rnd(2)==0) k=GK_MOON;
-  else if(wish && rnd(3)==0) k=GK_STAR;
-  else if(!(p->flags&2) && rnd(3)==0){ int a=(int)rnd(5), b=(int)rnd(4); if(b>=a) b++; k=GK_TWIN; p->col2=(u8)(a|(b<<4)); }
+  else if(moon && rnd(3)==0) k=GK_MOON;                     // v8.2b: the rare chances differ (lily 1/3, star 1/2, twin 1/5)
+  else if(wish && rnd(2)==0) k=GK_STAR;
+  else if(!(p->flags&2) && rnd(5)==0){ int a=(int)rnd(5), b=(int)rnd(4); if(b>=a) b++; k=GK_TWIN; p->col2=(u8)(a|(b<<4)); }
   else k= p->kind<5? p->kind : care_colour();   // (the bud already showed its colour)
   p->kind=(u8)k; p->stage=4; p->left=4;
   if(G.gdn.blooms<65535) G.gdn.blooms++;
@@ -3485,15 +3500,42 @@ static void glints(int cx,int cy,int c,int t){   // a soft ring of glints that s
     int a=(k*16/14 + (t>>4))&15, r=(k&1)? 7 : 8;
     pset(cx+SINE16[(a+4)&15]*r/8, cy+SINE16[a]*r/8, c); }
 }
+// v8.2b: watering. Planting leaves the soil dry; watering brings a can that tips and showers from its rose, and the
+// patch's soil turns dark (wet) for the rest of the night. Art: gen/can.py -> can.h (garden palette).
+#define CAN_T   72      // frames the can is out: in (12), pouring (44), away (16)
+#define CAN_WET 36      // the soil darkens here, mid-pour
+#define SEQ_POUR_START SEQ_BLIP
+static void soil_wet(int i,int x,int yb){   // darken a watered patch's soil (59 soil -> 41, 41 -> 40)
+  const Patch *p=&G.gdn.p[i]; if(!(p->flags&1)) return;
+  for(int y=yb-5;y<yb;y++) for(int xx=x-7;xx<=x+7;xx++){ int v=pget(xx,y); if(v==59) pset(xx,y,41); else if(v==41) pset(xx,y,40); }
+}
+static void can_pose(int tip,int x,int y){
+  int w= tip? CAN_TIP_W : CAN_UP_W, h= tip? CAN_TIP_H : CAN_UP_H;
+  for(int r=0;r<h;r++) for(int c=0;c<w;c++){ int v= tip? CAN_TIP[r][c] : CAN_UP[r][c]; if(v) pset(x+c,y+r,v); }
+}
+static void can_draw(int px,int py,int t){   // t: 0 .. CAN_T-1; px,py: the patch (bottom of its soil)
+  int ry=py-20, tx=px-CAN_TIP_RX-1, ty=ry-CAN_TIP_RY;              // the tipped can, its rose's face above the patch
+  int ux=tx+2, uy=ty+3;                                             // carried, about where it tips from
+  if(t<12){ can_pose(0,ux-(12-t)*3,uy-(12-t)); return; }             // carried in from the left
+  if(t>=56){ int k=t-56; can_pose(0,ux-k*3,uy-k*2); return; }        // and away again
+  can_pose(1,tx,ty);
+  int fx=tx+CAN_TIP_RX, fy=ty+CAN_TIP_RY, L=py-4-fy;                 // the shower: only from the rose's face
+  if(L<4) L=4;
+  int u=t-12;                                                       // pouring time
+  for(int k=0;k<4;k++){ int x0=fx-1+k;
+    for(int j=0;j<4;j++){ int ph=(u*2+j*(L/4+1)+k*3)%L; if(ph>u*2) continue;   // (the first drops have only just left)
+      int x=x0+(ph*(k-1))/14, y=fy+1+ph; pset(x,y,(j+k)&1? GP_SKY1 : 245); if(ph+1<L) pset(x,y+1,GP_SKY2); } }
+  if(u>8){ int s=(u>>1)&3; pset(px-4+s,py-5,245); pset(px+3-s,py-6,GP_SKY1); pset(px+s,py-5,GP_SKY2); }   // little splashes
+}
 static void patch_draw(int i,int glow,int t,int moving){   // moving 0: soil, stems and young plants (kept in the yard picture)
   const Patch *p=&G.gdn.p[i]; int x=PATCH_X[i], yb=PATCH_Y[i];
   u8 pet[4]={GP_PETAL[0][0],GP_PETAL[0][1],GP_PETAL[0][0],GP_PETAL[0][1]};
   if(p->kind<5){ pet[0]=GP_PETAL[p->kind][0]; pet[1]=GP_PETAL[p->kind][1]; }
   if(!moving) switch(p->stage){
     case 0: gdraw(GS_MOUND,x-6,yb-3,0,0); return;
-    case 1: gdraw(GS_SEED,x-6,yb-5,0,0); return;
-    case 2: gdraw(GS_SPROUT,x-6,yb-GSPR[GS_SPROUT].h,0,0); return;
-    case 3: gdraw(GS_BUD,x-6,yb-GSPR[GS_BUD].h,pet,0); return; }
+    case 1: gdraw(GS_SEED,x-6,yb-5,0,0); soil_wet(i,x,yb); return;
+    case 2: gdraw(GS_SPROUT,x-6,yb-GSPR[GS_SPROUT].h,0,0); soil_wet(i,x,yb); return;
+    case 3: gdraw(GS_BUD,x-6,yb-GSPR[GS_BUD].h,pet,0); soil_wet(i,x,yb); return; }
   if(p->stage<4) return;
   int hx=x-5, hy=yb-3-8-10;   // head: 11 wide, on an 8-high stem above the mound
   int a=p->col2&15, b=p->col2>>4;
@@ -3570,7 +3612,10 @@ static void garden_close(u16 keys){ G.outside=0; G.bg_state=0; sfx(0,SEQ_DOOR); 
 static void garden_update(u16 pr,u16 keys){
   live_update(0);   // v8.1: the clock keeps running out in the yard, so the night still ends
   if(SCENE!=1){ G.outside=0; G.bg_state=0; G.mode=M_NONE; return; }   // (e.g. a farewell)
-  G.gt++; if(G.gmsg_t) G.gmsg_t--; if(G.gwater) G.gwater--;
+  G.gt++; if(G.gmsg_t) G.gmsg_t--;
+  if(G.gwater){ G.gwater--;   // v8.2b: the watering can is out: wait for it
+    if(G.gwater==CAN_WET){ G.bg_state=0; garden_msg("WATERED IT!"); sfx(0,SEQ_COIN); }
+    if(G.gwater) return; }
   wish_tick();
   if(wish_try(pr)) return;
   if(!is_night()){ garden_close(keys); return; }
@@ -3588,11 +3633,11 @@ static void garden_update(u16 pr,u16 keys){
   Patch *p=&G.gdn.p[G.gcur];
   if(p->stage==0){
     if(!G.gdn.seeds){ garden_msg("NO SEEDS. A FADED BLOOM DROPS ONE."); sfx(0,SEQ_DENY); return; }
-    G.gdn.seeds--; memset(p,0,sizeof(Patch)); p->stage=1; p->flags=1; p->pday=(u8)G.ext.day; p->kind=0xFF;
-    G.gwater=40; garden_msg("PLANTED A MOONFLOWER SEED!"); sfx(0,SEQ_STAR); save_all(); G.bg_state=0; G.gui_key=0; return; }
+    G.gdn.seeds--; memset(p,0,sizeof(Patch)); p->stage=1; p->flags=0; p->pday=(u8)G.ext.day; p->kind=0xFF;   // (v8.2b: planted dry; A again waters it)
+    garden_msg("PLANTED A MOONFLOWER SEED!"); sfx(0,SEQ_STAR); save_all(); G.bg_state=0; G.gui_key=0; return; }
   if(p->stage<4){
     if(p->flags&1){ garden_msg("IT'S WATERED. IT GROWS BY MORNING."); sfx(0,SEQ_BLIP); return; }
-    p->flags|=1; G.gwater=40; garden_msg("WATERED IT!"); sfx(0,SEQ_COIN); save_all(); return; }
+    p->flags|=1; G.gwater=CAN_T; G.gui_key=0; sfx(0,SEQ_POUR_START); save_all(); return; }   // the can comes; the message waits for the pour
   { char b[40]; char *q;
     if(p->kind>=GK_STAR){ q=scpy(b,"A RARE "); scpy(q,GK_NAME[p->kind]); scpy(b+slen(b),"!"); }
     else { q=scpy(b,"A "); q=scpy(q,GK_NAME[p->kind]); scpy(q," MOONFLOWER."); }
@@ -3622,10 +3667,9 @@ static void garden_screen_draw(void){
   O_DMACOPY(DRAW_TARGET, YARD_BG);
   draw_sky(0); garden_draw(1); draw_decor(1);
   for(int i=0;i<G.gdn.vis_n;i++) visitor_draw(G.gdn.vis[i],(int)G.gt);
-  if(G.gpad2){ int x=PATCH_X[G.gcur], y=PATCH_Y[G.gcur]-(G.gdn.p[G.gcur].stage==4? 36 : G.gdn.p[G.gcur].stage==3? 21 : 13)-((G.gt>>3)&1);   // the cursor (tending)
+  if(G.gpad2 && !G.gwater){ int x=PATCH_X[G.gcur], y=PATCH_Y[G.gcur]-(G.gdn.p[G.gcur].stage==4? 36 : G.gdn.p[G.gcur].stage==3? 21 : 13)-((G.gt>>3)&1);   // the cursor (tending)
     for(int k=0;k<4;k++){ fill(x-3+k,y+k,7-2*k,1,GP_Y); pset(x-4+k,y+k,GP_K); pset(x+4-k,y+k,GP_K); } pset(x,y+4,GP_K); }
-  if(G.gwater){ int x=PATCH_X[G.gcur];   // water drops
-    for(int k=0;k<6;k++){ int yy=PATCH_Y[G.gcur]-30+((40-G.gwater)*2+k*7)%26; pset(x-5+k*2,yy,GP_SKY1); pset(x-5+k*2,yy+1,GP_SKY2); } }
+  if(G.gwater) can_draw(PATCH_X[G.gcur],PATCH_Y[G.gcur],CAN_T-G.gwater);   // v8.2b: the watering can
   copy_rect(0,0,240,28); copy_rect(0,134,240,160);
   if(G.gmsg_t){ int w=slen(G.gmsg)*6+12; copy_rect(120-w/2,32,120+w/2,48); }
 }
@@ -3798,12 +3842,13 @@ void hook_update(u32 keys){
   init_once();
   fx_watch();   // (v8 phase 6: near the start of the frame, where register changes don't tear)
   spr_sync();   // (v8.2: the sprites the last render asked for)
+  poop_sync();
   flush_crit_palette();
   // the original reloads the palette every vblank (40-63 to black): put the food's colours back straight away, so
   // they are right for the whole frame on hardware, not only from wherever the draw gets to
+  if(garden_palette_on()) garden_palette();   // (v8.2b: first, so the food can share the yard: it sits at 96-119 there)
   if(G.mode==M_EAT && G.eat_item<11) food_palette(G.eat_item);
   else if(G.mode==M_STORY) story_palette();
-  else if(garden_palette_on()) garden_palette();
   else if(G.mode==M_NONE && SCENE==3 && ANIM_KIND<=1 && PET[P_STAGE]>=1 && PET[P_STAGE]<=7) food_palette(ANIM_KIND==1? FOOD_SNACK : FOOD_MEAL);
   u16 k=(u16)keys, pr=(u16)(k & ~G.prev); G.prev=k;
   G.suppress &= k;
@@ -3840,9 +3885,14 @@ void hook_update(u32 keys){
       }
       wish_tick();
       if(wish_try(pr)){ G.suppress=k; kin=(u16)(k & ~G.suppress); }   // the A is the wish's, not the icon bar's
+      // v8.2b: LIGHTS in the yard just says so (the original would switch them off, and the critter would go in)
+      if(G.outside && SCENE==1 && ICON_CUR==1 && (pr&kin&K_A)){ set_msg("YOU'RE OUTSIDE!"); sfx(0,SEQ_DENY); G.suppress=k; kin=(u16)(k & ~G.suppress); }
       int title_new = SCENE==0 && TITLE_CUR==1 && TITLE_CONFIRM==1;
+      u32 sc_was=SCENE;
       live_update(kin);
-      if(title_new && SCENE!=0) full_restart();
+      if(title_new && SCENE!=0){ full_restart(); G.more.pad1&=(u16)~1; }
+      else if(sc_was==0 && SCENE==1 && (G.more.pad1&1)){ G.more.pad1&=(u16)~1; save_all();   // v8.2b: it was saved in the yard: back out there
+        u8 st=PET[P_STAGE]; if(st>=2 && st<=7 && !PET[P_ASLEEP] && !PET[P_SICK] && !PET[P_LIGHTS]) go_outside(); }
       u32 sc=SCENE;
       if(sc==6) enter_menu();
       else if(sc==8) enter_minigame();
@@ -4072,7 +4122,7 @@ static const char *const HELP_TEXT[HELP_PAGES][8]={
    "20 FORMS IN THE JOURNAL!","DIRTY ROOMS AND SNACK BINGES","MAKE IT SICK. NEGLECT IT TOO LONG","AND IT RUNS AWAY, WITH NO STAR."},
   {"ONCE IT'S A CHILD, IT CAN GO OUT","TO THE YARD: TOYS, FRESH AIR AND","COINS IN THE GRASS. WHILE IT","SLEEPS, SELECT: GARDEN TO GROW",
    "MOONFLOWERS. R: CATCH FIREFLIES.","THE SHOP SELLS FOOD, TOYS AND","DECOR, AND MORE COMES AS IT GROWS.","BAG: PLACE DECOR AND USE ITEMS."},
-  {"AFTER ABOUT 12 YEARS AS A GROWN-UP","IT RISES TO BECOME A STAR. CARE","DECIDES HOW BRIGHTLY IT SHINES:","80%+ WONDERFUL: +35 COINS",
+  {"AFTER ABOUT 8 YEARS AS A GROWN-UP","IT RISES TO BECOME A STAR. CARE","DECIDES HOW BRIGHTLY IT SHINES:","80%+ WONDERFUL: +35 COINS",
    "60%+ HAPPY: +20 COINS","UNDER 60% SAD: DIM, NO BONUS","THEN A NEW STAR-SEED FALLS. SEE","EVERY STAR IN THE JOURNAL."},
 };
 static void help_draw(void){
@@ -4233,7 +4283,8 @@ static void jr_guide(void){
   int sf=adult_secret(f);
   if(sf>=0){ int got=(G.dex.seen>>sf)&1; text("SECRET:",96,124,C_LILAC); text(got? form_name(sf) : "? ? ?",144,124,got? C_LILAC : C_GRAY); }
 }
-static void jr_row(int i,const char *label,const char *val,int c){ int y=39+i*9; text(label,24,y,C_DTEXT); text(val,216-slen(val)*6,y,c); }
+static void jr_row(int i,const char *label,const char *val,int c){ int y=37+i*8;   // (v8.2b: 12 rows)
+  text(label,24,y,C_DTEXT); text(val,216-slen(val)*6,y,c); }
 static char *jr_num(char *p,u32 v){   // 1,240
   if(v>=1000){ p=sint(p,(int)(v/1000)); *p++=','; u32 r=v%1000; *p++=(char)('0'+r/100); *p++=(char)('0'+r/10%10); *p++=(char)('0'+r%10); *p=0; return p; }
   return sint(p,(int)v); }
@@ -4252,6 +4303,8 @@ static void jr_records(void){
   { int m=-1, best=0; for(int k=1;k<4;k++) if(j->loved[k]>best){ best=j->loved[k]; m=k; } if(m<0 && j->loved[0]) m=0;
     jr_row(8,"MOST LOVED CARE", m>=0? LOVED_NAME[m] : "-",C_DTEXT); }
   jr_num(b,j->coins); jr_row(9,"COINS EARNED",b,C_DTEXT);
+  jr_num(b,G.more.spare[4]); jr_row(10,"FIREFLIES CAUGHT",b,C_DTEXT);   // v8.2b: moved here from the firefly page
+  sint(b,G.more.spare[5]); jr_row(11,"BEST FIREFLY NIGHT",b,C_DTEXT);
 }
 static void icon_big(int it,int cx,int cy,int mono){   // an item icon at double size (or its silhouette)
   const Icon *I=&ICONS[it]; const u8 *pix=ICON_PIX+I->pix, *rows=ICON_ROWS+2*I->row; int x0=cx-I->w, y0=cy-I->h;
@@ -4284,8 +4337,8 @@ static void jr_items(void){
 static const char *const GK_TEXT[GK_N]={
   "GROWS FOR A CRITTER|THAT IS WELL CARED|FOR, ALL ROUND.", "GROWS FOR A CRITTER|THAT PLAYS A LOT.",
   "GROWS FOR A CRITTER|THAT SPENDS LOTS OF|TIME OUTSIDE.", "GROWS FOR A CRITTER|KEPT NICE AND CLEAN.", "GROWS FOR A CRITTER|THAT IS WELL FED.",
-  "PLANT IT ON A NIGHT|YOU WISHED ON A|SHOOTING STAR|(1 IN 3).", "PLANT IT ON THE|NIGHT OF A FULL MOON|(1 IN 2).",
-  "WATER IT EVERY|NIGHT TILL IT BLOOMS|(1 IN 3). ITS TWO|COLOURS ARE NEW|EVERY TIME!", "ANY MOONFLOWER MAY|BLOOM AS AN AURORA:|1 IN 20." };
+  "PLANT IT ON A NIGHT|YOU WISHED ON A|SHOOTING STAR|(1 IN 2).", "PLANT IT ON THE|NIGHT OF A FULL MOON|(1 IN 3).",
+  "WATER IT EVERY|NIGHT TILL IT BLOOMS|(1 IN 5). ITS TWO|COLOURS ARE NEW|EVERY TIME!", "ANY MOONFLOWER MAY|BLOOM AS AN AURORA:|1 IN 20." };
 static const char *const GK_RIDDLE[4]={"WHAT FALLS, IS|WISHED ON, AND GROWS?","IT WAITS FOR THE|NIGHT WITH NO|MISSING PIECE.",
   "NOT ONE NIGHT|FORGOTTEN, NOT ONE|NIGHT DRY.","NO RIDDLE CAN TELL|YOU. ONLY LUCK."};
 static const char *const GV_TEXT[GV_N]={"FLUTTERS ROUND AND|ROUND THE GLOW.","BLINKS ITS LITTLE|LANTERN BACK AT THE|FLOWERS.",
@@ -4354,7 +4407,8 @@ static void jr_garden_big(int n,int t){   // the moving picture on a GARDEN page
       for(int r=0;r<s->h;r++) for(int c=0;c<s->w;c++){ int v=*q++; if(!v) continue;
         if(v<8){ if(k==GK_AURORA){ int bnd=r*4+(t>>1)+SINE16[(c*2+(t>>3))&15]; v=GP_AURORA[(bnd>>3)&7]; } else v=pet[v-1]; }
         fill(ox+c*2,oy+r*2,2,2,v); }
-      gdraw(GS_STEM,cx-5,oy+s->h*2-2,0,0); fill(cx-1,oy+s->h*2+6,2,14,GP_K+9 /* g: the stem's green */); gdraw(GS_MOUND,cx-6,118,0,0); }
+      gdraw(GS_STEM,cx-5,oy+s->h*2-2,0,0); { int sy=oy+s->h*2+6; fill(cx-1,sy,2,120-sy,GP_K+9 /* g: the stem's green */); }   // (v8.2b: the stem reaches down into its soil)
+      gdraw(GS_MOUND,cx-6,118,0,0); }
     return; }
   int v=n-GK_N; const GVis *V=&GVIS[v];
   { int id=V->first+(got? V->seq[(t/8)%V->seq_n] : 0); const GSpr *s=&GSPR[id]; const u8 *q=GPIX+s->off; int ox=46-s->w, oy=120-s->h*2;
@@ -4381,7 +4435,7 @@ static void jr_garden_keys(u16 pr){
   G.gpad=(u8)n;
 }
 // ================================================================== FIREFLIES (v8.1)
-// From the yard at night (R), up to three 30-second rounds: steer a jar and scoop fireflies while they glow. There
+// From the yard at night (R), up to three 20-second rounds: steer a jar and scoop fireflies while they glow. There
 // are twelve kinds to find for the journal's field guide: three are out every night, two of five others each night,
 // and four rare ones need something from the rest of the game. Catching gives nothing but the find itself: the
 // night's catch glows in a lantern on the windowsill and flies home in the morning; all twelve found, and they
@@ -4389,7 +4443,7 @@ static void jr_garden_keys(u16 pr){
 // all, [5] the most in one night, [6] (day+1) of tonight, [7] rounds used tonight (bits 0-1) | tonight's kinds << 4.
 #define FK_N 12
 #define FLY_SLOTS 8
-#define FLY_ROUND 1800          // 30 s
+#define FLY_ROUND 1200          // 20 s (v8.2b: was 30 s)
 #define FLY_ROUNDS 3
 #define FLY_ALL 0xFFFu
 enum { FS_LOW=1, FS_HIGH=2, FS_ZIG=4, FS_ROSE=8, FS_STAR=16 };
@@ -4482,7 +4536,7 @@ static void fly_move(Fly *f){
 }
 static void fly_catch(void){
   int cx=G.jx+6, cy=G.jy+8, best=-1, bd=999;
-  for(int i=0;i<FLY_SLOTS;i++){ Fly *f=&G.fly[i]; if(!f->live || fly_level(f)<2) continue;
+  for(int i=0;i<FLY_SLOTS;i++){ Fly *f=&G.fly[i]; if(!f->live || fly_level(f)<1) continue;   // (v8.2b: a faint glow counts too)
     int dx=(f->x>>4)-cx, dy=(f->y>>4)-cy; if(dx<0) dx=-dx; if(dy<0) dy=-dy;
     if(dx<=8 && dy<=9 && dx+dy<bd){ bd=dx+dy; best=i; } }
   if(best<0){ sfx(0,SEQ_TICK); return; }
@@ -4503,8 +4557,9 @@ static void fly_update(u16 pr,u16 keys){
     else if(pr&(K_B|K_SELECT)) fly_back(keys);
     return; }
   if(pr&K_B){ fly_finish(); return; }
-  if(keys&K_LEFT) G.jx=(u8)(G.jx>6? G.jx-2 : 4);   if(keys&K_RIGHT) G.jx=(u8)(G.jx<222? G.jx+2 : 224);
-  if(keys&K_UP) G.jy=(u8)(G.jy>34? G.jy-2 : 32);    if(keys&K_DOWN) G.jy=(u8)(G.jy<116? G.jy+2 : 118);
+  // (v8.2b: the jar moves 3 px a frame, was 2)
+  if(keys&K_LEFT) G.jx=(u8)(G.jx>7? G.jx-3 : 4);   if(keys&K_RIGHT) G.jx=(u8)(G.jx<221? G.jx+3 : 224);
+  if(keys&K_UP) G.jy=(u8)(G.jy>35? G.jy-3 : 32);    if(keys&K_DOWN) G.jy=(u8)(G.jy<115? G.jy+3 : 118);
   for(int i=0;i<FLY_SLOTS;i++){ Fly *f=&G.fly[i];
     if(f->live) fly_move(f); else if(f->wait && !--f->wait) fly_spawn(f); }
   if(G.fly_cool) G.fly_cool--;
@@ -4688,7 +4743,6 @@ static void jr_fly_page(void){
     quick_box(10,100,220,36);
     p=scpy(b,"NO."); p=sint(p,k+1); p=scpy(p,"  "); scpy(p,got? FK[k].name : "???"); text(b,18,105,got? C_DTEXT : C_HINT);
     { const char *s= got? FK[k].note : FK[k].hint? FK[k].hint : k<3? "OUT MOST NIGHTS." : "NOT OUT EVERY NIGHT."; text(s,18,115,got? C_DTEXT : C_ORANGE); }
-    p=scpy(b,"CAUGHT "); p=jr_num(p,G.more.spare[4]); p=scpy(p,"   BEST NIGHT "); sint(p,G.more.spare[5]); text(b,18,125,C_HINT);
     return; }
   for(int i=0;i<FK_N;i++) if((fly_found()>>i)&1) fly_big(10+(i%6)*38+17,31+(i/6)*34+15,i,t+i*9);
 }
@@ -4764,13 +4818,13 @@ static void title_draw(void){
 void hook_render(void){
   init_once();
   spr_begin();
+  poop_sync();
   G.sky_t++;
   if((G.sky_t&63)==1) check_window_panes();
   set_extra_palette(); set_special_cmap();
   int help = G.mode==M_NONE && SCENE==7;    // our HOW TO PLAY pages cover the whole screen
   if(!help && (G.mode==M_NONE || G.mode==M_MENU || (G.mode==M_EXTRAS && !G.ex_yard) || G.mode==M_BAG || G.mode==M_EAT || G.mode==M_SURE)){
     u8 poop=PET[P_POOP]; u32 sc=SCENE;
-    if(G.outside) PET[P_POOP]=0;             // the room's mess stays in the room
     if(G.mode==M_MENU) SCENE=1;              // our menu replaces the original's box
     O_RENDER();
     SCENE=sc; PET[P_POOP]=poop;

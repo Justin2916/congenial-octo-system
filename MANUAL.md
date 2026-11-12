@@ -136,7 +136,7 @@ Each new star-seed comes with **3 moonflower seeds**.
 
 | Night | What happens |
 |---|---|
-| 1 | Plant a seed. It is watered the night you plant it. |
+| 1 | Plant a seed (A), then water it (A again). |
 | 2 | A sprout. Water it. |
 | 3 | A bud, already showing its colour. Water it. |
 | 4 | It blooms, and glows at night. |
@@ -161,7 +161,7 @@ A night without water doesn't harm it; it just waits a night longer. Blooms are 
 
 ## Fireflies
 
-On any night in the yard, press **R** to catch fireflies. A round lasts 30 seconds, and you get **three rounds a night**. Steer the jar with the +Control Pad and press **A** to scoop a firefly while it glows; an unlit one slips away. B stops a round early.
+On any night in the yard, press **R** to catch fireflies. A round lasts 20 seconds, and you get **three rounds a night**. Steer the jar with the +Control Pad and press **A** to scoop a firefly while it glows, even faintly; an unlit one slips away. B stops a round early.
 
 There are **twelve kinds** to find, each with its own colour and way of blinking. Catching gives no coins or stats: it's all about the collection.
 
@@ -316,7 +316,7 @@ Choose **PLAY**, pick a game with UP and DOWN, and press A. Every round counts a
 
 ## Farewells
 
-After about 12 years as a grown-up, your critter rises to become a star, around noon. The day before, it gazes up at the stars. How brightly it shines depends on its care score as a grown-up:
+After about 8 years as a grown-up, your critter rises to become a star, around noon. The day before, it gazes up at the stars. How brightly it shines depends on its care score as a grown-up:
 
 | Care score | Ending | Bonus for the next critter |
 |---|---|---|
@@ -351,7 +351,7 @@ The journal keeps a record of every critter and is never cleared. Open it from t
 
 **What carries over to the next critter?** The journal, with its stars, guide, items and garden pages, and any farewell bonus. Coins, the bag, toys, decor, the shop and the garden start fresh.
 
-**How long does a critter live?** About 16 days in all: half a day as a baby, a day as a child, two as a teen and about 12 as a grown-up.
+**How long does a critter live?** About 12 days in all: half a day as a baby, a day as a child, two as a teen and about 8 as a grown-up.
 
 **Does time pass when the game is off?** No. Your critter waits for you.
 
@@ -392,9 +392,9 @@ Only read on if you're stuck.
 
 | Riddle | Rare form | What it takes |
 |---|---|---|
-| "What falls, is wished on, and grows?" | Starbloom | Plant it on a night you wished on a shooting star (1 in 3) |
-| "It waits for the night with no missing piece." | Moon Lily | Plant it on the night of a full moon (1 in 2) |
-| "Not one night forgotten, not one night dry." | Twinglow | Water it every night until it blooms (1 in 3) |
+| "What falls, is wished on, and grows?" | Starbloom | Plant it on a night you wished on a shooting star (1 in 2) |
+| "It waits for the night with no missing piece." | Moon Lily | Plant it on the night of a full moon (1 in 3) |
+| "Not one night forgotten, not one night dry." | Twinglow | Water it every night until it blooms (1 in 5) |
 | "No riddle can tell you. Only luck." | Aurora | Any moonflower may bloom as an Aurora (1 in 20) |
 
 **Rare fireflies**
