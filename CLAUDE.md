@@ -217,6 +217,14 @@ Other details:
   backgrounds, one 96-colour palette from 144: `runaway_palette`; the family uses the runaway's own critter art).
 
 
+## Pinned for later (owner, Nov 12 2026)
+
+- **Runaway family, lore fix:** keep the grown-up the same form as the runaway (a kindred spirit shaped by the same
+  kind of life), but make the little ones Bliplets: star-seeds that fell in the meadow and hatched wild. Text idea:
+  "...WHERE A WILD CRITTER, JUST LIKE IT, WAS LOOKING AFTER TWO LITTLE ONES." Needs the Bliplets drawn as hardware
+  sprites (8bpp OBJ with the album art/palette, or 4bpp per-bank), since BG2 can show only one critter palette.
+  Today the family is the runaway's own form at sizes 2 and 1, which clashes with the star-seed origin and stages.
+
 ## Decided against (owner, Nov 11 2026)
 
 - Keeping the critter out of decorated room corners, or drawing decor in front of it: the critter covering decor
