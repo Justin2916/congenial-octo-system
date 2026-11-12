@@ -502,7 +502,7 @@ def t_journal():
     syms = {l.split()[-1]: int(l.split()[0], 16) for l in subprocess.run(['llvm-objdump', '-t', f'{CK}/ext.elf'], capture_output=True, text=True).stdout.splitlines() if ' SEQ_' in l}
     v = pk(run(ROM, ['wait 30', p8(PET + 0x13, 1), 'wait 40', 'press DOWN', 'wait 4', 'press DOWN', 'wait 4', 'press A', 'wait 2', 'peek 03000288 4'], copy_save('adult')))
     a = pk(run(ROM, BOOT + [p8(PET + 0x13, 1)] + care_set('c_adult', n=100, good=100, bad=0) + [p8(g('so_pend'), 1), 'wait 224', 'peek 0300028c 4', 'wait 340', 'peek 03000288 4'], copy_save('adult')))
-    r = pk(run(ROM, BOOT + [p8(PET + 0x13, 1), 'poke8 03000032 1', 'poke8 0300003e 0', 'poke8 0300003f 0', 'poke8 03000064 64', 'poke8 03000065 0', 'waitscene 9', 'wait 190', 'peek 03000288 4'], copy_save('adult')))
+    r = pk(run(ROM, BOOT + [p8(PET + 0x13, 1), 'poke8 03000032 1', 'poke8 0300003e 0', 'poke8 0300003f 0', 'poke8 03000064 64', 'poke8 03000065 0', 'waitscene 9', 'wait 310', 'peek 03000288 4'], copy_save('adult')))
     got = [u32(v[0][1]), u32(a[0][1]), u32(a[1][1]), u32(r[0][1])]
     check('journal: the new jingles play (journal, beam, new star, runaway)', got == [syms['SEQ_JOURNAL'], syms['SEQ_BEAM'], syms['SEQ_NEWSTAR'], syms['SEQ_RUNAWAY']], str([hex(x) for x in got]))
     # v8.1: a v13 save (the v8 release) loads with its journal and saves as v14
