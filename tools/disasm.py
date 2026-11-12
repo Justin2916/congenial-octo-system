@@ -105,6 +105,9 @@ def is_leaf(t):
         a += i.size
     return False
 
+# switches whose bound is not a nearby 'cmp' (checked by hand): the switch instruction's address -> number of cases
+KNOWN_SIZES = {0x08000DB6: 4}    # game_update: the START menu's cursor (0x030002D4, always & 3)
+
 def jump_table(a):
     """the compiler's three switch forms (the bound is the nearest earlier 'cmp rI, #n'):
       words:  lsls rX, rI, #2 / adr rT, #k / ldr rX, [rT, rX] (/ ...) / mov pc, rX      - absolute targets after the code
@@ -119,6 +122,7 @@ def jump_table(a):
     n = None
     for i in prev:
         if i.mnemonic == 'cmp' and len(i.operands) == 2 and i.operands[1].type == A.ARM_OP_IMM: n = i.operands[1].imm + 1; break
+    if a in KNOWN_SIZES: n = KNOWN_SIZES[a]
     me = insns[a]; out = None
     if me.mnemonic == 'add':            # bytes / halves
         k = next((i for i in prev[:4] if i.mnemonic in ('ldrb', 'ldrh')), None)

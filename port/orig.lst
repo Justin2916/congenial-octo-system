@@ -1486,7 +1486,9 @@ case_08000d44:
   08000db4  4900      lsls r1, r1, #1
   08000db6  8f44      add pc, r1
   08000db8  .word 0x0000003d
-  08000dba  .bytes 6 (a2037f039903...)
+  08000dba  .word 0x000003a2
+  08000dbc  .word 0x0000037f
+  08000dbe  .word 0x00000399
   08000dc0  .word 0x030002d0
   08000dc4  .word 0x03000012
   08000dc8  .word 0x03000028
@@ -2287,7 +2289,51 @@ case_0800143c:
   080014b0  0270      strb r2, [r0]
   080014b2  0a70      strb r2, [r1]
   080014b4  00f03afd  bl case_08001f2c
-  080014b8  .bytes 84 (9d4de87c41424141e974002800d18be0...)
+
+case_080014b8:
+  080014b8  9d4d      ldr r5, [pc, #0x274]   ; =0x3000028
+  080014ba  e87c      ldrb r0, [r5, #0x13]
+  080014bc  4142      rsbs r1, r0, #0
+  080014be  4141      adcs r1, r0
+  080014c0  e974      strb r1, [r5, #0x13]
+  080014c2  0028      cmp r0, #0
+  080014c4  00d1      bne #0x80014c8
+  080014c6  8be0      b #0x80015e0
+  080014c8  0024      movs r4, #0
+  080014ca  3460      str r4, [r6]
+  080014cc  a248      ldr r0, [pc, #0x288]   ; =0x300028c
+  080014ce  0460      str r4, [r0]
+  080014d0  2000      movs r0, r4
+  080014d2  2100      movs r1, r4
+  080014d4  2200      movs r2, r4
+  080014d6  2300      movs r3, r4
+  080014d8  0ef0b0f8  bl sound_play
+  080014dc  0120      movs r0, #1
+  080014de  2100      movs r1, r4
+  080014e0  2200      movs r2, r4
+  080014e2  2300      movs r3, r4
+  080014e4  0ef0aaf8  bl sound_play
+  080014e8  e87c      ldrb r0, [r5, #0x13]
+  080014ea  75e0      b #0x80015d8
+
+case_080014ec:
+  080014ec  c007      lsls r0, r0, #0x1f
+  080014ee  01d1      bne #0x80014f4
+  080014f0  00f01cfd  bl case_08001f2c
+  080014f4  9949      ldr r1, [pc, #0x264]   ; =0x30003ac
+  080014f6  0020      movs r0, #0
+  080014f8  0860      str r0, [r1]
+  080014fa  0721      movs r1, #7
+  080014fc  3de6      b #0x800117a
+
+case_080014fe:
+  080014fe  8c48      ldr r0, [pc, #0x230]   ; =0x3000028
+  08001500  817c      ldrb r1, [r0, #0x12]
+  08001502  4a42      rsbs r2, r1, #0
+  08001504  4a41      adcs r2, r1
+  08001506  8274      strb r2, [r0, #0x12]
+  08001508  c07c      ldrb r0, [r0, #0x13]
+  0800150a  65e0      b #0x80015d8
   0800150c  9049      ldr r1, [pc, #0x240]   ; =0x3000004
   0800150e  0c68      ldr r4, [r1]
   08001510  9349      ldr r1, [pc, #0x24c]   ; =0x3000018
@@ -2575,7 +2621,7 @@ case_080016f4:
   08001750  .word 0x03000004
   08001754  .word 0x0800fc24
   08001758  .word 0x0300028c
-  0800175c  .bytes 4 (ac030003...)
+  0800175c  .word 0x030003ac
   08001760  .word 0x03000018
   08001764  .word 0x03000288
   08001768  .word 0x0801019d

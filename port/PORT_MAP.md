@@ -187,6 +187,50 @@ Still read from the original ROM: the ported helpers' data (the font, the palett
 three strings), at their old addresses (`orig.h`). It moves into our source with the rest of the data in stage 5, when
 nothing else reads it there.
 
+## Stage 3: `game_update` (done, lifted)
+
+`game_update` (`0x080001AC`) now runs from `orig_update.c`, which `tools/lift.py` generates from the original's machine
+code. The lifter turns each Thumb instruction into C:
+- registers become local variables, and the flags N, Z, C and V are computed exactly;
+- branches become `goto`s, and the compiler's switch tables become `switch`es;
+- memory accesses keep their exact sizes (`volatile`), and the stack frame is a local array;
+- every call goes where it goes in the patched game, by symbol name (the ported helpers, `ext.c`'s hooks);
+- literal-pool values come from the patched ROM (for example the names table moved to `0x0203D040`), and those that are
+  addresses in our code become symbols;
+- `patch.py`'s jump past the clock block (`0x080002A6` → `0x0800096C`) is applied, so the clock block isn't emitted.
+  2,417 of its 3,250 instructions are live, about 7 KB of C.
+
+It is exact, but it reads like machine code. `tools/live_listing.py` prints the same live code as an annotated
+listing for reading.
+
+One fix to stage 1 came out of this. The START menu's switch (`0x08000DB6`, on its cursor `0x030002D4`, which is always
+`& 3`) has 4 cases, not 1; there is no `cmp` to show the bound. `tools/disasm.py` now has a `KNOWN_SIZES` table, and the
+84 bytes at `0x080014B8` that stage 1 called dead are that menu's 3rd case.
+
+Checked: `port_check` is identical (50 runs, every scene), and the test suite passes 211/211.
+
+**Readable versions** are the next step for anything we want to change. A lifted function is rewritten as normal C, a
+scene or a piece at a time, and checked with `port_check` against the lifted build. What `game_update` does, from
+reading so far:
+- **The preamble:** it stores the keys held, pressed and previous; counts `FRAMES`; steps the RNG (xorshift 13/17/5);
+  plays the next note of each sound channel's sequence (`SND_PTR`/`SND_IDX`/`SND_CNT`, period ≥ 2 → `sound_play(ch, p,
+  11, 2)`); and counts down `MSG_TIMER`.
+- **Then a switch on `SCENE`:**
+  - 0, the title: CONTINUE / NEW EGG, the "START OVER?" confirm.
+  - 1, the room: the icon bar.
+  - 2: the 2-item menu.
+  - 3: the animations, by `ANIM_KIND`.
+  - 4, the status card: A/B/START leaves it.
+  - 5, hatching and naming.
+  - 6, the START menu: a 4-way cursor.
+  - 7, help: its pages.
+  - 8, BERRY CATCH.
+  - 9, the runaway: after 90 frames, A/START starts a new egg.
+- **"Start a new egg"** is inlined in several places. It clears `PET` but keeps the sound and FAST settings; sets stage
+  0, health 100, hunger and happy 2/2 (`0x0202`), the poop timer 120 and `+0x32` = 200, and the title timers 120/120/60;
+  writes the magic `CKP1`; picks a random name (the RNG `>>16 * 10 >> 16`); checksums (×31 from `0x5EED`) and saves; and
+  then goes to the room (scene 1) with the hatch chime (`0x0800FB90`).
+
 ## The plan from here
 
 1. **Done (stage 1):** this map, the listing, the data extracted byte-identical, and the harness.
@@ -196,7 +240,7 @@ nothing else reads it there.
 
    The original's own calls to these get redirected to ours, with `patch.py` growing a `bl` redirect per call site. Each
    function is checked with lockstep. The data they use moves from the ROM to `gen/orig_data.py` → `orig_data.h`.
-3. **Port `game_update`:** scene by scene, following its switch. While it's half done, a scene not yet ported jumps back
+3. **Done (stage 3, lifted; see above). Port `game_update`:** scene by scene, following its switch. While it's half done, a scene not yet ported jumps back
    into the original's code for that case.
 4. **Port `game_render`:** scene by scene the same way. It's the biggest job, mostly long, straight-line drawing code.
 5. **Our own startup:** crt0, the IRQ, `main`, the header. Then `patch.py` and `CritterKeep_original.gba` drop out of
