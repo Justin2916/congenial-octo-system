@@ -19,7 +19,9 @@ from capstone import arm as A
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ORIG = open(os.path.join(ROOT, 'CritterKeep_original.gba'), 'rb').read()
-PATCHED = open(os.path.join(ROOT, 'CritterKeep.gba'), 'rb').read()
+# the patched game whose call targets and literals the lift follows (LIFT_ROM=...: since stage 5 the build is no longer
+# patched, so this is the last patched build, kept outside the repo)
+PATCHED = open(os.environ.get('LIFT_ROM', os.path.join(ROOT, 'CritterKeep.gba')), 'rb').read()
 J = json.load(open(os.path.join(ROOT, 'port', 'funcs.json')))
 FUNCS = {int(f['start'], 16) for f in J['functions']}
 TABLES = {int(k, 16): [int(x, 16) for x in v] for k, v in J['jump_tables'].items()}
@@ -45,6 +47,13 @@ COND = {A.ARM_CC_EQ: 'Z', A.ARM_CC_NE: '!Z', A.ARM_CC_HS: 'C', A.ARM_CC_LO: '!C'
         A.ARM_CC_VS: 'V', A.ARM_CC_VC: '!V', A.ARM_CC_HI: '(C&&!Z)', A.ARM_CC_LS: '(!C||Z)', A.ARM_CC_GE: '(N==V)',
         A.ARM_CC_LT: '(N!=V)', A.ARM_CC_GT: '(!Z&&N==V)', A.ARM_CC_LE: '(Z||N!=V)'}
 
+# the original's functions and their ports (what patch.py redirected, until stage 5)
+PORTED = {0x0800E840: 'o_rng_mix', 0x0800F5F8: 'o_back_buffer', 0x0800F614: 'o_dma_copy', 0x0800F6C0: 'o_save_write',
+          0x0800F6E0: 'o_save_read', 0x0800F2A4: 'o_hline', 0x0800EFB4: 'o_draw_box', 0x0800F98C: 'o_udiv',
+          0x0800F9D8: 'o_udivmod', 0x0800FA34: 'o_sdiv', 0x0800FAA0: 'o_sdivmod', 0x0800E854: 'o_set_message',
+          0x0800EC74: 'o_draw_text', 0x0800F63C: 'o_sound_play', 0x0800F070: 'hook_sprite', 0x0800F37C: 'o_draw_hearts',
+          0x0800EDB8: 'o_draw_stars', 0x0800CC94: 'o_build_palette', 0x0800E8F0: 'o_minigame_start',
+          0x0800CE5C: 'o_game_init', 0x0800D690: 'o_prerender', 0x080001AC: 'o_game_update', 0x08001FB4: 'o_game_render'}
 LIT_EXTERNS = set()
 def const_expr(v):
     """a literal: a symbol when it is an address in our code (orig.c / ext.c), else the number"""
@@ -82,6 +91,24 @@ class Lifter:
             s, k = self.succ(a, i)
             if k in ('b', 'cond', 'far', 'switch'): self.targets.update(s)
             todo += s
+        # each switch reads its table from the original's code area: find that load, so it reads a copy in our C instead
+        self.tabload = {}
+        for a, i in self.seen.items():
+            s, k = self.succ(a, i)
+            if k != 'switch': continue
+            tb = min(t for t in TABLES if 0 < t - a <= 12)
+            b = a
+            for _ in range(6):
+                b -= 2
+                j = self.seen.get(b) or self.seen.get(b - 2)
+                if j is None: break
+                if j.address != b: b = j.address
+                if j.mnemonic in ('ldr', 'ldrb', 'ldrh') and j.operands[1].type == A.ARM_OP_MEM and j.operands[1].mem.base not in (A.ARM_REG_PC, A.ARM_REG_SP):
+                    sz = {'ldr': 4, 'ldrb': 1, 'ldrh': 2}[j.mnemonic]; n = len(TABLES[tb])
+                    vals = [int.from_bytes(ORIG[tb - 0x08000000 + sz * q:tb - 0x08000000 + sz * (q + 1)], 'little') for q in range(n)]
+                    self.tabload[b] = (tb, sz, vals); break
+            else:
+                raise SystemExit(f'lift: no table load found for the switch at {a:#x}')
 
     # ---- one instruction
     def mem(self, op, a):
@@ -104,6 +131,11 @@ class Lifter:
         if m in ('ldr', 'ldrb', 'ldrh', 'ldrsb', 'ldrsh') and ops[1].type == A.ARM_OP_MEM and ops[1].mem.base == A.ARM_REG_PC:
             la = ((a + 4) & ~3) + ops[1].mem.disp
             return [f'{R(0)}={const_expr(u32(PATCHED, la))};']
+        if a in self.tabload:         # a switch's table (the original keeps it in its code area): read our copy
+            tb, sz, vals = self.tabload[a]; ad = self.mem(ops[1], a)
+            ty = {1: 'u8', 2: 'u16', 4: 'u32'}[sz]
+            arr = '{' + ','.join(f'0x{v:X}u' for v in vals) + '}'
+            return [f'{{ static const {ty} T_[{len(vals)}]={arr}; u32 A_=(u32)({ad}); {R(0)}=T_[(A_-0x{tb:08X}u)/{sz}]; }}   /* table at 0x{tb:08X} */']
         if m in ('ldr', 'ldrb', 'ldrh', 'ldrsb', 'ldrsh', 'str', 'strb', 'strh'):
             ad = self.mem(ops[1], a)
             ty = {'ldr': 'u32', 'str': 'u32', 'ldrb': 'u8', 'strb': 'u8', 'ldrh': 'u16', 'strh': 'u16', 'ldrsb': 's8', 'ldrsh': 's16'}[m]
@@ -135,6 +167,9 @@ class Lifter:
             return out
         if m == 'bl':
             t = bl_target(PATCHED, a)       # where the patched game sends it
+            if ORIG[a - 0x08000000:a - 0x08000000 + 4] != PATCHED[a - 0x08000000:a - 0x08000000 + 4] and not (0x08000000 <= t < 0x0A000000 and (t in SYMS or t < 0x08012000)):
+                t = bl_target(ORIG, a)      # (overwritten by an entry jump in that build: the original call, ported)
+                if t in PORTED: return [f'{{ unsigned long long rv=((unsigned long long(*)(u32,u32,u32,u32,u32,u32))&{PORTED[t]})(r0,r1,r2,r3,*(volatile u32*)sp,*(volatile u32*)(sp+4)); r0=(u32)rv; r1=(u32)(rv>>32); }}   /* {PORTED[t]} */'] if not self.externs.add(PORTED[t]) else []
             if t in self.seen or (self.start <= bl_target(ORIG, a) < self.end and bl_target(ORIG, a) not in FUNCS):
                 return [f'goto L_{bl_target(ORIG, a):08x};   /* long branch */']
             if t in SYMS:
@@ -213,6 +248,7 @@ class Lifter:
                 s += ' if(S_==0){R_=X_;} else { S_&=31; if(S_==0){C=X_>>31; R_=X_;} else {R_=(X_>>S_)|(X_<<(32-S_)); C=R_>>31;} }'
             s += f' {d}=R_; N=R_>>31; Z=R_==0; }}'
             return [s]
+        if m == 'svc': return [f'__asm__ volatile("svc #{ops[0].imm}" ::: "r0","r1","r2","r3","memory");']   # (2: Halt until an interrupt)
         if m == 'nop' or (m == 'mov' and len(ops) == 2 and ops[0].reg == ops[1].reg): return ['/* nop */']
         raise SystemExit(f'lift: no rule for {a:#x} {m} {i.op_str}')
 

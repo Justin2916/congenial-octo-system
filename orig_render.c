@@ -37,7 +37,7 @@ L_08001fb4: ;  sp-=20; *(volatile u32*)(sp+0)=r4; *(volatile u32*)(sp+4)=r5; *(v
 L_08001fce: ;  goto L_08002e30;   /* long branch */                                                                 /* 01fce bl #0x8002e30 */
 L_08001fd2: ;  { u32 X_=(u32)(r0), S_=(u32)(1u)&0xFF; u32 R_; if(S_==0){R_=X_;} else {C=(X_>>(32-S_))&1; R_=X_<<S_;} r0=R_; N=R_>>31; Z=R_==0; } /* 01fd2 lsls r0, r0, #1 */
                { u32 X_=(u32)(r0), Y_=(u32)(0x08001FD8u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; r0=R_; } /* 01fd4 add r0, pc */
-               r0=*(volatile u16*)((r0+4));                                                                         /* 01fd6 ldrh r0, [r0, #4] */
+               { static const u16 T_[10]={0xDu,0x729u,0x729u,0x729u,0x729u,0x729u,0x729u,0x661u,0x75u,0x693u}; u32 A_=(u32)((r0+4)); r0=T_[(A_-0x08001FDCu)/2]; }   /* table at 0x08001FDC */ /* 01fd6 ldrh r0, [r0, #4] */
                { u32 X_=(u32)(r0), S_=(u32)(1u)&0xFF; u32 R_; if(S_==0){R_=X_;} else {C=(X_>>(32-S_))&1; R_=X_<<S_;} r0=R_; N=R_>>31; Z=R_==0; } /* 01fd8 lsls r0, r0, #1 */
                switch((134225886u+r0)){   case 0x08001FF8u: goto L_08001ff8;   case 0x080020C8u: goto L_080020c8;   case 0x08002CA0u: goto L_08002ca0;   case 0x08002D04u: goto L_08002d04;   case 0x08002E30u: goto L_08002e30;   default: return; }   // (never: the original has no other case) /* 01fda add pc, r0 */
 L_08001ff8: ;  r0=0x03000078u;                                                                                      /* 01ff8 ldr r0, [pc, #0x3dc] */
@@ -9701,7 +9701,7 @@ L_08006e4e: ;  r0=0x03000298u;                                                  
                if((C&&!Z)) goto L_08006f2e;                                                                         /* 06e58 bhi #0x8006f2e */
 L_08006e5a: ;  r8=r8;                                                                                               /* 06e5a mov r8, r8 */
                { u32 X_=(u32)(r0), Y_=(u32)(0x08006E60u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; r0=R_; } /* 06e5c add r0, pc */
-               r0=*(volatile u8*)((r0+4));                                                                          /* 06e5e ldrb r0, [r0, #4] */
+               { static const u8 T_[8]={0x7u,0x7u,0x19u,0x64u,0x64u,0x25u,0x30u,0x1Fu}; u32 A_=(u32)((r0+4)); r0=T_[(A_-0x08006E64u)/1]; }   /* table at 0x08006E64 */ /* 06e5e ldrb r0, [r0, #4] */
                { u32 X_=(u32)(r0), S_=(u32)(1u)&0xFF; u32 R_; if(S_==0){R_=X_;} else {C=(X_>>(32-S_))&1; R_=X_<<S_;} r0=R_; N=R_>>31; Z=R_==0; } /* 06e60 lsls r0, r0, #1 */
                switch((134245990u+r0)){   case 0x08006E74u: goto L_08006e74;   case 0x08006E98u: goto L_08006e98;   case 0x08006EA4u: goto L_08006ea4;   case 0x08006EB0u: goto L_08006eb0;   case 0x08006EC6u: goto L_08006ec6;   case 0x08006F2Eu: goto L_08006f2e;   default: return; }   // (never: the original has no other case) /* 06e62 add pc, r0 */
 L_08006e74: ;  r0=*(volatile u32*)((sp+168));                                                                       /* 06e74 ldr r0, [sp, #0xa8] */
@@ -10004,7 +10004,7 @@ L_080070ce: ;  r0=0x03000298u;                                                  
 L_080070d6: ;  goto L_0800acc6;   /* long branch */                                                                 /* 070d6 bl #0x800acc6 */
 L_080070da: ;  { u32 X_=(u32)(r1), S_=(u32)(2u)&0xFF; u32 R_; if(S_==0){R_=X_;} else {C=(X_>>(32-S_))&1; R_=X_<<S_;} r0=R_; N=R_>>31; Z=R_==0; } /* 070da lsls r0, r1, #2 */
                r2=0x080070E4u;                                                                                      /* 070dc adr r2, #4 */
-               r0=*(volatile u32*)((r2+r0));                                                                        /* 070de ldr r0, [r2, r0] */
+               { static const u32 T_[8]={0x800712Du,0x800712Du,0x800ACC7u,0x8009AE5u,0x8009B65u,0x8009F29u,0x8009355u,0x8009355u}; u32 A_=(u32)((r2+r0)); r0=T_[(A_-0x080070E4u)/4]; }   /* table at 0x080070E4 */ /* 070de ldr r0, [r2, r0] */
                switch((r0&~1u)){   case 0x0800712Cu: goto L_0800712c;   case 0x08009354u: goto L_08009354;   case 0x08009AE4u: goto L_08009ae4;   case 0x08009B64u: goto L_08009b64;   case 0x08009F28u: goto L_08009f28;   case 0x0800ACC6u: goto L_0800acc6;   default: return; }   // (never: the original has no other case) /* 070e0 mov pc, r0 */
 L_0800712c: ;  r2=1u; N=(r2)>>31; Z=(r2)==0;                                                                        /* 0712c movs r2, #1 */
                r3=0x030003B0u;                                                                                      /* 0712e ldr r3, [pc, #0x38c] */

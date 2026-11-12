@@ -58,8 +58,10 @@ static void io_write16(u32 a, u16 v){
 
 static u8 rd8(u32 a);
 static u32 rd32(u32 a);
+static int rwatch_on = 0; static u32 cur_pc_r;   // 'rwatch 1': report the ported code reading the original's code area
 static u16 rd16(u32 a){
   a&=~1;
+  if(rwatch_on && a>=0x08000000 && a<0x0800FB1A && cur_pc_r>=0x08012000 && (a+8<cur_pc_r || a>cur_pc_r+8)){ printf("RREAD %08x by pc=%08x\n",a,cur_pc_r); }
   switch(a>>24){
     case 0x02: return *(u16*)&ewram[a&0x3FFFF];
     case 0x03: return *(u16*)&iwram[a&0x7FFF];
@@ -315,8 +317,10 @@ static void swi(u32 n){
   fprintf(stderr,"unhandled SWI %02x at %08x\n",n,cur_pc);
 }
 
+static u32 pc_hist[64]; static int pc_hi=0;   // the last 64 places a branch went to (printed on a fault)
 static void step(void){
-  cur_pc = next_pc; branched=0;
+  if(next_pc!=cur_pc+2 && next_pc!=cur_pc+4){ pc_hist[pc_hi++&63]=next_pc|((u32)(cur_pc&0xFFFFFF)<<0 ? 0:0); pc_hist[(pc_hi-1)&63]=next_pc; }
+  cur_pc = next_pc; cur_pc_r = cur_pc; branched=0;
   if(cur_pc==bp_addr && bp_count>0){ bp_count--; printf("BP %08x r0=%08x r1=%d r2=%d r3=%d sp0=%d sp1=%d sp2=%d lr=%08x\n",cur_pc,R[0],R[1],R[2],R[3],rd32(R[13]),rd32(R[13]+4),rd32(R[13]+8),R[14]); }
   if(cur_pc==MAGIC_IRQ_RET){ // return from HLE IRQ
     set_cpsr(irq_save_CPSR); memcpy(R,irq_save_R,sizeof R); in_hle_irq=0; next_pc=R[15]; return; }
@@ -501,9 +505,10 @@ int main(int argc, char **argv){
       for(int i=0;i<k&&!fault;i++){ run_frame(); frame++; trail_rec(tf,frame); }
       fclose(tf); }
     else if(!strcmp(cmd,"turbo")){ turbo=atoi(a1); }
+    else if(!strcmp(cmd,"rwatch")){ rwatch_on=atoi(a1); }
     else if(!strcmp(cmd,"echo")){ printf("%s", line+5); }
   }
   if(sramfn){ FILE *s=fopen(sramfn,"wb"); fwrite(sram,1,sizeof sram,s); fclose(s); }
-  if(fault){ fprintf(stderr,"FAULT at frame %ld pc=%08x\n",frame,cur_pc); for(int i=0;i<16;i++) fprintf(stderr,"r%d=%08x ",i,R[i]); fprintf(stderr,"cpsr=%08x\n",CPSR); return 2; }
+  if(fault){ fprintf(stderr,"branches before the fault:"); for(int i=40;i>0;i--) fprintf(stderr," %08x",pc_hist[(pc_hi-i)&63]); fprintf(stderr,"\n"); fprintf(stderr,"FAULT at frame %ld pc=%08x\n",frame,cur_pc); for(int i=0;i<16;i++) fprintf(stderr,"r%d=%08x ",i,R[i]); fprintf(stderr,"cpsr=%08x\n",CPSR); return 2; }
   return 0;
 }

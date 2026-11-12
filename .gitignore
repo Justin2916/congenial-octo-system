@@ -5,7 +5,11 @@ orig_update.o
 orig_render.o
 ext.elf
 ext.bin
-patch.log
+mkrom.log
+start.o
+orig_main.o
+orig_data.bin
+orig_datainit.bin
 CritterKeep.gba
 emu
 __pycache__/

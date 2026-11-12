@@ -231,6 +231,38 @@ reading so far:
   writes the magic `CKP1`; picks a random name (the RNG `>>16 * 10 >> 16`); checksums (×31 from `0x5EED`) and saves; and
   then goes to the room (scene 1) with the hatch chime (`0x0800FB90`).
 
+## Stage 4: `game_render` (done, lifted)
+
+`orig_render.c`: 21,277 instructions, about 64 KB compiled, so it is linked after `ext.c`'s data rather than in the gap.
+Every hooked call (`hook_sprite`, `hook_room_critter`, `hook_bg_copy`) and every redirected literal (the critter
+picture and name tables in RAM, the food art, " YEAR"/" YEARS") is carried over. Checked identical: 50 runs.
+
+## Stage 5: standalone (done)
+
+The build no longer reads `CritterKeep_original.gba` or patches anything:
+- `start.s` holds:
+  - the header (`header.inc`: the boot logo the BIOS checks, the codes; `mkrom.py` writes the title STARFALL and the
+    check byte);
+  - our startup, which does what the original's did: three stacks, `.data` copied to `0x03000000`, `.bss` cleared,
+    the interrupt vector set, then `o_main`;
+  - the interrupt handler (it acknowledges the interrupt and counts vblanks at `0x03000480`);
+  - 9 entry stubs at the original's addresses, which `ext.c`'s `O_*` constants call, so `ext.c` is unchanged byte for
+    byte;
+  - the original's data (`gen/orig_data.py --bin`) at `0x0800FB1A`, where the ported code reads it, and `.data`'s 16
+    bytes at `0x080114A0`.
+- `main` is lifted (`orig_main.c`). Its `svc #2` (Halt) became inline assembly.
+- `link.ld` places it all, and `mkrom.py` makes the ROM. `patch.py` is gone.
+
+Two lifter fixes came out of this:
+- **Switch tables:** the original keeps each switch's table in its code area, which is now empty. The lifter copies
+  each table into the generated C. (A read watch in the emulator, `rwatch 1`, confirmed that the ported code reads
+  nothing else from the old code area.)
+- **Overwritten entries:** a call inside a function's first 16 bytes was overwritten by stage 2's entry jump in the
+  build it lifts from, so the lifter maps those calls through its `PORTED` table.
+
+Checked: the standalone ROM is identical to the stage 4 build on all 50 runs, and it builds with
+`CritterKeep_original.gba` moved away.
+
 ## The plan from here
 
 1. **Done (stage 1):** this map, the listing, the data extracted byte-identical, and the harness.
@@ -242,6 +274,6 @@ reading so far:
    function is checked with lockstep. The data they use moves from the ROM to `gen/orig_data.py` → `orig_data.h`.
 3. **Done (stage 3, lifted; see above). Port `game_update`:** scene by scene, following its switch. While it's half done, a scene not yet ported jumps back
    into the original's code for that case.
-4. **Port `game_render`:** scene by scene the same way. It's the biggest job, mostly long, straight-line drawing code.
-5. **Our own startup:** crt0, the IRQ, `main`, the header. Then `patch.py` and `CritterKeep_original.gba` drop out of
+4. **Done (stage 4, lifted). Port `game_render`:** scene by scene the same way. It's the biggest job, mostly long, straight-line drawing code.
+5. **Done (stage 5, see above). Our own startup:** crt0, the IRQ, `main`, the header. Then `patch.py` and `CritterKeep_original.gba` drop out of
    the build.

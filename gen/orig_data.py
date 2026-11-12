@@ -311,6 +311,12 @@ def build():
     return bytes(out)
 
 if __name__ == '__main__':
+    import sys
+    if '--bin' in sys.argv:      # for the build: the data region and the .data block, as the ROM holds them
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        open(os.path.join(root, 'orig_data.bin'), 'wb').write(build())
+        open(os.path.join(root, 'orig_datainit.bin'), 'wb').write(DATA_INIT)
+        sys.exit(0)
     b = build()
     rom = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'CritterKeep_original.gba')
     if os.path.exists(rom):

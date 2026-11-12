@@ -781,6 +781,7 @@ def t_sprites():
     sc = BOOT + night + [p8(g('fly_n'), 6), *p16(g('fly_kinds'), 0x13), *p16(g('fly_night'), d + 1), 'wait 30', f'peek {LIVE:08x} 1', 'peek 07000000 8'] + \
          ['poke32 0300004c 257', f'waitb {g("fly_rel"):08x} 20', f'peek {LIVE:08x} 1'] + \
          [f'waitb {g("fly_rel"):08x} 100', f'peek {LIVE:08x} 1', f'peek {g("spr_n"):08x} 1', f'peek {g("spr_win"):08x} 1', f'peek {g("win"):08x} 4', 'peek 07000000 96', 'peek 04000050 2'] + disp + \
+         [x for _ in range(3) for x in ('wait 1', f'peek {g("spr_win"):08x} 1')] + \
          ['cyc 60 release', 'wait 300', f'peek {LIVE:08x} 1', f'peek {g("fly_rel"):08x} 2'] + disp
     out = run(ROM, sc, copy_save('adult')); w = [x[1] for x in peeks(out)]; jar = w[:2]; v = w[2:]
     a = struct.unpack('<4H', jar[1])
@@ -789,13 +790,15 @@ def t_sprites():
     oam = struct.unpack('<48H', v[5]); tiles = {oam[i * 4 + 2] & 0x3FF for i in range(v[2][0])}
     check('sprites: the fireflies fly out as glowing sprites (heart and glow)', v[1][0] == 1 and v[2][0] >= 2 and tiles <= {SPT['FGLOW'], SPT['FCORE'], SPT['FCORE2']} and SPT['FGLOW'] in tiles, f'{list(v[1:3])} {tiles}')
     check('sprites: all of them are blended (semi-transparent), the glow is affine', all(oam[i * 4] & 0x0C00 == 0x0400 for i in range(v[2][0])) and any(oam[i * 4] & 0x0100 for i in range(v[2][0])), str(oam[:12]))
-    check('sprites: window 0 keeps them inside the open window', v[3][0] == 1 and 22 < v[4][0] < v[4][1] < 70 and v[4][2] == 45 and v[4][3] == 80, str(list(v[4])))
+    # (spr_win is set while a frame's sprites are drawn, so a frame that ends mid-render reads 0: sample a few frames)
+    wins = [v[3][0]] + [x[0] for x in v[10:13]]
+    check('sprites: window 0 keeps them inside the open window', 1 in wins and 22 < v[4][0] < v[4][1] < 70 and v[4][2] == 45 and v[4][3] == 80, f'{list(v[4])} spr_win {wins}')
     dc = [struct.unpack('<H', x)[0] for x in v[7:10]]
     check('sprites: OBJ, 1D mapping and window 0 are switched on', any(x & 0x3040 == 0x3040 for x in dc) and struct.unpack('<H', v[6])[0] & 0x2400 == 0x2400, str([hex(x) for x in dc]))
     m = re.search(r'release avg busy cycles/frame: (\d+) \(of \d+\) max (\d+)', out); cy, mx = (int(m.group(1)), int(m.group(2))) if m else (-1, -1)
     check(f'sprites: the release never runs over a frame (avg {cy}, busiest {mx} of 280896)', 0 < cy and 0 < mx < 280896, out[-300:])
-    dc = [struct.unpack('<H', x)[0] for x in v[12:15]]
-    check('sprites: when the window has shut they are gone and OBJ is off again', v[10][0] == 0 and struct.unpack('<H', v[11])[0] == 0 and all(not x & 0x1000 for x in dc), f'{list(v[10:12])} {[hex(x) for x in dc]}')
+    dc = [struct.unpack('<H', x)[0] for x in v[15:18]]
+    check('sprites: when the window has shut they are gone and OBJ is off again', v[13][0] == 0 and struct.unpack('<H', v[14])[0] == 0 and all(not x & 0x1000 for x in dc), f'{list(v[13:15])} {[hex(x) for x in dc]}')
     # the farewell star
     res = {}
     for kind, care in (('wonder', 100), ('sad', 30)):
