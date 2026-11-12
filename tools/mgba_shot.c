@@ -1,7 +1,7 @@
 // Runs the ROM in mGBA (libmgba) from a script, for screenshots on a real emulator core.
 // Build: cc -O2 tools/mgba_shot.c -o mgba_shot $(pkg-config --cflags --libs libmgba 2>/dev/null || echo -lmgba) -lpng
 // Usage: mgba_shot rom.gba script.txt [save.sav]
-// Script: wait N | press KEY [frames] | hold KEY | release KEY | poke8 addr val | poke32 addr val | peek addr n | shot file.ppm
+// Script: wait N | waitscene N | press KEY [frames] | hold KEY | release KEY | poke8 addr val | poke32 addr val | peek addr n | shot file.ppm
 #include <mgba/core/core.h>
 #include <mgba/core/log.h>
 #include <mgba/gba/core.h>
@@ -34,6 +34,7 @@ int main(int argc,char **argv){
     else if(!strcmp(cmd,"poke8")) core->rawWrite8(core,strtoul(a1,0,16),-1,strtoul(a2,0,16));
     else if(!strcmp(cmd,"poke32")) core->rawWrite32(core,strtoul(a1,0,16),-1,strtoul(a2,0,16));
     else if(!strcmp(cmd,"peek")){ unsigned a=strtoul(a1,0,16); int k=n>2?atoi(a2):16; printf("%08x:",a); for(int i=0;i<k;i++) printf(" %02x",core->rawRead8(core,a+i,-1)); printf("\n"); }
+    else if(!strcmp(cmd,"waitscene")){ unsigned v=strtoul(a1,0,0); for(int k=0;k<6000 && core->rawRead32(core,0x03000020,-1)!=v;k++){ core->setKeys(core,keys); FRAME(); } }
     else if(!strcmp(cmd,"shot")){ FILE *f=fopen(a1,"wb"); fprintf(f,"P6\n%u %u\n255\n",w,h);
       for(unsigned i=0;i<w*h;i++){ color_t c=buf[i]; unsigned char p[3]={c&0xFF,(c>>8)&0xFF,(c>>16)&0xFF}; fwrite(p,1,3,f); } fclose(f); }
   }

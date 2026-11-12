@@ -41,7 +41,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 197 checks (175 from v8.1, 12 `sprites` and 10 `yard` in v8.2).
+`python3 tests/run_tests.py <sections...>`. There are 201 checks (175 from v8.1, 12 `sprites` and 14 `yard` in v8.2).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: compares the clock against v7, byte for byte, by day only (on its own, it's slow)
@@ -62,7 +62,7 @@ Other details:
 - The test emulator does **not** draw hardware sprites (OBJ), windows or alpha blending. For screenshots of those, use
   the real mGBA core: `apt-get install libmgba-dev`, then
   `cc -O2 tools/mgba_shot.c -o mgba_shot -lmgba` and `./mgba_shot rom.gba script.txt save.sav` (the same script
-  commands: `wait`, `press`, `poke8`, `poke32`, `peek`, `shot`). The `sprites` tests check OAM and the registers.
+  commands: `wait`, `waitscene`, `press`, `poke8`, `poke32`, `peek`, `shot`). The `sprites` tests check OAM and the registers.
 
 ## Code map (`ext.c`, about 4,700 lines)
 
@@ -197,9 +197,25 @@ Other details:
   (caught, best night) moved from the firefly page to the RECORDS tab.
 - **Length:** `LIFESPAN` 8 grown-up days (was 12); `shop_level()` opens a level every 2 grown-up days so all six
   still open. Every secret form needs only its first 2 grown-up days. (Teen, child and day length unchanged.)
-- **Next, waiting on the owner's OK of the storyboard:** the runaway rework ("B: a home in the wild": a bindle at
-  dawn, one look back, out across the meadow, a family of wild critters by a stream; "It found a new home, but
-  it left no star behind"; end card "Not every critter becomes a star").
+
+## v8.2c (built; Nov 12 2026)
+
+- **Journal flowers:** the double-size flower and its stem are placed so the stem ends in the soil (`oy=98-2h`).
+- **RECORDS scrolls** (UP/DOWN, `G.jrec`): 10 of `REC_ROWS` rows show, with arrows; add rows in `jr_records`.
+- **Yard poops** are ours: `yard_poops()` draws up to four at `YP_X/YP_Y` (front, two middle, back; smaller further
+  back; `gen/poop.py` -> `poop.h`). The spots were found by mapping every pixel any decor piece, toy or moonflower can
+  cover (plus the house and tree), so nothing ever overlaps. The original's own poops are hidden outside by zeroing
+  `PET[P_POOP]` around `O_RENDER`; the count to draw is kept in `G.yp_n`. **Note:** the yard's render runs across the
+  frame boundary, so a test peeking `PET[P_POOP]` outside reads 0; peek `yp_n` instead (game logic is unaffected:
+  it is restored before the next update).
+- **Runaway (health ran out), "a home in the wild":** `runaway_draw` plays six shots (`RA_T1..RA_T5`, timed by
+  FRAMES), each fading in from black: its room at dawn (warm palette, empty bowl, bindle), the yard at sunrise (one
+  look back at the house), the meadow path (it shrinks 3 -> 2 -> 1 as it walks away), the stream where a family of
+  wild critters by their burrow under the willow take it in (hearts), the night sky where a faint glow (sprite)
+  flickers out at its star's place, and the end card ("NOT EVERY CRITTER BECOMES A STAR."). The words sit in the
+  bottom bar (`ra_box`) so the picture stays clear. New art: `gen/meadow.py` -> `meadow.h` (two painted 240x106
+  backgrounds and the wild critters in two sizes and two frames, one 96-colour palette from 144: `runaway_palette`).
+
 
 ## Decided against (owner, Nov 11 2026)
 

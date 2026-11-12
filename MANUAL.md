@@ -324,7 +324,7 @@ After about 8 years as a grown-up, your critter rises to become a star, around n
 | 60–79% | A happy farewell | +20 coins |
 | Under 60% | A sad goodbye: a dim star | None |
 
-A critter whose health runs out runs away instead, and leaves no star. After any ending a new star-seed falls. Coins start again at 20 plus any bonus, and the bag, toys, decor, shop and garden start fresh. The journal keeps everything.
+A critter whose health runs out leaves instead: at dawn it packs its little bindle and goes off across the meadow, where a family of wild critters takes it in. It finds a new home, but it leaves no star. After any ending a new star-seed falls. Coins start again at 20 plus any bonus, and the bag, toys, decor, shop and garden start fresh. The journal keeps everything.
 
 ## The journal
 
@@ -335,7 +335,7 @@ The journal keeps a record of every critter and is never cleared. Open it from t
 - **ITEMS:** a page for each of the 44 shop items, opened the first time you buy one: its picture, price, kind of care and exactly what it does.
 - **GARDEN:** every moonflower and night visitor you've found. Press A on a card to look closer. Rare moonflowers show a riddle until you grow them.
 - **FIREFLIES:** the field guide to the twelve fireflies. Pick one with the +Control Pad to see its name and what it does, or a hint for one you haven't caught. (How many you've caught in all, and your best night, are on the RECORDS tab.)
-- **RECORDS:** critters raised, wonderful farewells in a row, forms, secrets and items found, wonderful farewells, games played, wishes made, its most-loved care, coins earned, fireflies caught and your best firefly night.
+- **RECORDS** (scroll with UP/DOWN): critters raised, wonderful farewells in a row, forms, secrets and items found, wonderful farewells, games played, wishes made, its most-loved care, coins earned, fireflies caught and your best firefly night.
 
 ## Questions and answers
 

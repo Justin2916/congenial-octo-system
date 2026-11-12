@@ -1174,8 +1174,10 @@ static void toy_draw(int t,int k,int ax,int ay){
 }
 static int title_showing(void){ return SCENE==0 && (G.mode==M_NONE || G.mode==M_SURE); }
 static int so_unified(void); static void sky_key(int k);
+static int ra_shot(void); static void runaway_palette(int s);
 static void farewell_palette(void){   // the farewell's yard and the runaway's rainy night, set before anything is drawn
   int run= G.mode==M_NONE && SCENE==9, rise= G.mode==M_SENDOFF && so_unified() && G.sendoff_t<560;
+  if(run){ int s=ra_shot(); if(s>=0){ runaway_palette(s); return; } }   // v8.2c: the new runaway's own colours
   if(!run && !rise) return;
   int night= run || G.sendoff==2;   /* E_SAD */
   { const u16 *q= night? BGX_YARD_NIGHTPAL : BGX_YARD_DAYPAL; for(int i=0;i<BGX_N;i++) PAL[BGX_FIRST+i]=q[i]; }
@@ -1193,7 +1195,7 @@ static void set_extra_palette(void){
     const u16 *q = G.bgx_yard? (night? BGX_YARD_NIGHTPAL : BGX_YARD_DAYPAL) : (night? BGX_ROOM_NIGHTPAL : BGX_ROOM_DAYPAL);
     if(G.mode==M_SHOP || (G.mode==M_DEX && G.jtab==JT_ITEMS)){ for(int i=0;i<ICON_N;i++) PAL[ICON_FIRST+i]=ICON_PAL[i]; }   // the shop shows no room: its icons borrow the range
     else if(G.mode==M_ALBUM || (G.mode==M_DEX && G.jtab==0)){ for(int i=0;i<ALB_N;i++) PAL[ALB_FIRST+i]=ALB_PAL[i]; }   // the album shows many critters on one shared palette
-    else if(title_showing() || (G.mode==M_SENDOFF && G.tbg)){         // painted title / star world: their own colours, twinkling stars
+    else if(title_showing() || (G.mode==M_SENDOFF && G.tbg) || ra_shot()==4){   // painted title / star world: their own colours, twinkling stars
       for(int i=0;i<TBG_TWINKLE;i++) PAL[TBG_FIRST+i]=TBG_PAL[i];
       for(int k=0;k<4;k++) PAL[TBG_FIRST+TBG_TWINKLE+k]=TBG_TW[(k+(G.sky_t>>4))&3]; }
     else { for(int i=0;i<BGX_N;i++) PAL[BGX_FIRST+i]=q[i]; decor_palettes(night); if(!garden_palette_on()) fly_palette(); } }
@@ -2457,23 +2459,121 @@ static void rise_draw(u32 t){
   }
 }
 static void crit_draw(int f,int pose,int x,int y,int sc,int flip,int night);
-// v8 phase 6: a critter whose health ran out runs away into the rainy night - it leaves no star
+// v8.2c: a critter whose health ran out leaves to find a home in the wild (it leaves no star). Six shots, each fading
+// in from black: (0) dawn in its room: an empty bowl, and it packs its bindle; (1) sunrise in the yard: one look back
+// at the house; (2) out along a path through the meadow, smaller and smaller; (3) a stream, and a family of wild
+// critters by their burrow under the willow take it in; (4) that night, the place its star would have been stays
+// empty; (5) the end card. New art: gen/meadow.py -> meadow.h (its own palette from MD_FIRST).
+#include "meadow.h"
+static void quick_box(int x,int y,int w,int h); static void build_bg(int want);
+#define RA_T1 300
+#define RA_T2 580
+#define RA_T3 880
+#define RA_T4 1220
+#define RA_T5 1460
+static int ra_shot(void){   // which shot is showing, or -1 when not in the runaway
+  if(!(G.mode==M_NONE && SCENE==9) || !G.gone_bg) return -1;
+  u32 t=FRAMES-G.sendoff_t; return t<RA_T1? 0 : t<RA_T2? 1 : t<RA_T3? 2 : t<RA_T4? 3 : t<RA_T5? 4 : 5; }
+static u16 rgb_warm(u16 c){   // a touch of dawn: warmer, a little darker
+  int r=c&31, g=(c>>5)&31, b=(c>>10)&31; r=r*7/8+4; g=g*13/16+1; b=b*5/8+1; if(r>31) r=31; return (u16)RGB(r,g,b); }
+static void runaway_palette(int s){   // called from farewell_palette, before anything is drawn
+  if(s==0){ for(int i=0;i<BGX_N;i++) PAL[BGX_FIRST+i]=rgb_warm(BGX_ROOM_DAYPAL[i]); decor_palettes(0);
+    for(int i=208;i<244;i++) PAL[i]=rgb_warm(PAL[i]); }
+  else if(s==1){ for(int i=0;i<BGX_N;i++) PAL[BGX_FIRST+i]=BGX_YARD_DAYPAL[i]; decor_palettes(0); sky_key(0); garden_palette(); }
+  else if(s==2 || s==3){ for(int i=0;i<MD_N;i++) PAL[MD_FIRST+i]=MD_PAL[i]; }
+}
+static void ra_bg_md(const u8 *src){   // a meadow picture into the background, with the dark bars round it
+  u8 *d=YARD_BG; for(int i=0;i<28*240;i++) d[i]=C_OUTLINE;
+  for(int i=0;i<MD_H*MD_W;i++) d[28*240+i]=src[i];
+  for(int i=(28+MD_H)*240;i<160*240;i++) d[i]=C_OUTLINE;
+}
+static void ra_box(const char *a,const char *b){   // the words, down in the bottom bar (the picture stays clear)
+  quick_box(8,135,224,24); textc(a,120,138,C_DTEXT); if(b) textc(b,120,148,C_DTEXT); }
+static void ra_blit(const u8 *pix,int w,int h,int x,int y,int flip){
+  for(int r=0;r<h;r++) for(int cc=0;cc<w;cc++){ int v=pix[r*w+(flip? w-1-cc : cc)]; if(v) pset(x+cc,y+r,v); } }
+static void ra_bindle(int x,int y,int sc,int dir){   // a stick over the shoulder (x,y: the shoulder; dir: +1 leans right, -1 left), and a spotted bundle
+  int L=6*sc; for(int i=0;i<L;i++) pset(x+i*dir,y-i,C_WOOD_DK);
+  int bx=x+(L+1)*dir, by=y-L-1, r=sc+2; disc(bx,by,r,C_OUTLINE); disc(bx,by,r-1,C_RED);
+  pset(bx-1,by-1,C_WHITE); pset(bx+1,by+1,C_WHITE); if(sc>2){ pset(bx+2,by-1,C_WHITE); pset(bx-2,by+1,C_WHITE); } pset(bx,by-r,C_OUTLINE); }
+static void ra_crit(int pose,int fx,int feet,int sc,int flip){   // the critter by where its feet are
+  int f=G.gone_form<N_FORMS? G.gone_form : 2; crit_draw(f,pose,fx-8*sc,feet-15*sc,sc,flip,0); }
+static void ra_heart(int x,int y){ art(ART_HEART,7,6,x,y,1,7); }
 static void runaway_draw(void){
   DRAW_TARGET=O_BACKBUF();
-  if(!G.gone_bg){ backdrop_yard(1); G.gone_bg=1; G.sendoff_t=FRAMES; }   // (the original redraws this scene only now and then: time it by frames)
+  if(!G.gone_bg){ G.gone_bg=1; G.sendoff_t=FRAMES; PET[P_LIGHTS]=0; G.fx_light=0; }   // (time it by frames: the original redraws this scene only now and then)
+  u32 t=FRAMES-G.sendoff_t; if(t>4000) t=4000;
+  int s=ra_shot();
+  if(G.gone_t!=(u16)(s+1)){   // a new shot: build its background once, and fade in from black
+    G.gone_t=(u16)(s+1); fx_fade(FX_BLACK,16,26);
+    if(s==0 || s==1){ build_bg(s==0? 1 : 3); u8 *d=YARD_BG; for(int i=0;i<28*240;i++) d[i]=C_OUTLINE; for(int i=134*240;i<160*240;i++) d[i]=C_OUTLINE;   // no icon bars: a cutscene
+      if(s==1) sfx(0,SEQ_RUNAWAY); }
+    else if(s==2) ra_bg_md(MD_BG_WALK);
+    else if(s==3) ra_bg_md(MD_BG_STREAM);
+    else if(s==4) backdrop_stars();
+    else { u8 *d=YARD_BG; for(int i=0;i<160*240;i++) d[i]=C_OUTLINE; }
+    G.bg_state=0;
+  }
   O_DMACOPY(DRAW_TARGET, YARD_BG);
-  u32 t=FRAMES-G.sendoff_t; if(t>2000) t=2000;
   sk_x0=0; sk_x1=239; sk_y0=28; sk_y1=95; sk_dx=0; sk_dy=0;
-  for(int i=0;i<5;i++) draw_cloud((int)((i*61+(t>>2))%300u)-30,34+(i&1)*10);
-  for(int i=0;i<30;i++){ int x=(int)((i*53+t*3)%250u)-5, y=(int)((i*37+t*7)%104u)+28; pset(x,y,C_PALEBLUE); pset(x-1,y+1,C_PALEBLUE); pset(x-2,y+2,C_GRAY); }
-  if(t>=180 && G.gone_bg==1){ G.gone_bg=2; sfx(0,SEQ_RUNAWAY); }   // it turns and walks away
-  int f=G.gone_form<N_FORMS? G.gone_form : 2, x= t<180? 96 : 96+(int)((t-180)*160/300);
-  if(x<240) crit_draw(f, t<180? POSE_SAD : (((t>>3)&1)? POSE_WALK1 : POSE_WALK2), x, 81+(t>=180 && ((t>>3)&1)), 3, t>=180, 1);
-  char l1[40]; char *p;
-  if(t<200){ p=scpy(l1,pet_name()); scpy(p," DIDN'T FEEL"); sendoff_box(l1,"CARED FOR..."); }
-  else if(t<420) sendoff_box("ONE RAINY NIGHT, IT RAN AWAY","INTO THE MEADOW.");
-  else sendoff_box("IT LEFT NO STAR BEHIND.","TAKE BETTER CARE NEXT TIME!");
-  if(t>=480 && ((t>>4)&1)) textc("PRESS START FOR A NEW SEED",120,10,C_GOLD);
+  const char *nm=pet_name(); char l1[40]; char *p;
+  int walk=(int)((t>>3)&1);
+  if(s==0){   // dawn in its room
+    int u=(int)t;
+    { int bx=150, by=122; ellipse(bx+10,by+3,11,4,C_OUTLINE); ellipse(bx+10,by+3,10,3,C_WHITE); ellipse(bx+10,by+3,7,2,C_GRAY); }   // its empty bowl
+    ra_crit(u<150? POSE_SAD : POSE_IDLE, 104, 129, 3, 0);
+    if(u>=150) ra_bindle(120,108,3,1);
+    p=scpy(l1,nm); scpy(p," DIDN'T FEEL CARED FOR...");
+    if(u<150) ra_box(l1,"ITS BOWL WAS EMPTY AGAIN.");
+    else ra_box("SO AT DAWN, IT PACKED","ITS LITTLE BINDLE.");
+  }
+  else if(s==1){   // sunrise in the yard: from the door, one look back, then away
+    int u=(int)t-RA_T1;
+    draw_sun(92,58);
+    for(int i=0;i<3;i++) draw_cloud((int)((i*90+(u>>2))%300u)-30,38+(i&1)*8);
+    int x, flip=0, pose=walk? POSE_WALK1 : POSE_WALK2, bob=0;
+    if(u<120){ x=196-u*3/4; bob=walk; }
+    else if(u<200){ x=106; flip=1; pose=u<130? POSE_IDLE : POSE_SAD; }   // it turns and looks back at the house
+    else { x=106-(u-200)*2; bob=walk; }
+    if(x>-40){ ra_crit(pose,x,129-bob,3,flip); if(!flip) ra_bindle(x+12,108-bob,3,1); }
+    ra_box("IT LOOKED BACK AT THE HOUSE","ONE LAST TIME...");
+  }
+  else if(s==2){   // along the path, up into the meadow, smaller and smaller
+    int u=(int)t-RA_T2; if(u>280) u=280;
+    int fy=104-u*44/280;                                     // its feet, in the picture's own rows (0 = screen row 28)
+    int tt=(fy-52)*256/54, sc= tt>150? 3 : tt>70? 2 : 1;     // (tt: 0 far .. 256 near, as gen/meadow.py lays the path)
+    int cx=128+((30*SIN64[(tt*131/1000+4)&63])>>8)-((70*tt*tt)>>16);   // the path's centre: 128 + 30 sin(3.3 tt + .4) - 70 tt^2
+    int y=28+fy;
+    ra_crit(walk? POSE_WALK1 : POSE_WALK2,cx,y-((t>>3)&1),sc,1);
+    if(sc>=2) ra_bindle(cx-4*sc,y-11*sc,sc,-1);
+    ra_box("IT WALKED FAR OUT","INTO THE MEADOW...");
+  }
+  else if(s==3){   // the stream: the wild critters by their burrow take it in
+    int u=(int)t-RA_T3, wv=u>130 && ((u>>4)&1);
+    ra_blit(wv? WC_BIG1 : WC_BIG0, WC_BIG0_W, WC_BIG0_H, 178, 118-WC_BIG0_H, 1);
+    ra_blit((u>150 && ((u>>4)&1)==0)? WC_KIT11 : WC_KIT10, WC_KIT10_W, WC_KIT10_H, 146, 117-WC_KIT10_H, 0);
+    ra_blit((u>170 && ((u>>4)&1))? WC_KIT21 : WC_KIT20, WC_KIT20_W, WC_KIT20_H, 206, 119-WC_KIT20_H, 1);
+    int x= u<130? -24+u : 106, pose= u<130? (walk? POSE_WALK1 : POSE_WALK2) : u<190? POSE_IDLE : (((u>>4)&1)? POSE_WAVE1 : POSE_WAVE2);
+    if(u>=230) pose=POSE_LOVE;
+    ra_crit(pose,x,119-(u<130? walk : 0),2,1);
+    if(u<130) ra_bindle(x-8,97-walk,2,-1);
+    if(u>=230){ for(int i=0;i<3;i++){ int q=((u-230)*2+i*22)%60; ra_heart(118+i*26-(i==1? 4 : 0),100-q/2); } }
+    ra_box("...WHERE A FAMILY OF WILD","CRITTERS TOOK IT IN.");
+  }
+  else if(s==4){   // that night: its star's place stays empty
+    int u=(int)t-RA_T4;
+    for(int i=0;i<9 && i+1<G.jr.n;i++){ const Story *o=&G.jr.s[G.jr.n-2-i]; jr_star(SKY_OLD[i][0],SKY_OLD[i][1],story_colour(o),story_kind(o),((G.sky_t+i*29)>>3)%10==0); }
+    if(u<200){ int bk=spr_pal();   // a faint light where it would have shone: it flickers, dims and goes out
+      if(bk>=0){ static const u8 RG[7]={0,14,32,56,90,135,190}; int br=(200-u)*190/200; if(((u>>3)&3)==0) br=br*2/3;
+        for(int L=1;L<=6;L++) G.sp[bk][L]=rgb_scale(RGB(20,22,31),RG[L]*br>>8);
+        spr_add(120,58,2,SPT_SGLOW,bk,spr_aff(120,0),1,0); } }
+    ra_box("IT FOUND A NEW HOME,","BUT IT LEFT NO STAR BEHIND.");
+  }
+  else {   // the end card
+    textc("- A SAD GOODBYE -",120,48,C_GRAY);
+    textc("NOT EVERY CRITTER BECOMES A STAR.",120,66,C_LTEXT);
+    textc("TAKE BETTER CARE NEXT TIME!",120,80,C_LTEXT);
+    if((t>>4)&1) textc("PRESS START FOR A NEW SEED",120,116,C_GOLD);
+  }
 }
 static void sendoff_draw(void){
   DRAW_TARGET=O_BACKBUF();
@@ -3460,7 +3560,7 @@ static void g_find(int b){ G.gdn.found|=1u<<b; }
 static int g_blooms(void){ int n=0; for(int i=0;i<3;i++) n+= G.gdn.p[i].stage==4; return n; }
 static void garden_palette(void){ for(int i=0;i<GP_N;i++) PAL[GP_IDX[i]]=GP_PAL[i]; PAL[255]=RGB(31,15,5); }   // (255: the ember firefly)
 static int garden_palette_on(void){ return G.mode==M_GARDEN || G.mode==M_FLY || (G.mode==M_MINI && G.outside) ||   // (v8.1: games in the yard show its flowers)
-   G.ex_yard || (G.mode==M_DEX && (G.jtab==JT_GARDEN || G.jtab==JT_FLY)) ||
+   G.ex_yard || (G.mode==M_DEX && (G.jtab==JT_GARDEN || G.jtab==JT_FLY)) || ra_shot()==1 ||
    // v8.2b: every screen over the yard keeps the flowers' colours (menus, the bag, feeding and petting too)
    (G.outside && SCENE>=1 && SCENE<=5 && (G.mode==M_NONE || G.mode==M_MENU || G.mode==M_EXTRAS || G.mode==M_BAG || G.mode==M_EAT || G.mode==M_SURE)); }
 // the colour a flower takes from the care the critter is getting: a weighted pick, so the care it gets most shows most

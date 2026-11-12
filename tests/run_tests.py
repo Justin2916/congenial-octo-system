@@ -46,7 +46,7 @@ def offsets():
               'obj': 'State,obj', 'st_seq': 'State,st_seq', 'tune': 'State,tune', 'rating': 'State,rating', 'pk_w': 'State,pk_w',
               'keep': 'State,keep', 'k_un0': 'Keep,un0', 'k_un1': 'Keep,un1', 'k_best': 'Keep,best', 'k_ok': 'Keep,ok',
               'd_unlock': 'Deco,unlock_lvl', 'names': 'State,names', 'nm': 'State,nm', 'want_name': 'State,want_name', 'nm_x': 'State,nm_x', 'd_owned': 'Deco,owned',
-              'jr': 'State,jr', 'jtab': 'State,jtab', 'jstar': 'State,jstar', 'jcare': 'State,jcare', 'j_s': 'Journal,s', 'j_coins': 'Journal,coins', 'j_games': 'Journal,games', 'so_pend': 'State,sendoff_pending', 'retired': 'Life,retired', 'more': 'State,more', 'm_rn': 'More,rn', 'm_rmiss': 'More,rmiss', 'jitem': 'State,jitem', 'm_found0': 'More,found0', 'm_found_ok': 'More,found_ok', 'm_wishes': 'More,wishes', 'wish_t': 'State,wish_t', 'wish_cd': 'State,wish_cd', 'm_spare': 'More,spare', 'e_inv': 'Ext,inv', 'dex_cur': 'State,dex_cur', 'stock': 'State,stock', 'st_cur': 'State,st_cur', 'st_page': 'State,st_page', 'm_stories': 'More,stories', 'st_pad': 'State,st_pad', 'rng': 'State,rng', 'gdn': 'State,gdn', 'gcur': 'State,gcur', 'g_found': 'Garden,found', 'g_seeds': 'Garden,seeds', 'g_vis_n': 'Garden,vis_n', 'g_vis': 'Garden,vis', 'g_vis_day': 'Garden,vis_day', 'e_day': 'Ext,day', 'gpad': 'State,gpad', 'gdetail': 'State,gdetail', 'bg_state': 'State,bg_state', 'weak_warned': 'State,weak_warned', 'outside': 'State,outside', 'gpad2': 'State,gpad2', 'dex_from': 'State,dex_from', 'gmsg': 'State,gmsg', 'ex_yard': 'State,ex_yard', 'jt_first': 'State,jt_first', 'fly': 'State,fly', 'fly_t': 'State,fly_t', 'fly_kinds': 'State,fly_kinds', 'fly_night': 'State,fly_night', 'fly_rel': 'State,fly_rel', 'fly_n': 'State,fly_n', 'fly_state': 'State,fly_state', 'fly_card': 'State,fly_card', 'jx': 'State,jx', 'jy': 'State,jy', 'jfly': 'State,jfly', 'f_x': 'Fly,x', 'f_y': 'Fly,y', 'f_k': 'Fly,k', 'f_t': 'Fly,t', 'f_live': 'Fly,live', 'spr_n': 'State,spr_n', 'spr_live': 'State,spr_live', 'spr_win': 'State,spr_win', 'win': 'State,win', 'm_pad0': 'More,pad0', 'm_pad1': 'More,pad1', 'gwater': 'State,gwater', 'e_adult': 'Ext,adult_day', 'gcur': 'State,gcur'}
+              'jr': 'State,jr', 'jtab': 'State,jtab', 'jstar': 'State,jstar', 'jcare': 'State,jcare', 'j_s': 'Journal,s', 'j_coins': 'Journal,coins', 'j_games': 'Journal,games', 'so_pend': 'State,sendoff_pending', 'retired': 'Life,retired', 'more': 'State,more', 'm_rn': 'More,rn', 'm_rmiss': 'More,rmiss', 'jitem': 'State,jitem', 'm_found0': 'More,found0', 'm_found_ok': 'More,found_ok', 'm_wishes': 'More,wishes', 'wish_t': 'State,wish_t', 'wish_cd': 'State,wish_cd', 'm_spare': 'More,spare', 'e_inv': 'Ext,inv', 'dex_cur': 'State,dex_cur', 'stock': 'State,stock', 'st_cur': 'State,st_cur', 'st_page': 'State,st_page', 'm_stories': 'More,stories', 'st_pad': 'State,st_pad', 'rng': 'State,rng', 'gdn': 'State,gdn', 'gcur': 'State,gcur', 'g_found': 'Garden,found', 'g_seeds': 'Garden,seeds', 'g_vis_n': 'Garden,vis_n', 'g_vis': 'Garden,vis', 'g_vis_day': 'Garden,vis_day', 'e_day': 'Ext,day', 'gpad': 'State,gpad', 'gdetail': 'State,gdetail', 'bg_state': 'State,bg_state', 'weak_warned': 'State,weak_warned', 'outside': 'State,outside', 'gpad2': 'State,gpad2', 'dex_from': 'State,dex_from', 'gmsg': 'State,gmsg', 'ex_yard': 'State,ex_yard', 'jt_first': 'State,jt_first', 'fly': 'State,fly', 'fly_t': 'State,fly_t', 'fly_kinds': 'State,fly_kinds', 'fly_night': 'State,fly_night', 'fly_rel': 'State,fly_rel', 'fly_n': 'State,fly_n', 'fly_state': 'State,fly_state', 'fly_card': 'State,fly_card', 'jx': 'State,jx', 'jy': 'State,jy', 'jfly': 'State,jfly', 'f_x': 'Fly,x', 'f_y': 'Fly,y', 'f_k': 'Fly,k', 'f_t': 'Fly,t', 'f_live': 'Fly,live', 'spr_n': 'State,spr_n', 'spr_live': 'State,spr_live', 'spr_win': 'State,spr_win', 'win': 'State,win', 'm_pad0': 'More,pad0', 'm_pad1': 'More,pad1', 'gwater': 'State,gwater', 'e_adult': 'Ext,adult_day', 'gcur': 'State,gcur', 'gone_t': 'State,gone_t', 'jrec': 'State,jrec'}
     src = f'#include "{CK}/ext.c"\nconst unsigned TEST_OFFS[] = {{ ' + ', '.join(f'__builtin_offsetof({v})' for v in fields.values()) + ' };\n'
     c, o, b = f'{TMP}/offs.c', f'{TMP}/offs.o', f'{TMP}/offs.bin'
     open(c, 'w').write(src)
@@ -810,11 +810,12 @@ def t_yard():
     moonflowers keep their colours on every yard screen; plant, then water with the can; a faint firefly counts;
     eight grown-up days."""
     MORE0 = g('more', 'm_pad0'); MORE1 = g('more', 'm_pad1'); OUT = g('outside'); POOP = PET + 11
+    YPN = g('jrec') + 1   # (State.yp_n: the yard's poops as drawn. Outside, PET[P_POOP] reads 0 between frames: it is hidden while the original draws)
     yard = ['press SELECT', 'wait 6', 'press A', 'wait 40']
     soon = lambda: [*p16(PET + 0x2C, 500), *p16(PET + 0x2E, 1), 'wait 100']   # it poops at the next clock step
     # the yard's mess: it poops outside, CLEAN outside cleans only the yard, inside the room's mess is its own
-    sc = BOOT + DAY + [f'peek {POOP:08x} 1'] + yard + soon() + soon() + [f'peek {POOP:08x} 1', f'peek {MORE0:08x} 2'] + \
-         ['press RIGHT', 'wait 4'] * 4 + ['press A', 'wait 220', f'peek {POOP:08x} 1'] + soon() + \
+    sc = BOOT + DAY + [f'peek {POOP:08x} 1'] + yard + soon() + soon() + [f'peek {YPN:08x} 1', f'peek {MORE0:08x} 2'] + \
+         ['press RIGHT', 'wait 4'] * 4 + ['press A', 'wait 220', f'peek {YPN:08x} 1'] + soon() + \
          ['press SELECT', 'wait 6', 'press A', 'wait 60', f'peek {OUT:08x} 1', f'peek {POOP:08x} 1', f'peek {MORE0:08x} 2']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
     room = v[0][0]
@@ -829,7 +830,7 @@ def t_yard():
     sv = copy_save('adult')
     sc = BOOT + DAY + yard + soon() + ['press START', 'wait 8', 'press UP', 'wait 4', 'press A', 'wait 8', 'press A', 'wait 60', f'peek {MORE1:08x} 1']
     run(ROM, sc, sv)
-    sc = ['wait 60', 'press A', 'waitscene 1', 'wait 30', f'peek {OUT:08x} 1', f'peek {POOP:08x} 1', f'peek {MORE1:08x} 1']
+    sc = ['wait 60', 'press A', 'waitscene 1', 'wait 30', f'peek {OUT:08x} 1', f'peek {YPN:08x} 1', f'peek {MORE1:08x} 1']
     v = [x[1] for x in peeks(run(ROM, sc, sv))]
     check('yard: save and quit in the yard; CONTINUE goes back out there, with its mess', v[0][0] == 1 and v[1][0] == 1 and not v[2][0] & 1, str(v))
     # the flowers' colours on yard screens (palette 40 is the garden's first colour)
@@ -857,6 +858,19 @@ def t_yard():
          [*p16(FLY, 120 << 4), *p16(FLY + 2, 92 << 4), p8(FLY + 6, 0), p8(FLY + 7, 1), p8(FLY + 8, 1), 'press A', 'wait 4', f'peek {g("fly_n"):08x} 1']
     v = peeks(run(ROM, sc, copy_save('adult')))
     check('yard: a faintly glowing firefly can be scooped', v[-1][1][0] >= 1, str(v[-1]))
+    # v8.2c: running away is a six-shot scene: its room at dawn, a look back from the yard, the meadow path, the
+    # stream where wild critters take it in, the empty place in the night sky, the end card
+    md0 = int(re.search(r'MD_PAL\[MD_N\]=\{(\d+)', open(f'{CK}/meadow.h').read()).group(1))
+    sc = BOOT + DAY + [*p16(PET + 0x16, 1), p8(PET + 6, 0), *p16(PET + 0x36, 200), 'waitscene 9']
+    for w in (100, 300, 300, 300, 300, 250): sc += [f'wait {w}', f'peek {g("gone_t"):08x} 1', 'peek 05000120 2']
+    out = run(ROM, sc, copy_save('adult')); v = peeks(out)
+    shots = [v[i][1][0] for i in range(0, 12, 2)]; pal = struct.unpack('<H', v[7][1])[0]
+    check('yard: running away plays its six shots in order (room, yard, meadow, stream, sky, end)', shots == [1, 2, 3, 4, 5, 6], str(shots))
+    check('yard: the meadow and stream scenes have their own palette', pal == md0, f'{pal} want {md0}')
+    # v8.2c: the RECORDS tab scrolls
+    sc = BOOT + DAY + ['press SELECT', 'wait 6', p8(g('mode'), 10), p8(g('jtab'), 5), 'wait 6'] + ['press DOWN', 'wait 4'] * 4 + [f'peek {g("jrec"):08x} 1', 'press UP', 'wait 4', f'peek {g("jrec"):08x} 1']
+    v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('yard: RECORDS scrolls down to its last rows and back up', v == [2, 1], str(v))
     # eight grown-up days: it says farewell at noon on its eighth day, not before
     DAYA = g('ext', 'e_day'); AD = g('ext', 'e_adult')
     d = struct.unpack('<H', peeks(run(ROM, BOOT + [f'peek {DAYA:08x} 2'], copy_save('adult')))[0][1])[0]
