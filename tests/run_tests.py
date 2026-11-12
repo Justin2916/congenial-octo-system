@@ -204,10 +204,10 @@ def t_growth():
     pk = peeks(run(ROM, sc, sav))
     check('growth: an old (pre-v7) stage-4 grown-up still grows into stage 6', pk[0][1][0] == 6, str(pk))
 
-def secret(adult, side, setup, expect_sf, expect_name, note):
+def secret(adult, side, setup, expect_sf, expect_name, note, back=3):
     sav = copy_save('teen'); day = 9
     sc = ['wait 30', p8(g('dex', 'd_phase'), 3), p8(g('dex', 'd_side'), side), p8(g('dex', 'd_adult'), adult),
-          *p16(g('ext', 'e_day'), day), *p16(g('ext', 'e_adult_day'), day - 3), p8(g('ext', 'e_special'), 0), p8(g('ext', 'e_stars'), 0),
+          *p16(g('ext', 'e_day'), day), *p16(g('ext', 'e_adult_day'), day - back), p8(g('ext', 'e_special'), 0), p8(g('ext', 'e_stars'), 0),
           *[p8(g('deco', 'k_slot') + i, 0xFF) for i in range(6)],
           *[p8(G + OFF['care'] + OFF['c_miss_day'] + k, day) for k in range(4)],
           *care_set('c_adult', n=40, good=20, bad=20, yard=0, garden=0, play=0),
@@ -221,6 +221,7 @@ def secret(adult, side, setup, expect_sf, expect_name, note):
 def t_secrets():
     md = G + OFF['care'] + OFF['c_miss_day']
     secret(15, 1, care_set('c_adult', yard=60), 1, 'SUNPUFF', 'an OAKHART 15 minutes outside becomes a SUNPUFF')
+    secret(15, 1, care_set('c_adult', yard=60), 0, '', 'v8.3: but not before its 4th grown-up day (on its 3rd it stays)', back=2)
     secret(16, 1, care_set('c_adult', garden=120) + [p8(PET + 8, 4)], 4, 'GLIMMER', 'a DUNEROSE with a garden and full bond becomes a GLIMMER')
     secret(16, 1, care_set('c_adult', garden=120) + [p8(PET + 8, 2)], 0, '', 'a DUNEROSE without full bond stays')
     secret(3, 1, [p8(g('ext', 'e_stars'), 6)], 3, 'ZIPPIT', 'a FLUFFBUD with 6 WHAT A STAR! games becomes a ZIPPIT')

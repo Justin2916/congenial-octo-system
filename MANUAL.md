@@ -50,7 +50,7 @@ STATUS shows how your critter is doing:
 
 - **Hunger and happiness:** up to four hearts each. Keep both from running empty.
 - **Bond:** how close it feels to you, up to four hearts. Petting it when it calls, gifts, bedtime stories and great minigame rounds all raise it.
-- **Age and weight:** its age in years, and its weight in pounds (never under 10 LB). An overweight critter is not well cared for.
+- **Age and weight:** its age in years, and its weight in pounds (never under 10 LB as a baby, 15 as a child, 20 as a teen and 30 as a grown-up). An overweight critter is not well cared for.
 - **The care corner** (bottom right):
   - The **heart line** shows what it gets most of: OUTSIDE, PLANTS, PLAY, or BALANCED when it's a bit of everything. This decides what a well-cared-for critter grows into.
   - The **! line** appears when one need keeps running out lately: HUNGRY, UNHAPPY, MESSY, SICK or LIGHTS ON. Fix that one first.
@@ -101,7 +101,7 @@ Your critter grows while it is awake.
 | Thornle | It lived in a mess | **Smogwool** |
 | Thornle | It went hungry | **Gunkbill** |
 
-- **Secret forms:** every grown-up has a secret form it can turn into if it gets one special kind of care as a grown-up. One grown-up kept almost perfectly may become something rarer still. Before you find one, its page in the journal's GUIDE shows a riddle; after, it shows the exact rule.
+- **Secret forms:** every grown-up has a secret form it can turn into if it gets one special kind of care as a grown-up (from its fourth grown-up day on). One grown-up kept almost perfectly may become something rarer still. Before you find one, its page in the journal's GUIDE shows a riddle; after, it shows the exact rule.
 - **Boy or girl:** every critter is a boy or a girl, which changes a small detail of how it looks and the pitch of its cry.
 
 ## Day and night
