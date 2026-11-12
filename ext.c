@@ -713,13 +713,13 @@ typedef struct {
 } State;
 
 #define G (*(State*)0x0203E000u)
-// v8.2b: the yard keeps its own mess. The original's poop counter (PET[P_POOP]) always holds the mess where the
-// critter is; More.pad0 holds the other place's. More.pad1 bit 1: they are swapped (outside); bit 0: it was saved
-// and quit from the yard. Every save writes them back the room's way round, so a save never holds them swapped.
-static void poop_swap(void){ u8 t=PET[P_POOP]; PET[P_POOP]=(u8)G.more.pad0; G.more.pad0=t; G.more.pad1^=2; }
-static void poop_sync(void){ if(((G.more.pad1>>1)&1)!=(G.outside? 1 : 0)) poop_swap(); }
-#define POOP_CANON_BEGIN int sw_=G.more.pad1&2; if(sw_) poop_swap();
-#define POOP_CANON_END   if(sw_) poop_swap();
+// v8.2b: the yard keeps its own mess. More.pad1 bit 0: it was saved and quit from the yard.
+// (Since the port: PET[P_POOP] is always the room's mess and More.pad0 always the yard's. The original's own code
+// reads and clears the mess where the critter is through ext_mess_here(), and draws the room's through
+// ext_mess_drawn(), so nothing is swapped any more. More.pad1 bit 1, the old swap flag, is unused.)
+volatile u8 *ext_mess_here(void){ return G.outside? (volatile u8*)&G.more.pad0 : PET+P_POOP; }
+u32 ext_mess_drawn(void){ return G.outside? 0 : PET[P_POOP]; }   // the room's poops (outside, yard_poops draws the yard's)
+#define MESS_HERE (*ext_mess_here())
 static void fly_update(u16 pr,u16 keys); static void fly_screen_draw(void); static void fly_start(void); static int fly_rounds_left(void);
 static void lantern_draw(void); static void win_open_pre(void); static void win_open_post(void); static void fly_dance(void); static void fly_morning(void); static void fly_palette(void); static void jr_fly_keys(u16 pr);
 #define HELP_PAGES 5
@@ -1007,7 +1007,7 @@ static void deco_load(void){
   G.deco.seed=0;                                    // picked on the first live frame
   deco_save();
 }
-static void pet_save(void){ POOP_CANON_BEGIN u32 h=0x5EED; for(int i=0;i<0x48;i++) h=h*31+PET[i]; *(volatile u32*)(PET+0x48)=h; O_SAVE(PET,0x4C); ext_save(); POOP_CANON_END }
+static void pet_save(void){ u32 h=0x5EED; for(int i=0;i<0x48;i++) h=h*31+PET[i]; *(volatile u32*)(PET+0x48)=h; O_SAVE(PET,0x4C); ext_save(); }
 static void add_coins(int n){ if(n>0) G.jr.coins+=(u32)n; int c=G.ext.coins+n; if(c>9999) c=9999; G.ext.coins=(u16)c; ext_save(); }
 
 // ------------------------------------------------------------------ v8 save: one versioned block, kept in two copies
@@ -1038,7 +1038,6 @@ static u8 *save_part(int i,u32 *n){
 static u32 save_size_v(int ver){ u32 t=SAVE_HDR+4, n; int parts= ver>=15? 11 : ver>=14? 10 : ver>=12? 9 : ver>=11? 8 : ver>=10? 7 : ver>=9? 6 : 5; for(int i=0;i<parts;i++){ save_part(i,&n); t+=n; } return t; }
 static u32 save_size(void){ return save_size_v(SAVE_VERSION); }
 static void save_all(void){
-  POOP_CANON_BEGIN
   u32 seq=G.save_seq+1, size=save_size(), h=0x5EED, o=0, n;
   volatile u8 *d=(volatile u8*)((seq&1)? SRAM_SAVE2_B : SRAM_SAVE2_A);
   u8 hdr[SAVE_HDR]={0};
@@ -1048,7 +1047,6 @@ static void save_all(void){
   for(int k=0;k<SAVE_PARTS;k++){ const u8 *p=save_part(k,&n); for(u32 i=0;i<n;i++){ d[o++]=p[i]; h=h*31+p[i]; } }
   for(int i=0;i<4;i++) d[o++]=(u8)(h>>(8*i));
   G.save_seq=seq;
-  POOP_CANON_END
 }
 static u32 rd32s(volatile u8 *s){ return s[0]|(s[1]<<8)|(s[2]<<16)|((u32)s[3]<<24); }
 static int save_valid(volatile u8 *s,u32 *seq){   // returns the block's version (8, 9 or 10), 0 if it is not a good save
@@ -1435,8 +1433,9 @@ static void spr_sync(void){
       REG16(0x0400004A)=0x0024; }  // everywhere else: BG2 and blending, no OBJ
     G.spr_shown=G.spr_n; G.spr_live=G.spr_n? 1 : 0;
   }
+  // OBJ, 1D tile mapping and window 0: ours to set and clear (main keeps them when it flips the page)
+  REG_DISPCNT=(u16)((REG_DISPCNT&~0x3040) | (G.spr_live? (0x1040 | (G.spr_win? 0x2000 : 0)) : 0));
   if(G.spr_live){
-    REG_DISPCNT|=(u16)(0x1040 | (G.spr_win? 0x2000 : 0));   // OBJ on, 1D tile mapping, window 0
     REG_BLDCNT|=0x2400;                                       // BG2 and the backdrop sit under the blended OBJs
     REG16(0x04000052)=0x1010;                                 // EVA=16, EVB=16: add the light
   }
@@ -1523,7 +1522,7 @@ static void to_room(u32 keys){ SCENE=1; G.mode=M_NONE; G.suppress=(u16)keys; }
 static void prerender_yard(int night){ O_DMACOPY(YARD_BG, night? BGX_YARD_NIGHT : BGX_YARD_DAY); G.bgx_yard=1; }   // see gen/bgfx.py
 static void toys_reset(int bx,int bubble_wait){ G.bx=bx<<8; G.by=0; G.bvx=0; G.bvy=0; G.bubble_timer=(u16)bubble_wait; for(int i=0;i<4;i++){ G.bub[i].active=0; G.bub[i].type=0; } }
 static void go_outside(void){
-  G.outside=1; G.poop_hold=PET[P_POOP]; G.fresh=0; G.coin_on=0; G.coin_timer=(u16)(600+rnd(900)); G.plays=0;
+  G.outside=1; G.poop_hold=MESS_HERE; G.fresh=0; G.coin_on=0; G.coin_timer=(u16)(600+rnd(900)); G.plays=0;
   toys_reset(170,90);
   G.yard_night=(u8)is_night(); G.bg_state=0;
   sfx(0,SEQ_DOOR); G.cry_delay=40;
@@ -1609,7 +1608,7 @@ static void outside_tick(void){
 // (x, bottom y) of each spot, in the order they fill; drawn back to front.
 static const u8 YP_X[4]={122,86,116,88}, YP_Y[4]={131,120,116,104}, YP_SZ[4]={0,1,1,2};   // size 0 front, 1 middle, 2 back
 static void yard_poops(void){
-  int n= G.mode==M_GARDEN || G.mode==M_FLY? PET[P_POOP] : G.yp_n; if(n>4) n=4; if(!n) return;   // (the original hides its own while it draws)
+  int n= G.mode==M_GARDEN || G.mode==M_FLY? G.more.pad0 : G.yp_n; if(n>4) n=4; if(!n) return;
   static const u8 ORDER[4]={3,2,1,0};   // back (y 104), middle right (116), middle left (120), front (131)
   for(int o=0;o<4;o++){ int i=ORDER[o]; if(i>=n) continue;
     int s=YP_SZ[i], w= s==0? POOP_FRONT_W : s==1? POOP_MID_W : POOP_BACK_W, h= s==0? POOP_FRONT_H : s==1? POOP_MID_H : POOP_BACK_H;
@@ -2092,7 +2091,7 @@ static void track_stage(void){
   if(st==8 && prev>=1 && prev<=7) journal_end(0);   // it ran out of health and ran away: counted, but no star
   if(st==0 && prev==8){ life_reset(0,0); G.ext.prev_stage=0; }
   if(st==0){ G.ext.special=0; G.ext.stars=0; G.ext.yard_mins=0; new_unlock_seed();
-    if(!(G.more.pad1&2)){ G.more.pad0=0; G.more.pad1&=(u8)~1; }   // v8.2b: a new egg, a clean yard
+    G.more.pad0=0; G.more.pad1&=(u8)~3;   // v8.2b: a new egg, a clean yard
     G.dex.gender=(u8)rnd(2); G.dex.phase=PH_GROW; G.dex.side=0; G.dex.adult=0; G.dex.games=0; G.dex.yard=0;   // a new egg: boy or girl,
     G.dex.c_good=G.dex.c_bad=G.dex.c_sad=G.dex.c_mess=0; memset(&G.care,0,sizeof(Care));
     G.more.rn[0]=G.more.rn[1]=0; memset(G.more.rmiss,0,sizeof(G.more.rmiss)); G.more.spare[2]=0; memset(G.names.cur,0,8); garden_reset(); dex_save(); }        // and a fresh care record
@@ -2178,7 +2177,7 @@ static u32 xs_back(u32 y){   // the step before y (xorshift is reversible)
 static void mistake(void){ if(PET[P_MISTAKES]<250) PET[P_MISTAKES]++; if(PET[P_MISTAKES2]<250) PET[P_MISTAKES2]++; }
 static void sim_msg(const char *s){ int i=0; while(s[i] && i<37){ MSG_BUF[i]=s[i]; i++; } MSG_BUF[i]=0; MSG_TIMER=101; }
 static void sim_save(void){   // the critter record only, like the original (the extension's own data saves when it changes)
-  POOP_CANON_BEGIN P32(0)=PET_MAGIC; u32 h=0x5EED; for(int i=0;i<0x48;i++) h=h*31+PET[i]; P32(0x48)=h; O_SAVE(PET,0x4C); POOP_CANON_END }
+  P32(0)=PET_MAGIC; u32 h=0x5EED; for(int i=0;i<0x48;i++) h=h*31+PET[i]; P32(0x48)=h; O_SAVE(PET,0x4C); }
 static void evolve_to(int target){ ANIM_T=0; ANIM_KIND=7; ANIM_ARG=(u32)target; SCENE=3; sfx(1,SEQ_EVOLVE); }
 static int rate_index(u8 st){
   if(st<=2) return st? st-1 : 0;
@@ -2231,7 +2230,7 @@ static void sim_tick(void){
     awake=1; sleeping=0;
     { u16 v=++P16(0x28); if(v>=HUNGER_RATE[ri]){ P16(0x28)=0; if(PET[P_HUNGER] && --PET[P_HUNGER]==0){ sfx(0,SEQ_ALERT); P16(0x46)=0; } } }
     { u16 v=++P16(0x2A); if(v>=HAPPY_RATE[ri]){ P16(0x2A)=0; if(PET[P_HAPPY] && --PET[P_HAPPY]==0){ sfx(0,SEQ_ALERT); P16(0x46)=0; } } }
-    { u16 v=++P16(0x2C); if(v>=P16(0x2E)){ P16(0x2C)=0; u32 r=orng(); P16(0x2E)=(u16)((((r>>16)*105u)>>16)+pbase); if(PET[P_POOP]<=3) PET[P_POOP]++; } }
+    { u16 v=++P16(0x2C); if(v>=P16(0x2E)){ P16(0x2C)=0; u32 r=orng(); P16(0x2E)=(u16)((((r>>16)*105u)>>16)+pbase); if(MESS_HERE<=3) MESS_HERE++; } }
     if(PET[P_CALL]){ u16 v=++P16(0x34); if(v>=60){ PET[P_CALL]=0; mistake(); } }
     else { u16 v=++P16(0x30);
       if(v>=P16(0x32)){ P16(0x30)=0; P16(0x34)=0; PET[P_CALL]=1; u32 r=orng(); P16(0x32)=(u16)((((r>>16)*225u)>>16)+225); sfx(0,SEQ_ALERT); P16(0x46)=0; } }
@@ -2241,7 +2240,7 @@ static void sim_tick(void){
   else { starve=P16(0x36); if(starve<1000){ starve=++P16(0x36); if(starve==90) mistake(); } }
   u8 happy=PET[P_HAPPY];
   if(happy) P16(0x38)=0; else if(P16(0x38)<1000){ if(++P16(0x38)==90) mistake(); }
-  u8 poop=PET[P_POOP]; int mess=poop+G.more.pad0;   // (v8.2b: the room's and the yard's mess both count)
+  int mess=PET[P_POOP]+G.more.pad0;   // (v8.2b: the room's and the yard's mess both count)
   if(mess<2) P16(0x3A)=0;
   else if(++P16(0x3A)>=120){                                   // a messy room can make it sick
     P16(0x3A)=0;
@@ -2262,7 +2261,7 @@ static void sim_tick(void){
     G.gone_form=(u8)form_index(); SCENE=9; PET[P_STAGE]=8; GONE_T=0; O_SOUND(0,0,0,0); sfx(1,SEQ_GONE); sim_save(); return;
   }
   if(!sleeping){                                              // awake: it fusses while it needs something
-    int need= !hunger || !happy || poop>2 || sick;
+    int need= !hunger || !happy || MESS_HERE>2 || sick;   // (the mess where it is)
     if((need || PET[P_CALL]) && ++P16(0x46)>=45){ sfx(0,SEQ_ALERT); P16(0x46)=0; }
     if(SCENE==1) sim_grow(st);                                // and grows up only while awake in its room
   }
@@ -2299,15 +2298,15 @@ static void care_sample(void){
   int ofed=overfed(), night_light=PET[P_ASLEEP] && !PET[P_LIGHTS], miss[N_NEEDS];
   miss[K_FOOD]  = PET[P_HUNGER]==0 || ofed;
   miss[K_PLAY]  = PET[P_HAPPY]==0;
-  miss[K_CLEAN] = PET[P_POOP]!=0;
+  miss[K_CLEAN] = MESS_HERE!=0;
   miss[K_REST]  = PET[P_SICK]!=0 || night_light;
-  int good = PET[P_HUNGER]>=1 && PET[P_HAPPY]>=1 && !PET[P_SICK] && !PET[P_POOP] && !night_light && !ofed;   // all-round good care
+  int good = PET[P_HUNGER]>=1 && PET[P_HAPPY]>=1 && !PET[P_SICK] && !MESS_HERE && !night_light && !ofed;   // all-round good care
   CareWin *w=care_win();
   cw_add(&w->n,1); cw_add(good? &w->good : &w->bad,1);
   for(int k=0;k<N_NEEDS;k++) if(miss[k]) cw_add(&w->miss[k],1);
   { More *m=&G.more;   // v8.1: the last day or so, for the status card's !
     if(m->rday!=(u8)G.ext.day){ m->rday=(u8)G.ext.day; m->rn[1]=m->rn[0]; m->rn[0]=0; for(int k=0;k<N_RMISS;k++){ m->rmiss[1][k]=m->rmiss[0][k]; m->rmiss[0][k]=0; } }
-    u8 r[N_RMISS]={(u8)(PET[P_HUNGER]==0 || ofed),(u8)(PET[P_HAPPY]==0),(u8)(PET[P_POOP]!=0),(u8)(PET[P_SICK]!=0),(u8)night_light};
+    u8 r[N_RMISS]={(u8)(PET[P_HUNGER]==0 || ofed),(u8)(PET[P_HAPPY]==0),(u8)(MESS_HERE!=0),(u8)(PET[P_SICK]!=0),(u8)night_light};
     if(m->rn[0]<60000) m->rn[0]++;
     for(int k=0;k<N_RMISS;k++) if(r[k] && m->rmiss[0][k]<60000) m->rmiss[0][k]++; }
   if(G.outside) cw_add(&w->yard,1);
@@ -3034,14 +3033,14 @@ static void bag_update(u16 pr, u16 keys){
     if(PET[P_STAGE]==0) deny="IT'S STILL AN EGG!";
     else if(PET[P_ASLEEP]) deny="SHH... IT'S ASLEEP.";
     else if(it==IT_VITAMIN && !PET[P_SICK] && G.deco.vit_day==(u8)(G.ext.day+1)) deny="IT'S PROTECTED FOR TODAY!";
-    else if(it==IT_SOAP && !PET[P_POOP]) deny="IT'S ALREADY CLEAN!";
+    else if(it==IT_SOAP && !MESS_HERE) deny="IT'S ALREADY CLEAN!";
     else if(it<N_FOODS && I->hunger && !I->happy && PET[P_HUNGER]>=4) deny="IT'S FULL!";
     if(deny){ set_msg(deny); sfx(0,SEQ_DENY); to_room(keys); return; }
     G.ext.inv[it]--; ext_save();
     if(it<N_FOODS){ G.mode=M_EAT; G.eat_item=(u8)it; G.t=0; SCENE=1; G.suppress=keys; sfx(0,SEQ_CONFIRM); return; }
     if(it==IT_VITAMIN){ int was=PET[P_SICK]; PET[P_SICK]=0; G.deco.vit_day=(u8)(G.ext.day+1); deco_save();
       set_msg(was? "ALL BETTER - AND PROTECTED TODAY!" : "PROTECTED FROM SICKNESS TODAY!"); sfx(1,SEQ_HAPPY); }
-    else if(it==IT_SOAP){ PET[P_POOP]=0; G.poop_hold=0; set_msg_name(" LOVES ITS BUBBLE BATH!"); sfx(1,SEQ_HAPPY); }   // (v8.1: just clean)
+    else if(it==IT_SOAP){ MESS_HERE=0; G.poop_hold=0; set_msg_name(" LOVES ITS BUBBLE BATH!"); sfx(1,SEQ_HAPPY); }   // (v8.1: just clean)
     else { apply_item(it); set_msg_name(" LOVES THE GIFT!"); sfx(0,SEQ_FANFARE); }
     to_room(keys);
   }
@@ -4010,7 +4009,6 @@ void hook_update(u32 keys){
   init_once();
   fx_watch();   // (v8 phase 6: near the start of the frame, where register changes don't tear)
   spr_sync();   // (v8.2: the sprites the last render asked for)
-  poop_sync();
   weight_floor();   // (v8.3: growing up, old saves: never under its stage's lightest)
   flush_crit_palette();
   // the original reloads the palette every vblank (40-63 to black): put the food's colours back straight away, so
@@ -4994,27 +4992,23 @@ static void title_draw(void){
 void hook_render(void){
   init_once();
   spr_begin();
-  poop_sync();
   G.sky_t++;
   if((G.sky_t&63)==1) check_window_panes();
   set_extra_palette(); set_special_cmap();
   int help = G.mode==M_NONE && SCENE==7;    // our HOW TO PLAY pages cover the whole screen
   if(!help && (G.mode==M_NONE || G.mode==M_MENU || (G.mode==M_EXTRAS && !G.ex_yard) || G.mode==M_BAG || G.mode==M_EAT || G.mode==M_SURE)){
-    u8 poop=PET[P_POOP]; u32 sc=SCENE;
-    G.yp_n=G.outside? poop : 0; if(G.outside) PET[P_POOP]=0;   // (v8.2c: the yard draws its own, at free spots: yard_poops)
+    u32 sc=SCENE;
+    G.yp_n=G.outside? G.more.pad0 : 0;      // (v8.2c: the yard draws its own, at free spots: yard_poops)
     if(G.mode==M_MENU) SCENE=1;              // our menu replaces the original's box
     O_RENDER();
-    SCENE=sc; PET[P_POOP]=poop;
+    SCENE=sc;
   }
   if(help){ DRAW_TARGET=O_BACKBUF(); help_draw(); }
   if(G.mode==M_NONE && SCENE==9) runaway_draw(); else { G.gone_t=0; G.gone_bg=0; }
   if(G.mode==M_NONE && SCENE==3 && ANIM_KIND<=1 && PET[P_STAGE]>=1 && PET[P_STAGE]<=7){ DRAW_TARGET=O_BACKBUF(); feed_draw(); }
   if(G.mode==M_NONE && SCENE==4 && PET[P_STAGE]>=1 && PET[P_STAGE]<=7){  // the status card shows boy/girl
     text(G.dex.gender? "GIRL" : "BOY",G.dex.gender? 128 : 131,41,G.dex.gender? C_RED : C_BLUE);
-    // v8.3: the weight in pounds (kept at least its stage's lightest: weight_floor)
-    { int bg=pget(214,62), fg=bg; for(int y=58;y<67 && fg==bg;y++) for(int x=130;x<136;x++){ int v=pget(x,y); if(v!=bg){ fg=v; break; } }
-      int lb=PET[P_WEIGHT]; char b[12]; char *q=sint(b,lb); scpy(q," LB");
-      fill(172,57,52,10,bg); text(b,172,58,fg); }
+    // (v8.3: the weight line says pounds, "WEIGHT 70 LB": the original's own drawing in orig_render.c writes it)
     card_care(); }
   if(title_showing()) title_draw();        // phase 4: our painted title replaces the original's
   switch(G.mode){

@@ -64,7 +64,7 @@ L_0800f77e: ;  r5=21u; N=(r5)>>31; Z=(r5)==0;                                   
 L_0800f780: ;  r1=0x000003FFu;                                                                                      /* 0f780 ldr r1, [pc, #0xf8] */
                { u32 X_=(u32)(r5), Y_=(u32)(r1); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r1=R_; } /* 0f782 adds r1, r5, r1 */
                r2=*(volatile u32*)((sp+4));                                                                         /* 0f784 ldr r2, [sp, #4] */
-               *(volatile u16*)(r2)=(u16)r1;                                                                        /* 0f786 strh r1, [r2] */
+               r1=(r1&0xFFFFu)|(*(volatile u16*)0x04000000u&0x3040u);   /* EDITED: keep ext.c's sprite bits (OBJ, 1D mapping, window 0) */ *(volatile u16*)(r2)=(u16)r1;                                                                        /* 0f786 strh r1, [r2] */
                r1=*(volatile u32*)((sp+8));                                                                         /* 0f788 ldr r1, [sp, #8] */
                r0=(u32)(r0^(r1)); N=(r0)>>31; Z=(r0)==0;                                                            /* 0f78a eors r0, r1 */
                r1=0x0300047Cu;                                                                                      /* 0f78c ldr r1, [pc, #0xe4] */
@@ -145,7 +145,7 @@ L_0800f832: ;  r0=5u; N=(r0)>>31; Z=(r0)==0;                                    
 L_0800f834: ;  r1=0x000003FFu;                                                                                      /* 0f834 ldr r1, [pc, #0x44] */
                { u32 X_=(u32)(r1), Y_=(u32)(r0); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r0=R_; } /* 0f836 adds r0, r1, r0 */
                r1=*(volatile u32*)((sp+4));                                                                         /* 0f838 ldr r1, [sp, #4] */
-               *(volatile u16*)(r1)=(u16)r0;                                                                        /* 0f83a strh r0, [r1] */
+               r0=(r0&0xFFFFu)|(*(volatile u16*)0x04000000u&0x3040u);   /* EDITED: keep ext.c's sprite bits */ *(volatile u16*)(r1)=(u16)r0;                                                                        /* 0f83a strh r0, [r1] */
                r4=0u; N=(r4)>>31; Z=(r4)==0;                                                                        /* 0f83c movs r4, #0 */
                { unsigned long long rv=((unsigned long long(*)(u32,u32,u32,u32,u32,u32))&o_build_palette)(r0,r1,r2,r3,*(volatile u32*)sp,*(volatile u32*)(sp+4)); r0=(u32)rv; r1=(u32)(rv>>32); }   /* o_build_palette */ /* 0f83e bl #0x800cc94 */
 L_0800f842: ;  r1=*(volatile u16*)((r0+r4));                                                                        /* 0f842 ldrh r1, [r0, r4] */

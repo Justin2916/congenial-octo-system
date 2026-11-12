@@ -5,6 +5,7 @@ extern char o_minigame_start[];
 extern char o_save_write[];
 extern char o_set_message[];
 extern char o_sound_play[];
+volatile u8 *ext_mess_here(void);   /* ext.c */
 void o_game_update(u32 a0){
   u32 r0=0,r1=0,r2=0,r3=0,r4=0,r5=0,r6=0,r7=0,r8=0,r9=0,r10=0,r11=0,r12=0,lr=0; u32 N=0,Z=0,C=0,V=0;
   u32 frame_[160]; u32 sp=(u32)&frame_[160];
@@ -1132,7 +1133,7 @@ L_08001334: ;  r0=0x03000028u;                                                  
 L_08001346: ;  goto L_08001f2c;   /* long branch */                                                                 /* 01346 bl #0x8001f2c */
 L_0800134a: ;  r1=21u; N=(r1)>>31; Z=(r1)==0;                                                                       /* 0134a movs r1, #0x15 */
                r6=~r1; N=(r6)>>31; Z=(r6)==0;                                                                       /* 0134c mvns r6, r1 */
-               r0=*(volatile u8*)((r0+11));                                                                         /* 0134e ldrb r0, [r0, #0xb] */
+               r0=*ext_mess_here();   /* EDITED: the mess where the critter is (was PET+11) */                                                                         /* 0134e ldrb r0, [r0, #0xb] */
                { u32 X_=(u32)(r0), Y_=(~(u32)(6u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; } /* 01350 cmp r0, #6 */
                if((!C||Z)) goto L_08001356;                                                                         /* 01352 bls #0x8001356 */
 L_08001354: ;  goto L_08001458;                                                                                     /* 01354 b #0x8001458 */
@@ -1344,7 +1345,7 @@ L_08001560: ;  r2=r5; N=(r2)>>31; Z=(r2)==0;                                    
                { u32 X_=(u32)(r2), Y_=(u32)(33u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r2=R_; } /* 01562 adds r2, #0x21 */
                r3=2u; N=(r3)>>31; Z=(r3)==0;                                                                        /* 01564 movs r3, #2 */
                goto L_08001dda;   /* long branch */                                                                 /* 01566 bl #0x8001dda */
-L_0800156a: ;  r1=*(volatile u8*)((r0+11));                                                                         /* 0156a ldrb r1, [r0, #0xb] */
+L_0800156a: ;  r1=*ext_mess_here();   /* EDITED: the mess where the critter is (was PET+11) */                                                                         /* 0156a ldrb r1, [r0, #0xb] */
                { u32 X_=(u32)(r1), Y_=(~(u32)(0u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; } /* 0156c cmp r1, #0 */
                if(!Z) goto L_08001572;                                                                              /* 0156e bne #0x8001572 */
 L_08001570: ;  goto L_08001c9e;                                                                                     /* 01570 b #0x8001c9e */
@@ -1745,7 +1746,7 @@ L_08001976: ;  goto L_08001ae6;                                                 
 L_08001978: ;  r0=0x03000028u;                                                                                      /* 01978 ldr r0, [pc, #0x21c] */
                r1=0u; N=(r1)>>31; Z=(r1)==0;                                                                        /* 0197a movs r1, #0 */
                *(volatile u16*)((r0+58))=(u16)r1;                                                                   /* 0197c strh r1, [r0, #0x3a] */
-               *(volatile u8*)((r0+11))=(u8)r1;                                                                     /* 0197e strb r1, [r0, #0xb] */
+               *ext_mess_here()=(u8)r1;   /* EDITED: the mess where the critter is (was PET+11) */                                                                     /* 0197e strb r1, [r0, #0xb] */
                r0=0x030002A4u;                                                                                      /* 01980 ldr r0, [pc, #0x218] */
                *(volatile u8*)((r0+16))=(u8)r1;                                                                     /* 01982 strb r1, [r0, #0x10] */
                r1=33u; N=(r1)>>31; Z=(r1)==0;                                                                       /* 01984 movs r1, #0x21 */

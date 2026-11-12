@@ -18,6 +18,7 @@ extern char o_sdiv[];
 extern char o_sdivmod[];
 extern char o_udiv[];
 extern char o_udivmod[];
+u32 ext_mess_drawn(void);   /* ext.c */
 void o_game_render(void){
   u32 r0=0,r1=0,r2=0,r3=0,r4=0,r5=0,r6=0,r7=0,r8=0,r9=0,r10=0,r11=0,r12=0,lr=0; u32 N=0,Z=0,C=0,V=0;
   u32 frame_[160]; u32 sp=(u32)&frame_[160];
@@ -6539,7 +6540,7 @@ L_0800546a: ;  { u32 X_=(u32)(r2), Y_=(~(u32)(0u)); unsigned long long W_=(unsig
                if(!Z) goto L_08005472;                                                                              /* 0546e bne #0x8005472 */
 L_08005470: ;  r1=r0; N=(r1)>>31; Z=(r1)==0;                                                                        /* 05470 movs r1, r0 */
 L_08005472: ;  r0=0x03000028u;                                                                                      /* 05472 ldr r0, [pc, #0x338] */
-               r0=*(volatile u8*)((r0+11));                                                                         /* 05474 ldrb r0, [r0, #0xb] */
+               r0=ext_mess_drawn();   /* EDITED: the room's poops, none outside (ext.c draws the yard's) */                                                                         /* 05474 ldrb r0, [r0, #0xb] */
                { u32 X_=(u32)(r0), Y_=(~(u32)(2u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; } /* 05476 cmp r0, #2 */
                r0=*(volatile u32*)((sp+252));                                                                       /* 05478 ldr r0, [sp, #0xfc] */
                if((C&&!Z)) goto L_0800547e;                                                                         /* 0547a bhi #0x800547e */
@@ -6748,7 +6749,7 @@ L_08005612: ;  r0=*(volatile u32*)((sp+248));                                   
                { u32 X_=(u32)(r0), S_=(u32)(2u)&0xFF; u32 R_; if(S_==0){R_=X_;} else {C=(X_>>(32-S_))&1; R_=X_<<S_;} r5=R_; N=R_>>31; Z=R_==0; } /* 05614 lsls r5, r0, #2 */
                r1=*(volatile u32*)((sp+36));                                                                        /* 05616 ldr r1, [sp, #0x24] */
 L_08005618: ;  r0=0x03000028u;                                                                                      /* 05618 ldr r0, [pc, #0x190] */
-               r0=*(volatile u8*)((r0+11));                                                                         /* 0561a ldrb r0, [r0, #0xb] */
+               r0=ext_mess_drawn();   /* EDITED: the room's poops, none outside (ext.c draws the yard's) */                                                                         /* 0561a ldrb r0, [r0, #0xb] */
                { u32 X_=(u32)(r0), Y_=(~(u32)(0u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; } /* 0561c cmp r0, #0 */
                *(volatile u32*)((sp+160))=(u32)r5;                                                                  /* 0561e str r5, [sp, #0xa0] */
                r4=*(volatile u32*)((sp+212));                                                                       /* 05620 ldr r4, [sp, #0xd4] */
@@ -6773,7 +6774,7 @@ L_08005642: ;  r0=*(volatile u32*)((sp+220));                                   
                *(volatile u32*)((sp+220))=(u32)r0;                                                                  /* 05646 str r0, [sp, #0xdc] */
                { u32 X_=(u32)(r1), Y_=(u32)(1u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r1=R_; } /* 05648 adds r1, r1, #1 */
                r0=0x03000028u;                                                                                      /* 0564a ldr r0, [pc, #0x160] */
-               r0=*(volatile u8*)((r0+11));                                                                         /* 0564c ldrb r0, [r0, #0xb] */
+               r0=ext_mess_drawn();   /* EDITED: the room's poops, none outside (ext.c draws the yard's) */                                                                         /* 0564c ldrb r0, [r0, #0xb] */
                { u32 X_=(u32)(r1), Y_=(~(u32)(r0)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; } /* 0564e cmp r1, r0 */
                if(!C) goto L_08005654;                                                                              /* 05650 blo #0x8005654 */
 L_08005652: ;  goto L_0800588a;                                                                                     /* 05652 b #0x800588a */
@@ -13085,46 +13086,18 @@ L_080089fc: ;  r0=*(volatile u32*)((sp+228));                                   
                { u32 X_=(u32)(r3), Y_=(u32)(1u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r3=R_; } /* 08a04 adds r3, r3, #1 */
                r4=*(volatile u32*)((sp+148));                                                                       /* 08a06 ldr r4, [sp, #0x94] */
                goto L_080087dc;                                                                                     /* 08a08 b #0x80087dc */
-L_08008a0a: ;  r0=0x00205448u;                                                                                      /* 08a0a ldr r0, [pc, #0x3f0] */
-               *(volatile u32*)((sp+260))=(u32)r0;                                                                  /* 08a0c str r0, [sp, #0x104] */
-               r0=0x47494557u;                                                                                      /* 08a0e ldr r0, [pc, #0x3f0] */
-               *(volatile u32*)((sp+256))=(u32)r0;                                                                  /* 08a10 str r0, [sp, #0x100] */
-               r0=0x03000028u;                                                                                      /* 08a12 ldr r0, [pc, #0x3f0] */
-               r4=*(volatile u8*)((r0+9));                                                                          /* 08a14 ldrb r4, [r0, #9] */
-               r5=0u; N=(r5)>>31; Z=(r5)==0;                                                                        /* 08a16 movs r5, #0 */
-               r6=*(volatile u32*)((sp+156));                                                                       /* 08a18 ldr r6, [sp, #0x9c] */
-L_08008a1a: ;  r0=r4; N=(r0)>>31; Z=(r0)==0;                                                                        /* 08a1a movs r0, r4 */
-               r1=r6; N=(r1)>>31; Z=(r1)==0;                                                                        /* 08a1c movs r1, r6 */
-               { unsigned long long rv=((unsigned long long(*)(u32,u32,u32,u32,u32,u32))&o_udiv)(r0,r1,r2,r3,*(volatile u32*)sp,*(volatile u32*)(sp+4)); r0=(u32)rv; r1=(u32)(rv>>32); }   /* o_udiv */ /* 08a1e bl #0x800f98c */
-               r1=r6; N=(r1)>>31; Z=(r1)==0;                                                                        /* 08a22 movs r1, r6 */
-               r1=(u32)(r0*(r1)); N=(r1)>>31; Z=(r1)==0;                                                            /* 08a24 muls r1, r0, r1 */
-               { u32 X_=(u32)(r4), Y_=(~(u32)(r1)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r1=R_; } /* 08a26 subs r1, r4, r1 */
-               r2=*(volatile u32*)((sp+160));                                                                       /* 08a28 ldr r2, [sp, #0xa0] */
-               r1=(u32)(r1|(r2)); N=(r1)>>31; Z=(r1)==0;                                                            /* 08a2a orrs r1, r2 */
-               { u32 X_=(u32)(sp), Y_=(u32)(296u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; r2=R_; } /* 08a2c add r2, sp, #0x128 */
-               *(volatile u8*)((r2+r5))=(u8)r1;                                                                     /* 08a2e strb r1, [r2, r5] */
-               { u32 X_=(u32)(r5), Y_=(u32)(1u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r5=R_; } /* 08a30 adds r5, r5, #1 */
-               { u32 X_=(u32)(r4), Y_=(~(u32)(9u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; } /* 08a32 cmp r4, #9 */
-               sp-=4; *(volatile u32*)(sp+0)=r0;                                                                    /* 08a34 push {r0} */
-               r4=*(volatile u32*)(sp+0); sp+=4;                                                                    /* 08a36 pop {r4} */
-               if((C&&!Z)) goto L_08008a1a;                                                                         /* 08a38 bhi #0x8008a1a */
-L_08008a3a: ;  { u32 X_=(u32)(r5), Y_=(~(u32)(1u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r1=R_; } /* 08a3a subs r1, r5, #1 */
-               { u32 X_=(u32)(sp), Y_=(u32)(256u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; r0=R_; } /* 08a3c add r0, sp, #0x100 */
-               { u32 X_=(u32)(r0), Y_=(u32)(8u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r0=R_; } /* 08a3e adds r0, #8 */
-L_08008a40: ;  { u32 X_=(u32)(sp), Y_=(u32)(296u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; r2=R_; } /* 08a40 add r2, sp, #0x128 */
-               r2=*(volatile u8*)((r2+r1));                                                                         /* 08a42 ldrb r2, [r2, r1] */
-               { u32 X_=(u32)(r0), Y_=(~(u32)(1u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r3=R_; } /* 08a44 subs r3, r0, #1 */
-               *(volatile u8*)(r3)=(u8)r2;                                                                          /* 08a46 strb r2, [r3] */
-               { u32 X_=(u32)(r0), Y_=(u32)(1u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r0=R_; } /* 08a48 adds r0, r0, #1 */
-               { u32 X_=(u32)(r1), Y_=(~(u32)(1u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r1=R_; } /* 08a4a subs r1, r1, #1 */
-               { u32 X_=(u32)(r1), Y_=(u32)(1u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r2=R_; } /* 08a4c adds r2, r1, #1 */
-               if(!C) goto L_08008a40;                                                                              /* 08a4e blo #0x8008a40 */
-L_08008a50: ;  r1=0u; N=(r1)>>31; Z=(r1)==0;                                                                        /* 08a50 movs r1, #0 */
-               *(volatile u32*)((sp+152))=(u32)r1;                                                                  /* 08a52 str r1, [sp, #0x98] */
-               *(volatile u8*)(r0)=(u8)r1;                                                                          /* 08a54 strb r1, [r0] */
-               { u32 X_=(u32)(r0), Y_=(~(u32)(1u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r0=R_; } /* 08a56 subs r0, r0, #1 */
-               r1=*(volatile u32*)((sp+144));                                                                       /* 08a58 ldr r1, [sp, #0x90] */
-               *(volatile u8*)(r0)=(u8)r1;                                                                          /* 08a5a strb r1, [r0] */
+L_08008a0a: ;  { /* EDITED v8.3 (readable): the status card's weight line, "WEIGHT 70 LB" in pounds (the original wrote
+                  "WEIGHT 70G"; ext.c used to cover it). Built where the original built it, leaving what the drawing
+                  after it reads: r4 = 0, r5 = the number of digits, r6 = [sp+0x9C], r2 = 0, [sp+0x98] = 0. */
+                 volatile u8 *b=(volatile u8*)(sp+256), *dig=(volatile u8*)(sp+296);
+                 u32 w=*(volatile u8*)(0x03000028u+9), n=0;
+                 do { dig[n++]=(u8)('0'+w%10); w/=10; } while(w);
+                 const char *head="WEIGHT ", *tail=" LB"; int k=0;
+                 for(int i=0;head[i];i++) b[k++]=(u8)head[i];
+                 for(u32 i=n;i>0;i--) b[k++]=dig[i-1];
+                 for(int i=0;tail[i];i++) b[k++]=(u8)tail[i];
+                 b[k]=0;
+                 r4=0; r5=n; r6=*(volatile u32*)(sp+156); r2=0; *(volatile u32*)(sp+152)=0; }
                { u32 X_=(u32)(sp), Y_=(u32)(256u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; r3=R_; } /* 08a5c add r3, sp, #0x100 */
                r0=130u; N=(r0)>>31; Z=(r0)==0;                                                                      /* 08a5e movs r0, #0x82 */
                r1=58u; N=(r1)>>31; Z=(r1)==0;                                                                       /* 08a60 movs r1, #0x3a */

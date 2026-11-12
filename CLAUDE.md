@@ -165,9 +165,9 @@ Other details:
 
 - **How sprites work here:** the game is a Mode 4 bitmap, and the original never used OBJs. `hook_render` calls
   `spr_begin()` and the draws fill a shadow in `State` (`so`, `sa`, `sp`, `spr_*`, `win`). The next `hook_update`
-  calls `spr_sync()` right after `fx_watch()`: that runs just after the original's vblank flip, which rewrites
-  `DISPCNT` every frame, so `spr_sync` sets OBJ (0x1000), 1D mapping (0x40) and WIN0 (0x2000) again each time.
-  When nothing asks for sprites the bits simply stay off. Tiles (`gen/sprfx.py` -> `sprfx.h`, 38 tiles) load to
+  calls `spr_sync()` right after `fx_watch()`, and it sets or clears OBJ (0x1000), 1D mapping (0x40) and WIN0
+  (0x2000) in `DISPCNT`. (Since the port, `main`'s page flip in `orig_main.c` keeps those three bits. Before, it
+  rewrote `DISPCNT` every frame and `spr_sync` had to OR them back in each time.) Tiles (`gen/sprfx.py` -> `sprfx.h`, 38 tiles) load to
   0x06014000 (tile 512) when sprites switch on; the OBJ palette (0x05000200) is free for us.
 - **Blending:** every sprite is semi-transparent and blended additively (`BLDALPHA` 16/16, BG2 and the backdrop as
   second targets, ORed into `BLDCNT` after `fx_tick`). A sprite fades by darkening its own palette bank. OBJs are
@@ -185,12 +185,12 @@ Other details:
 
 ## v8.2b: fixes and changes (released in v8.2)
 
-- **Yard mess:** the original's poop counter `PET[P_POOP]` always holds the mess where the critter is; `More.pad0`
-  holds the other place's. `poop_sync()` (start of every update and render) swaps them when `G.outside` changes, and
-  `pet_save`, `sim_save` and `save_all` swap back around the write (`POOP_CANON_BEGIN/END`). So the original's own
-  pooping, drawing and CLEAN work in the yard. Both messes count toward getting sick (`mess` in `sim_tick`).
-  Note: poking `PET[P_POOP]` from a test script doesn't stick (the original restores it); push the poop timer
-  instead (`P16(0x2C)`/`P16(0x2E)`), as the `yard` test does.
+- **Yard mess:** `PET[P_POOP]` is always the room's mess and `More.pad0` always the yard's (since the port; before,
+  they were swapped while outside). `MESS_HERE` (`ext_mess_here()`) is the one where the critter is: the original's
+  CLEAN and its mess checks in `orig_update.c` use it, and so do pooping (`sim_tick`), soap and the care record. The
+  original's room-poop drawing in `orig_render.c` reads `ext_mess_drawn()`, which is 0 outside. Both messes count
+  toward getting sick (`mess` in `sim_tick`). Note: to make it poop in a test, push the poop timer
+  (`P16(0x2C)`/`P16(0x2E)`), as the `yard` test does.
 - **Moonflower colours:** `garden_palette_on()` is true on every screen over the yard (menus, bag, feeding,
   petting). Outside, the food art uses the wall picture's slots 96–119 (`food_base()`), which the room only needs.
 - **Save and quit in the yard** sets `More.pad1` bit 0; CONTINUE goes back outside (if awake, well and lights on).
@@ -212,10 +212,8 @@ Other details:
 - **RECORDS scrolls** (UP/DOWN, `G.jrec`): 10 of `REC_ROWS` rows show, with arrows; add rows in `jr_records`.
 - **Yard poops** are ours: `yard_poops()` draws up to four at `YP_X/YP_Y` (front, two middle, back; smaller further
   back; `gen/poop.py` -> `poop.h`). The spots were found by mapping every pixel any decor piece, toy or moonflower can
-  cover (plus the house and tree), so nothing ever overlaps. The original's own poops are hidden outside by zeroing
-  `PET[P_POOP]` around `O_RENDER`; the count to draw is kept in `G.yp_n`. **Note:** the yard's render runs across the
-  frame boundary, so a test peeking `PET[P_POOP]` outside reads 0; peek `yp_n` instead (game logic is unaffected:
-  it is restored before the next update).
+  cover (plus the house and tree), so nothing ever overlaps. The original draws no poops outside (`ext_mess_drawn()`
+  is 0 there). The count to draw is kept in `G.yp_n`.
 - **Runaway (health ran out), "a home in the wild":** `runaway_draw` plays six shots (`RA_T1..RA_T5`, timed by
   FRAMES), each fading in from black: its room at dawn (warm palette, empty bowl, bindle), the yard at sunrise (one
   look back at the house), the meadow path (it shrinks 3 -> 2 -> 1 as it walks away), the stream where a wild grown-up
@@ -232,7 +230,8 @@ Other details:
 
 ## v8.3 (in progress)
 
-- **Weight** shows in pounds on the status card (the original draws "70G"; we cover it and write "70 LB").
+- **Weight** shows in pounds on the status card: "WEIGHT 70 LB", written by the original's own drawing (an edited
+  block in `orig_render.c`; before the port, `ext.c` covered the original's "70G").
   `min_weight()`: baby 5, child 10, teen 20 (`PH_TEEN`), grown-up and secret 30; `weight_floor()` keeps the stored
   weight at least that (every update: growing up, old saves), and salad and Hop Hop stop there. The overweight line
   (`overfed`, the original's `MIN_W*2+24`: 34/44/60/80) is deliberately unchanged.
@@ -268,9 +267,14 @@ Other details:
   handler, the 9 entry stubs and the original's data (`.incbin` of `orig_data.bin`). `main` is lifted
   (`orig_main.c`), and `mkrom.py` replaces `patch.py`. Each switch's table is copied into the lifted C, since the
   original kept it in its code area, which is now empty.
-- **Next (readable rewrites, as needed):** the workarounds `ext.c` keeps for the original can now be retired by changing
-  the original's code itself: re-ORing `DISPCNT`, the yard poop swap and hiding, "LB" drawn over "70G", PET's
-  cooldown. Each needs its part of `game_update`/`game_render` rewritten readably first.
+- **Workarounds retired (Nov 12 2026):** the original's own code was changed in place:
+  - PET's cooldown is set to 90;
+  - the weight line says "LB";
+  - `main` keeps the sprite bits;
+  - the mess goes through `ext_mess_here()`/`ext_mess_drawn()`.
+
+  Each edit in a lifted file is marked `EDITED` and was checked screen for screen against the build before.
+  The lifted files are ordinary source now: change them where needed, keeping each change small and marked.
 - **Port rules learned:** a call the original made at a site `patch.py` hooked still goes through that hook. For
   example, every `draw_sprite` call in the original goes to `ext.c`'s `hook_sprite` (also `hook_room_critter` and
   `hook_bg_copy`), so ported code calls `hook_sprite`, not `o_draw_sprite`. The lifted code already does.

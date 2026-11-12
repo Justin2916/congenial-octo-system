@@ -802,9 +802,10 @@ def t_sprites():
     oam = struct.unpack('<48H', v[5]); tiles = {oam[i * 4 + 2] & 0x3FF for i in range(v[2][0])}
     check('sprites: the fireflies fly out as glowing sprites (heart and glow)', v[1][0] == 1 and v[2][0] >= 2 and tiles <= {SPT['FGLOW'], SPT['FCORE'], SPT['FCORE2']} and SPT['FGLOW'] in tiles, f'{list(v[1:3])} {tiles}')
     check('sprites: all of them are blended (semi-transparent), the glow is affine', all(oam[i * 4] & 0x0C00 == 0x0400 for i in range(v[2][0])) and any(oam[i * 4] & 0x0100 for i in range(v[2][0])), str(oam[:12]))
-    # (spr_win is set while a frame's sprites are drawn, so a frame that ends mid-render reads 0: sample a few frames)
-    wins = [v[3][0]] + [x[0] for x in v[10:13]]
-    check('sprites: window 0 keeps them inside the open window', 1 in wins and 22 < v[4][0] < v[4][1] < 70 and v[4][2] == 45 and v[4][3] == 80, f'{list(v[4])} spr_win {wins}')
+    # (the window as the hardware has it: DISPCNT's window 0 bit in the frames sampled, and its corners. The spr_win
+    # flag itself drops for a stretch near the end of the flight, so it is not what is checked)
+    dcs = [struct.unpack('<H', x)[0] for x in v[7:10]]
+    check('sprites: window 0 keeps them inside the open window', any(x & 0x2000 for x in dcs) and 22 < v[4][0] < v[4][1] < 70 and v[4][2] == 45 and v[4][3] == 80, f'{list(v[4])} dispcnt {[hex(x) for x in dcs]}')
     dc = [struct.unpack('<H', x)[0] for x in v[7:10]]
     check('sprites: OBJ, 1D mapping and window 0 are switched on', any(x & 0x3040 == 0x3040 for x in dc) and struct.unpack('<H', v[6])[0] & 0x2400 == 0x2400, str([hex(x) for x in dc]))
     m = re.search(r'release avg busy cycles/frame: (\d+) \(of \d+\) max (\d+)', out); cy, mx = (int(m.group(1)), int(m.group(2))) if m else (-1, -1)
@@ -830,18 +831,19 @@ def t_yard():
     moonflowers keep their colours on every yard screen; plant, then water with the can; a faint firefly counts;
     eight grown-up days."""
     MORE0 = g('more', 'm_pad0'); MORE1 = g('more', 'm_pad1'); OUT = g('outside'); POOP = PET + 11
-    YPN = g('jrec') + 1   # (State.yp_n: the yard's poops as drawn. Outside, PET[P_POOP] reads 0 between frames: it is hidden while the original draws)
+    YPN = g('jrec') + 1   # (State.yp_n: the yard's poops as drawn)
     yard = ['press SELECT', 'wait 6', 'press A', 'wait 40']
     soon = lambda: [*p16(PET + 0x2C, 500), *p16(PET + 0x2E, 1), 'wait 100']   # it poops at the next clock step
     # the yard's mess: it poops outside, CLEAN outside cleans only the yard, inside the room's mess is its own
-    sc = BOOT + DAY + [f'peek {POOP:08x} 1'] + yard + soon() + soon() + [f'peek {YPN:08x} 1', f'peek {MORE0:08x} 2'] + \
+    sc = BOOT + DAY + [f'peek {POOP:08x} 1'] + yard + soon() + soon() + [f'peek {YPN:08x} 1', f'peek {MORE0:08x} 2', f'peek {POOP:08x} 1'] + \
          ['press RIGHT', 'wait 4'] * 4 + ['press A', 'wait 220', f'peek {YPN:08x} 1'] + soon() + \
          ['press SELECT', 'wait 6', 'press A', 'wait 60', f'peek {OUT:08x} 1', f'peek {POOP:08x} 1', f'peek {MORE0:08x} 2']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
     room = v[0][0]
-    check('yard: the critter poops outside too (the yard\'s own mess)', v[1][0] == 2 and v[2][0] == room and v[2][1] & 2, str(v[:3]))
-    check('yard: CLEAN outside cleans the yard', v[3][0] == 0, str(v[3]))
-    check('yard: back inside, the room has its own mess and the yard keeps its', v[4][0] == 0 and v[5][0] == room and v[6][0] == 1 and not v[6][1] & 2, str(v[4:]))
+    # (since the port: PET[P_POOP] is always the room's mess, More.pad0 always the yard's; nothing is swapped)
+    check('yard: the critter poops outside too (the yard\'s own mess)', v[1][0] == 2 and v[2][0] == 2 and v[3][0] == room, str(v[:4]))
+    check('yard: CLEAN outside cleans the yard', v[4][0] == 0, str(v[4]))
+    check('yard: back inside, the room has its own mess and the yard keeps its', v[5][0] == 0 and v[6][0] == room and v[7][0] == 1, str(v[5:]))
     # LIGHTS outside: a message, and nothing else changes
     sc = BOOT + DAY + yard + ['press RIGHT', 'wait 6', 'press A', 'wait 20', f'peek {OUT:08x} 1', f'peek {PET + 13:08x} 1', 'peek 030002a4 16']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
