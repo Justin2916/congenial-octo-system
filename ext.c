@@ -2120,6 +2120,9 @@ static void life_watch(void){
   if(SCENE==0 || *(volatile u32*)PET!=0x31504B43u) return;   // title screen / no critter loaded
   if(PET[P_SICK] && G.deco.vit_day==(u8)(G.ext.day+1)) PET[P_SICK]=0;      // a VITAMIN today keeps sickness away
   track_day(); track_stage();
+  // v8.3: an unnamed egg or baby shows no name. A brand-new game picks the egg's name slot after the tables were made
+  // (egg to egg is no stage change), so refresh them whenever that slot isn't the blank one.
+  if((PET[P_STAGE]==0 || G.want_name) && !G.names.cur[0] && PET[P_NAME]<10 && RAM_NAMES[PET[P_NAME]][0]) refresh_tables();
   if(G.cry_cool) G.cry_cool--;
   u8 h=PET[P_HAPPY], call=PET[P_CALL], sl=PET[P_ASLEEP];
   // (v8.1: a happy rise no longer counts as play by itself: toys, minigames and play decor count their own)

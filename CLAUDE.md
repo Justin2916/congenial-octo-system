@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 211 checks (183 in the v8.1 sections, 12 `sprites` and 16 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 212 checks (184 in the v8.1 sections, 12 `sprites` and 16 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired

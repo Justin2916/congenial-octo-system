@@ -424,6 +424,13 @@ def t_fixes():
     im = Image.open(shot).convert('RGB')
     ink = sum(1 for y in range(34, 52) for x in range(14, 110) if sum(im.getpixel((x, y))) < 300)
     check('fixes: no name on the status card before it is named', ink == 0, f'ink {ink}')
+    # v8.3: a brand-new game (no save): the egg's name slot is picked after the name tables were made; still no name
+    sv = f'{TMP}/fresh.sav'; open(sv, 'wb').write(b'\xff' * 65536)
+    shot = f'{TMP}/card_egg.png'
+    run(ROM, ['wait 60', 'press A', 'wait 120', p8(PET + 5, 3), 'wait 10'] + ['press RIGHT', 'wait 6'] * 5 + ['press A', 'wait 20', f'shot {shot}'], sv)
+    im = Image.open(shot).convert('RGB')
+    ink = sum(1 for y in range(34, 52) for x in range(14, 110) if sum(im.getpixel((x, y))) < 300)
+    check('fixes: v8.3: a new game\'s egg shows no name on its status card', ink == 0, f'ink {ink}')
     # START right away takes the suggested name; SELECT suggests another
     sc = egg + [f'peek {g("nm"):08x} 8', 'press SELECT', 'wait 3', f'peek {g("nm"):08x} 8', 'press START', 'wait 5', f'peek {g("names"):08x} 8']
     v = pk(run(ROM, sc, copy_save('adult')))
