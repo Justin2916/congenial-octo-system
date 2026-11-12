@@ -41,14 +41,14 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 186 checks (175 from v8.1 plus 11 `sprites` checks in v8.2).
+`python3 tests/run_tests.py <sections...>`. There are 197 checks (175 from v8.1, 12 `sprites` and 10 `yard` in v8.2).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: compares the clock against v7, byte for byte, by day only (on its own, it's slow)
 2. `growth secrets care save fast rebal`
 3. `games fixes unlocks journal b1 stories health`
 4. `garden budget fuzz`
-5. `fly sprites`
+5. `fly sprites yard`
 
 Other details:
 - `CUR_VER = 15` is the save version. `BASE14 = tests/baseline_v81b2.gba` is a save-version-14 build used for
@@ -107,6 +107,8 @@ Other details:
   - `[5]`: the best night
   - `[6]`: tonight's marker (day+1)
   - `[7]`: rounds used tonight (bits 0–1), plus tonight's kinds shifted left by 4
+  - v8.2b: `More.pad0` is the other place's mess (see the yard mess below), and `More.pad1` bit 0 = saved and quit
+    in the yard, bit 1 = the mess counts are swapped (outside). Saves always store them unswapped.
 - **Generators → headers:**
   - `bgfx.py` → `bgfx.h` (the room and yard pictures, including the tree trunk)
   - `garden_art.py` + `gardengen.py` → `garden.h`
@@ -172,6 +174,32 @@ Other details:
   rises, glides to (120,58) in the sky, then breathes and turns. Wonderful/happy/sad set its size; sad is faint.
 - **Avoid software divides** in per-frame code: `/` by a variable costs a few hundred cycles on the GBA
   (`__aeabi_idiv`). A per-pixel divide in the first window-pane line drawer cost about 60k cycles a frame.
+
+## v8.2b: fixes and changes (built; Nov 12 2026)
+
+- **Yard mess:** the original's poop counter `PET[P_POOP]` always holds the mess where the critter is; `More.pad0`
+  holds the other place's. `poop_sync()` (start of every update and render) swaps them when `G.outside` changes, and
+  `pet_save`, `sim_save` and `save_all` swap back around the write (`POOP_CANON_BEGIN/END`). So the original's own
+  pooping, drawing and CLEAN work in the yard. Both messes count toward getting sick (`mess` in `sim_tick`).
+  Note: poking `PET[P_POOP]` from a test script doesn't stick (the original restores it); push the poop timer
+  instead (`P16(0x2C)`/`P16(0x2E)`), as the `yard` test does.
+- **Moonflower colours:** `garden_palette_on()` is true on every screen over the yard (menus, bag, feeding,
+  petting). Outside, the food art uses the wall picture's slots 96–119 (`food_base()`), which the room only needs.
+- **Save and quit in the yard** sets `More.pad1` bit 0; CONTINUE goes back outside (if awake, well and lights on).
+- **LIGHTS outside:** caught before the original sees it (the icon cursor is `ICON_CUR`, 0x030002D8; 1 = LIGHTS).
+- **Toys:** the pinwheel, sprinkler and resting frisbee share `TOY_X` = 108, between the first two moonflower
+  patches, clear of every yard decor piece (by the tree: up to x 88; by the house: from x 168).
+- **Jar:** a soft breathing glow sprite (`jar_glow`) instead of specks round it.
+- **Garden:** planting leaves the soil dry; A again brings the watering can (`gen/can.py` -> `can.h`, garden
+  palette; it pours only from its rose; keys wait `CAN_T` frames); watered soil is drawn dark (`soil_wet`).
+  Rare odds: moon lily 1/3, starbloom 1/2, twinglow 1/5, aurora 1/20. Journal flowers stand on their soil.
+- **Fireflies:** 20 s rounds, the jar moves 3 px a frame, a faint glow counts (catch area unchanged). The totals
+  (caught, best night) moved from the firefly page to the RECORDS tab.
+- **Length:** `LIFESPAN` 8 grown-up days (was 12); `shop_level()` opens a level every 2 grown-up days so all six
+  still open. Every secret form needs only its first 2 grown-up days. (Teen, child and day length unchanged.)
+- **Next, waiting on the owner's OK of the storyboard:** the runaway rework ("B: a home in the wild": a bindle at
+  dawn, one look back, out across the meadow, a family of wild critters by a stream; "It found a new home, but
+  it left no star behind"; end card "Not every critter becomes a star").
 
 ## Decided against (owner, Nov 11 2026)
 

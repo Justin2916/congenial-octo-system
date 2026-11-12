@@ -46,7 +46,7 @@ def offsets():
               'obj': 'State,obj', 'st_seq': 'State,st_seq', 'tune': 'State,tune', 'rating': 'State,rating', 'pk_w': 'State,pk_w',
               'keep': 'State,keep', 'k_un0': 'Keep,un0', 'k_un1': 'Keep,un1', 'k_best': 'Keep,best', 'k_ok': 'Keep,ok',
               'd_unlock': 'Deco,unlock_lvl', 'names': 'State,names', 'nm': 'State,nm', 'want_name': 'State,want_name', 'nm_x': 'State,nm_x', 'd_owned': 'Deco,owned',
-              'jr': 'State,jr', 'jtab': 'State,jtab', 'jstar': 'State,jstar', 'jcare': 'State,jcare', 'j_s': 'Journal,s', 'j_coins': 'Journal,coins', 'j_games': 'Journal,games', 'so_pend': 'State,sendoff_pending', 'retired': 'Life,retired', 'more': 'State,more', 'm_rn': 'More,rn', 'm_rmiss': 'More,rmiss', 'jitem': 'State,jitem', 'm_found0': 'More,found0', 'm_found_ok': 'More,found_ok', 'm_wishes': 'More,wishes', 'wish_t': 'State,wish_t', 'wish_cd': 'State,wish_cd', 'm_spare': 'More,spare', 'e_inv': 'Ext,inv', 'dex_cur': 'State,dex_cur', 'stock': 'State,stock', 'st_cur': 'State,st_cur', 'st_page': 'State,st_page', 'm_stories': 'More,stories', 'st_pad': 'State,st_pad', 'rng': 'State,rng', 'gdn': 'State,gdn', 'gcur': 'State,gcur', 'g_found': 'Garden,found', 'g_seeds': 'Garden,seeds', 'g_vis_n': 'Garden,vis_n', 'g_vis': 'Garden,vis', 'g_vis_day': 'Garden,vis_day', 'e_day': 'Ext,day', 'gpad': 'State,gpad', 'gdetail': 'State,gdetail', 'bg_state': 'State,bg_state', 'weak_warned': 'State,weak_warned', 'outside': 'State,outside', 'gpad2': 'State,gpad2', 'dex_from': 'State,dex_from', 'gmsg': 'State,gmsg', 'ex_yard': 'State,ex_yard', 'jt_first': 'State,jt_first', 'fly': 'State,fly', 'fly_t': 'State,fly_t', 'fly_kinds': 'State,fly_kinds', 'fly_night': 'State,fly_night', 'fly_rel': 'State,fly_rel', 'fly_n': 'State,fly_n', 'fly_state': 'State,fly_state', 'fly_card': 'State,fly_card', 'jx': 'State,jx', 'jy': 'State,jy', 'jfly': 'State,jfly', 'f_x': 'Fly,x', 'f_y': 'Fly,y', 'f_k': 'Fly,k', 'f_t': 'Fly,t', 'f_live': 'Fly,live', 'spr_n': 'State,spr_n', 'spr_live': 'State,spr_live', 'spr_win': 'State,spr_win', 'win': 'State,win'}
+              'jr': 'State,jr', 'jtab': 'State,jtab', 'jstar': 'State,jstar', 'jcare': 'State,jcare', 'j_s': 'Journal,s', 'j_coins': 'Journal,coins', 'j_games': 'Journal,games', 'so_pend': 'State,sendoff_pending', 'retired': 'Life,retired', 'more': 'State,more', 'm_rn': 'More,rn', 'm_rmiss': 'More,rmiss', 'jitem': 'State,jitem', 'm_found0': 'More,found0', 'm_found_ok': 'More,found_ok', 'm_wishes': 'More,wishes', 'wish_t': 'State,wish_t', 'wish_cd': 'State,wish_cd', 'm_spare': 'More,spare', 'e_inv': 'Ext,inv', 'dex_cur': 'State,dex_cur', 'stock': 'State,stock', 'st_cur': 'State,st_cur', 'st_page': 'State,st_page', 'm_stories': 'More,stories', 'st_pad': 'State,st_pad', 'rng': 'State,rng', 'gdn': 'State,gdn', 'gcur': 'State,gcur', 'g_found': 'Garden,found', 'g_seeds': 'Garden,seeds', 'g_vis_n': 'Garden,vis_n', 'g_vis': 'Garden,vis', 'g_vis_day': 'Garden,vis_day', 'e_day': 'Ext,day', 'gpad': 'State,gpad', 'gdetail': 'State,gdetail', 'bg_state': 'State,bg_state', 'weak_warned': 'State,weak_warned', 'outside': 'State,outside', 'gpad2': 'State,gpad2', 'dex_from': 'State,dex_from', 'gmsg': 'State,gmsg', 'ex_yard': 'State,ex_yard', 'jt_first': 'State,jt_first', 'fly': 'State,fly', 'fly_t': 'State,fly_t', 'fly_kinds': 'State,fly_kinds', 'fly_night': 'State,fly_night', 'fly_rel': 'State,fly_rel', 'fly_n': 'State,fly_n', 'fly_state': 'State,fly_state', 'fly_card': 'State,fly_card', 'jx': 'State,jx', 'jy': 'State,jy', 'jfly': 'State,jfly', 'f_x': 'Fly,x', 'f_y': 'Fly,y', 'f_k': 'Fly,k', 'f_t': 'Fly,t', 'f_live': 'Fly,live', 'spr_n': 'State,spr_n', 'spr_live': 'State,spr_live', 'spr_win': 'State,spr_win', 'win': 'State,win', 'm_pad0': 'More,pad0', 'm_pad1': 'More,pad1', 'gwater': 'State,gwater', 'e_adult': 'Ext,adult_day', 'gcur': 'State,gcur'}
     src = f'#include "{CK}/ext.c"\nconst unsigned TEST_OFFS[] = {{ ' + ', '.join(f'__builtin_offsetof({v})' for v in fields.values()) + ' };\n'
     c, o, b = f'{TMP}/offs.c', f'{TMP}/offs.o', f'{TMP}/offs.bin'
     open(c, 'w').write(src)
@@ -608,14 +608,15 @@ def t_garden():
     garden = ['press SELECT', 'wait 6', 'press A', 'wait 10', 'press A', 'wait 4']   # (v8.1: A to tend)
     leave = ['press B', 'wait 6', 'press B', 'wait 8']
     pk = lambda: [f'peek {GD:08x} 18', f'peek {SEEDS:08x} 1']
-    sc = BOOT + [f'peek {SEEDS:08x} 4'] + night + garden + [f'peek {MODE:08x} 1', 'press A', 'wait 4'] + pk() + leave + [f'peek {MODE:08x} 1'] + \
-         morning + pk() + morning + pk() + night + garden + ['press A', 'wait 4'] + leave + morning + pk() + \
-         night + garden + ['press A', 'wait 4'] + leave + morning + pk() + [f'peek {FOUND:08x} 4'] + \
+    water = ['press A', 'wait 80']   # (v8.2b: A brings the watering can; keys wait till it has gone)
+    sc = BOOT + [f'peek {SEEDS:08x} 4'] + night + garden + [f'peek {MODE:08x} 1', 'press A', 'wait 4'] + water + pk() + leave + [f'peek {MODE:08x} 1'] + \
+         morning + pk() + morning + pk() + night + garden + water + leave + morning + pk() + \
+         night + garden + water + leave + morning + pk() + [f'peek {FOUND:08x} 4'] + \
          night + garden + [f'peek {g("gdn", "g_vis_n"):08x} 4', f'peek {FOUND:08x} 4'] + leave + morning * 4 + pk() + [f'savesram {TMP}/gd.sav']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('garden: an older save starts with three seeds', v[0][0] == 3, str(v[0]))
     check('garden: SELECT > GARDEN at night while it sleeps', v[1][0] == 13, str(v[1]))
-    check('garden: A plants a seed (watered on the night it goes in)', v[2][0] == 1 and v[2][4] & 1 and v[3][0] == 2, f'{list(v[2][:6])} seeds {v[3][0]}')
+    check('garden: A plants a seed, and A again waters it', v[2][0] == 1 and v[2][4] & 1 and v[3][0] == 2, f'{list(v[2][:6])} seeds {v[3][0]}')
     check('garden: B goes back inside', v[4][0] == 0, str(v[4]))
     check('garden: by morning it sprouts', v[5][0] == 2 and not v[5][4] & 1, str(list(v[5][:6])))
     check('garden: a night without water: no growth, and it remembers the missed night', v[7][0] == 2 and v[7][4] & 2, str(list(v[7][:6])))
@@ -772,19 +773,22 @@ def t_sprites():
     disp = ['wait 1', 'peek 04000000 2'] * 3
     v = peeks(run(ROM, BOOT + [f'peek {DAY:08x} 2'], copy_save('adult'))); d = struct.unpack('<H', v[0][1])[0]
     morning = [p8(g('fly_n'), 6), *p16(g('fly_kinds'), 0x13), *p16(g('fly_night'), d + 1), 'wait 30', 'poke32 0300004c 257']
-    sc = BOOT + night + morning + [f'waitb {g("fly_rel"):08x} 20', f'peek {LIVE:08x} 1'] + \
+    sc = BOOT + night + [p8(g('fly_n'), 6), *p16(g('fly_kinds'), 0x13), *p16(g('fly_night'), d + 1), 'wait 30', f'peek {LIVE:08x} 1', 'peek 07000000 8'] + \
+         ['poke32 0300004c 257', f'waitb {g("fly_rel"):08x} 20', f'peek {LIVE:08x} 1'] + \
          [f'waitb {g("fly_rel"):08x} 100', f'peek {LIVE:08x} 1', f'peek {g("spr_n"):08x} 1', f'peek {g("spr_win"):08x} 1', f'peek {g("win"):08x} 4', 'peek 07000000 96', 'peek 04000050 2'] + disp + \
          ['cyc 60 release', 'wait 300', f'peek {LIVE:08x} 1', f'peek {g("fly_rel"):08x} 2'] + disp
-    out = run(ROM, sc, copy_save('adult')); v = [x[1] for x in peeks(out)]
-    check('sprites: no sprites while the jar is still shut', v[0][0] == 0, str(v[0]))
+    out = run(ROM, sc, copy_save('adult')); w = [x[1] for x in peeks(out)]; jar = w[:2]; v = w[2:]
+    a = struct.unpack('<4H', jar[1])
+    check('sprites: at night the jar glows (a soft halo sprite, not specks)', jar[0][0] == 1 and a[2] & 0x3FF == SPT['SGLOW'] and a[0] & 0x0C00 == 0x0400, f'{jar[0]} {a}')
+    check('sprites: the glow stays while the jar is still shut in the morning', v[0][0] == 1, str(v[0]))
     oam = struct.unpack('<48H', v[5]); tiles = {oam[i * 4 + 2] & 0x3FF for i in range(v[2][0])}
     check('sprites: the fireflies fly out as glowing sprites (heart and glow)', v[1][0] == 1 and v[2][0] >= 2 and tiles <= {SPT['FGLOW'], SPT['FCORE'], SPT['FCORE2']} and SPT['FGLOW'] in tiles, f'{list(v[1:3])} {tiles}')
     check('sprites: all of them are blended (semi-transparent), the glow is affine', all(oam[i * 4] & 0x0C00 == 0x0400 for i in range(v[2][0])) and any(oam[i * 4] & 0x0100 for i in range(v[2][0])), str(oam[:12]))
     check('sprites: window 0 keeps them inside the open window', v[3][0] == 1 and 22 < v[4][0] < v[4][1] < 70 and v[4][2] == 45 and v[4][3] == 80, str(list(v[4])))
     dc = [struct.unpack('<H', x)[0] for x in v[7:10]]
     check('sprites: OBJ, 1D mapping and window 0 are switched on', any(x & 0x3040 == 0x3040 for x in dc) and struct.unpack('<H', v[6])[0] & 0x2400 == 0x2400, str([hex(x) for x in dc]))
-    m = re.search(r'release avg busy cycles/frame: (\d+)', out); cy = int(m.group(1)) if m else -1
-    check(f'sprites: the release stays inside the frame budget ({cy})', 0 < cy < 240000, out[-300:])
+    m = re.search(r'release avg busy cycles/frame: (\d+) \(of \d+\) max (\d+)', out); cy, mx = (int(m.group(1)), int(m.group(2))) if m else (-1, -1)
+    check(f'sprites: the release never runs over a frame (avg {cy}, busiest {mx} of 280896)', 0 < cy and 0 < mx < 280896, out[-300:])
     dc = [struct.unpack('<H', x)[0] for x in v[12:15]]
     check('sprites: when the window has shut they are gone and OBJ is off again', v[10][0] == 0 and struct.unpack('<H', v[11])[0] == 0 and all(not x & 0x1000 for x in dc), f'{list(v[10:12])} {[hex(x) for x in dc]}')
     # the farewell star
@@ -801,6 +805,61 @@ def t_sprites():
     dc = [struct.unpack('<H', x)[0] for x in v[6:9]]
     check('sprites: after the farewell the sprites are off', v[5][0] == 0 and all(not x & 0x1000 for x in dc), f'{v[5]} {[hex(x) for x in dc]}')
 
+def t_yard():
+    """v8.2b: the yard keeps its own mess; LIGHTS outside; save and quit in the yard comes back to the yard; the
+    moonflowers keep their colours on every yard screen; plant, then water with the can; a faint firefly counts;
+    eight grown-up days."""
+    MORE0 = g('more', 'm_pad0'); MORE1 = g('more', 'm_pad1'); OUT = g('outside'); POOP = PET + 11
+    yard = ['press SELECT', 'wait 6', 'press A', 'wait 40']
+    soon = lambda: [*p16(PET + 0x2C, 500), *p16(PET + 0x2E, 1), 'wait 100']   # it poops at the next clock step
+    # the yard's mess: it poops outside, CLEAN outside cleans only the yard, inside the room's mess is its own
+    sc = BOOT + DAY + [f'peek {POOP:08x} 1'] + yard + soon() + soon() + [f'peek {POOP:08x} 1', f'peek {MORE0:08x} 2'] + \
+         ['press RIGHT', 'wait 4'] * 4 + ['press A', 'wait 220', f'peek {POOP:08x} 1'] + soon() + \
+         ['press SELECT', 'wait 6', 'press A', 'wait 60', f'peek {OUT:08x} 1', f'peek {POOP:08x} 1', f'peek {MORE0:08x} 2']
+    v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    room = v[0][0]
+    check('yard: the critter poops outside too (the yard\'s own mess)', v[1][0] == 2 and v[2][0] == room and v[2][1] & 2, str(v[:3]))
+    check('yard: CLEAN outside cleans the yard', v[3][0] == 0, str(v[3]))
+    check('yard: back inside, the room has its own mess and the yard keeps its', v[4][0] == 0 and v[5][0] == room and v[6][0] == 1 and not v[6][1] & 2, str(v[4:]))
+    # LIGHTS outside: a message, and nothing else changes
+    sc = BOOT + DAY + yard + ['press RIGHT', 'wait 6', 'press A', 'wait 20', f'peek {OUT:08x} 1', f'peek {PET + 13:08x} 1', 'peek 030002a4 16']
+    v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('yard: LIGHTS outside says YOU\'RE OUTSIDE! and changes nothing', v[0][0] == 1 and v[1][0] == 0 and bytes(v[2]).startswith(b"YOU'RE OUTSIDE!"), str(v))
+    # save and quit in the yard (with a mess out there), CONTINUE: back in the yard, the mess still there
+    sv = copy_save('adult')
+    sc = BOOT + DAY + yard + soon() + ['press START', 'wait 8', 'press UP', 'wait 4', 'press A', 'wait 8', 'press A', 'wait 60', f'peek {MORE1:08x} 1']
+    run(ROM, sc, sv)
+    sc = ['wait 60', 'press A', 'waitscene 1', 'wait 30', f'peek {OUT:08x} 1', f'peek {POOP:08x} 1', f'peek {MORE1:08x} 1']
+    v = [x[1] for x in peeks(run(ROM, sc, sv))]
+    check('yard: save and quit in the yard; CONTINUE goes back out there, with its mess', v[0][0] == 1 and v[1][0] == 1 and not v[2][0] & 1, str(v))
+    # the flowers' colours on yard screens (palette 40 is the garden's first colour)
+    gp0 = int(re.search(r'GP_PAL\[GP_N\]=\{(\d+)', open(f'{CK}/garden.h').read()).group(1))
+    sc = BOOT + DAY + yard + ['press SELECT', 'wait 10', 'peek 05000050 2', 'press B', 'wait 10', 'press A', 'wait 12', 'press A', 'wait 40', 'peek 05000050 2', 'scene']
+    out = run(ROM, sc, copy_save('adult')); v = [struct.unpack('<H', x[1])[0] for x in peeks(out)]
+    check('yard: the moonflowers keep their colours under the SELECT menu and while it eats', v[0] == gp0 and v[1] == gp0, f'{v} want {gp0}')
+    # plant, then water: planted dry, A again brings the can
+    GD = g('gdn')
+    sc = BOOT + ['poke32 0300004c 1f4', p8(PET + 12, 1), 'wait 4', p8(GD + 6, 0), p8(g('gdn', 'g_seeds'), 3), 'press SELECT', 'wait 6', 'press A', 'wait 10', 'press A', 'wait 4',
+                 'press RIGHT', 'wait 4', 'press A', 'wait 6', f'peek {GD + 6:08x} 6', 'press A', 'wait 2', f'peek {g("gwater"):08x} 1', f'peek {GD + 6:08x} 6',
+                 'press B', 'wait 4', f'peek {g("mode"):08x} 1', 'wait 80', f'peek {g("gwater"):08x} 1']
+    v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('yard: A plants a seed in dry soil', v[0][0] == 1 and not v[0][4] & 1, str(list(v[0])))
+    check('yard: A again waters it: the watering can comes, keys wait for it', v[1][0] > 60 and v[2][4] & 1 and v[3][0] == 13 and v[4][0] == 0, str(v[1:]))
+    # a firefly glowing only faintly can be scooped now
+    FLY = g('fly'); night = ['poke32 0300004c 1f4', p8(PET + 12, 1), 'wait 4']
+    sc = BOOT + night + yard[:3] + ['wait 20', 'press R', 'wait 10'] + [p8(FLY + 12 * i + 8, 0) for i in range(8)] + [p8(FLY + 12 * i + 9, 250) for i in range(8)] + \
+         [*p16(FLY, 120 << 4), *p16(FLY + 2, 92 << 4), p8(FLY + 6, 0), p8(FLY + 7, 1), p8(FLY + 8, 1), 'press A', 'wait 4', f'peek {g("fly_n"):08x} 1']
+    v = peeks(run(ROM, sc, copy_save('adult')))
+    check('yard: a faintly glowing firefly can be scooped', v[-1][1][0] >= 1, str(v[-1]))
+    # eight grown-up days: it says farewell at noon on its eighth day, not before
+    DAYA = g('ext', 'e_day'); AD = g('ext', 'e_adult')
+    d = struct.unpack('<H', peeks(run(ROM, BOOT + [f'peek {DAYA:08x} 2'], copy_save('adult')))[0][1])[0]
+    res = []
+    for back in (7, 8):
+        sc = BOOT + ['poke32 0300004c c8', 'wait 2', *p16(AD, (d + 1 - back) & 0xFFFF), 'wait 200', f'peek {g("so_pend"):08x} 1', f'peek {g("mode"):08x} 1']   # (moving the clock back to noon starts a new day)
+        res.append([x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))])
+    check('yard: the farewell comes after 8 grown-up days (not 7)', res[0] == [0, 0] and (res[1][0] == 1 or res[1][1] == 3), str(res))
+
 def t_budget():
     out = run(ROM, ['wait 30', 'cyc 120 title', 'press A', 'waitscene 1', 'wait 30', 'cyc 300 room', 'poke32 0300004c 1f4', 'wait 5',
                     'press SELECT', 'wait 6', 'press UP', 'wait 4', 'press A', 'wait 20', 'cyc 120 stories', 'press A', 'wait 10', 'cyc 120 story'], copy_save('adult'))
@@ -810,7 +869,7 @@ def t_budget():
         check(f'budget: {label} {v} cycles/frame (limit {limit} of 280896)', 0 < v < limit, out[-300:])
 
 TESTS = {'fidelity': t_fidelity, 'growth': t_growth, 'secrets': t_secrets, 'care': t_care, 'save': t_save, 'fast': t_fast,
-         'games': t_games, 'fixes': t_fixes, 'unlocks': t_unlocks, 'journal': t_journal, 'b1': t_b1, 'stories': t_stories, 'garden': t_garden, 'health': t_health, 'fly': t_fly, 'sprites': t_sprites, 'rebal': t_rebal, 'fuzz': t_fuzz, 'budget': t_budget}
+         'games': t_games, 'fixes': t_fixes, 'unlocks': t_unlocks, 'journal': t_journal, 'b1': t_b1, 'stories': t_stories, 'garden': t_garden, 'health': t_health, 'fly': t_fly, 'sprites': t_sprites, 'yard': t_yard, 'rebal': t_rebal, 'fuzz': t_fuzz, 'budget': t_budget}
 if __name__ == '__main__':
     pick = sys.argv[1:] or list(TESTS)
     for t in pick:

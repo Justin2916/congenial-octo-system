@@ -4283,15 +4283,14 @@ static void jr_guide(void){
   int sf=adult_secret(f);
   if(sf>=0){ int got=(G.dex.seen>>sf)&1; text("SECRET:",96,124,C_LILAC); text(got? form_name(sf) : "? ? ?",144,124,got? C_LILAC : C_GRAY); }
 }
-static void jr_row(int i,const char *label,const char *val,int c){ int y=37+i*8;   // (v8.2b: 12 rows)
-  text(label,24,y,C_DTEXT); text(val,216-slen(val)*6,y,c); }
+static void jr_row(int i,const char *label,const char *val,int c){ int y=32+i*9; text(label,24,y,C_DTEXT); text(val,216-slen(val)*6,y,c); }   // (v8.2b: 11 rows)
 static char *jr_num(char *p,u32 v){   // 1,240
   if(v>=1000){ p=sint(p,(int)(v/1000)); *p++=','; u32 r=v%1000; *p++=(char)('0'+r/100); *p++=(char)('0'+r/10%10); *p++=(char)('0'+r%10); *p=0; return p; }
   return sint(p,(int)v); }
 static void jr_records(void){
   jr_header(0,"L/R: TAB   B: BACK");
   const Journal *j=&G.jr; char b[24]; char *p; int t;
-  quick_box(14,34,212,100);
+  quick_box(14,28,212,105);
   jr_num(b,j->raised); jr_row(0,"CRITTERS RAISED",b,C_DTEXT);
   sint(b,G.life.retired); jr_row(1,"WONDERFUL IN A ROW",b,G.life.retired? C_RED : C_DTEXT);
   p=sint(b,dex_count()); p=scpy(p," / "); sint(p,DEX_N); jr_row(2,"FORMS FOUND",b,C_DTEXT);
@@ -4303,8 +4302,7 @@ static void jr_records(void){
   { int m=-1, best=0; for(int k=1;k<4;k++) if(j->loved[k]>best){ best=j->loved[k]; m=k; } if(m<0 && j->loved[0]) m=0;
     jr_row(8,"MOST LOVED CARE", m>=0? LOVED_NAME[m] : "-",C_DTEXT); }
   jr_num(b,j->coins); jr_row(9,"COINS EARNED",b,C_DTEXT);
-  jr_num(b,G.more.spare[4]); jr_row(10,"FIREFLIES CAUGHT",b,C_DTEXT);   // v8.2b: moved here from the firefly page
-  sint(b,G.more.spare[5]); jr_row(11,"BEST FIREFLY NIGHT",b,C_DTEXT);
+  { char *q=jr_num(b,G.more.spare[4]); q=scpy(q," ("); q=sint(q,G.more.spare[5]); scpy(q,")"); jr_row(10,"FIREFLIES (BEST NIGHT)",b,C_DTEXT); }   // v8.2b: from the firefly page
 }
 static void icon_big(int it,int cx,int cy,int mono){   // an item icon at double size (or its silhouette)
   const Icon *I=&ICONS[it]; const u8 *pix=ICON_PIX+I->pix, *rows=ICON_ROWS+2*I->row; int x0=cx-I->w, y0=cy-I->h;

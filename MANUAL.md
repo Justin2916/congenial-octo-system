@@ -39,7 +39,7 @@ The eight icons sit along the top and bottom of the screen. Move between them wi
 | LIGHTS | Turn the lights off when it falls asleep, and back on in the morning. |
 | PLAY | Pick one of four minigames and win coins (see **Minigames**). |
 | MEDS | Cure it when it is sick. Sometimes it needs a second dose. Medicine when it isn't sick only makes it pull a yuck face. |
-| CLEAN | Wash away the mess. A messy room soon makes it sick. |
+| CLEAN | Wash away the mess, in the room or in the yard (each keeps its own). A mess soon makes it sick. |
 | STATUS | Open its status card (see below). |
 | PET | Answer it when it calls you. |
 | ! | Lights up when it needs something, and it cries. Answer it soon. |
@@ -334,8 +334,8 @@ The journal keeps a record of every critter and is never cleared. Open it from t
 - **GUIDE:** a page for each of the 20 forms. A met form shows its picture, lore and whether you've raised it as a boy or a girl. Press A to see how it grows. Secret forms show a riddle until you find them.
 - **ITEMS:** a page for each of the 44 shop items, opened the first time you buy one: its picture, price, kind of care and exactly what it does.
 - **GARDEN:** every moonflower and night visitor you've found. Press A on a card to look closer. Rare moonflowers show a riddle until you grow them.
-- **FIREFLIES:** the field guide to the twelve fireflies. Pick one with the +Control Pad to see its name and what it does, or a hint for one you haven't caught. It also shows how many you've caught in all and your best night.
-- **RECORDS:** critters raised, wonderful farewells in a row, forms, secrets and items found, wonderful farewells, games played, wishes made, its most-loved care and coins earned.
+- **FIREFLIES:** the field guide to the twelve fireflies. Pick one with the +Control Pad to see its name and what it does, or a hint for one you haven't caught. (How many you've caught in all, and your best night, are on the RECORDS tab.)
+- **RECORDS:** critters raised, wonderful farewells in a row, forms, secrets and items found, wonderful farewells, games played, wishes made, its most-loved care, coins earned, fireflies caught and your best firefly night.
 
 ## Questions and answers
 

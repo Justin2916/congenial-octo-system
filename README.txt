@@ -7,7 +7,19 @@ What v8.2 adds over v8.1
   then the window shuts.
 - The farewell star: a light gathers on the critter as it rises, stays sharp through the white-out, glides into
   its place in the night sky and then gently breathes and turns. A sad goodbye leaves a small, faint star.
-- No changes to stats, prices or balance. Save version unchanged (15).
+- The jar on the windowsill glows softly at night (no more specks flying round it).
+- v8.2b fixes and changes (Nov 12):
+  - The yard keeps its own mess: the critter poops outside too, and CLEAN works there.
+  - Moonflowers keep their colours on every yard screen (menus, feeding, petting).
+  - Save and quit in the yard: CONTINUE goes back to the yard. LIGHTS outside says "YOU'RE OUTSIDE!".
+  - The pinwheel, sprinkler and frisbee moved off the front moonflower patch.
+  - Plant a seed, then water it: a watering can pours onto the patch and the soil darkens.
+  - Rare moonflowers: Moon Lily 1 in 3, Starbloom 1 in 2, Twinglow 1 in 5 (Aurora still 1 in 20).
+  - Fireflies: 20-second rounds, a quicker jar, and a faintly glowing firefly can be scooped. The totals moved
+    to the journal's RECORDS tab.
+  - A shorter life: about 8 days as a grown-up (was 12); the shop still opens all its levels.
+  - The journal's moonflowers stand on their soil.
+- No changes to prices; the stat changes above were asked for. Save version unchanged (15).
 - Tools: gen/sprfx.py (sprite art -> sprfx.h), tools/mgba_shot.c (screenshots on the real mGBA core), and 11 new
   `sprites` tests (186 checks in all).
 
