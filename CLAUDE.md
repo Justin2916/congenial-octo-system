@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 212 checks (184 in the v8.1 sections, 12 `sprites` and 16 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 213 checks (185 in the v8.1 sections, 12 `sprites` and 16 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
@@ -89,7 +89,8 @@ Other details:
   - By day the clock moves 8 steps every 7 ticks (7 minutes); at night 1 step every 2 ticks (4 minutes): an 11-minute
     day. The critter's own counters count every tick, and every care timer in `sim_tick` counts 1.5x the ticks it
     did before v8.3, so care keeps the same real-time pace (the `fidelity` checks). PET's cooldown (`P16(0x40)`, set
-    to 60 by the original when petting raises happiness) counts down 2 ticks in 3, so it stays 90 s.
+    when petting raises happiness) is set to 90 in the original's own code (`orig_update.c`, was 60) and counts down
+    every tick: 90 s.
   - The clock runs in `M_NONE`, `M_EXTRAS`, `M_NAME`, `M_GARDEN` and `M_FLY`. It is paused everywhere else.
 - **Display:**
   - The game uses Mode 4 (8-bit bitmap) with page flipping. Draw through `DRAW_TARGET`.

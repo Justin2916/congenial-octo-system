@@ -2250,7 +2250,7 @@ static void sim_tick(void){
   int sick=0;
   if(PET[P_SICK]){ sick=1; if(P16(0x3C)<1000){ if(++P16(0x3C)==180) mistake(); } }
   if(PET[P_MEDS]){ if(++P16(0x42)>=135){ P16(0x42)=0; PET[P_MEDS]--; } }
-  if(P16(0x40) && (P32(0x1C)%3)) P16(0x40)--;   // PET's cooldown (the original sets 60): 2 ticks in 3, so still 90 s (v8.3)
+  if(P16(0x40)) P16(0x40)--;   // PET's cooldown: the original's game_update sets 90 (one-second ticks)
   u16 ht=++P16(0x44);
   int sv_starve= starve>45, dmg= (sick && P16(0x3C)>45)? (sv_starve? 2 : 1) : (sv_starve? 1 : 0), healed=0;
   if(dmg){ dmg*=2; if(ht>=9){ P16(0x44)=0; u16 h=P16(0x16); P16(0x16)=(u16)(h>dmg? h-dmg : 0); } }   // (v8.3: 2x the loss every 9 ticks = the old pace)

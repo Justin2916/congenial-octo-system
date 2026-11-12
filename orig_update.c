@@ -1984,7 +1984,7 @@ L_08001b54: ;  r2=*(volatile u8*)((r0+7));                                      
                if((C&&!Z)) goto L_08001b5e;                                                                         /* 01b58 bhi #0x8001b5e */
 L_08001b5a: ;  { u32 X_=(u32)(r2), Y_=(u32)(1u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r2=R_; } /* 01b5a adds r2, r2, #1 */
                *(volatile u8*)((r0+7))=(u8)r2;                                                                      /* 01b5c strb r2, [r0, #7] */
-L_08001b5e: ;  r2=60u; N=(r2)>>31; Z=(r2)==0;                                                                       /* 01b5e movs r2, #0x3c */
+L_08001b5e: ;  r2=90u; N=(r2)>>31; Z=(r2)==0;   /* EDITED v8.3: PET's cooldown, 90 one-second ticks (was 60 at 1.5 s) */                                                                       /* 01b5e movs r2, #0x3c */
                *(volatile u16*)((r0+r1))=(u16)r2;                                                                   /* 01b60 strh r2, [r0, r1] */
                r0=0x030002A4u;                                                                                      /* 01b62 ldr r0, [pc, #0x38] */
                r1=0u; N=(r1)>>31; Z=(r1)==0;                                                                        /* 01b64 movs r1, #0 */

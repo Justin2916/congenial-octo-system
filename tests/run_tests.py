@@ -431,6 +431,11 @@ def t_fixes():
     im = Image.open(shot).convert('RGB')
     ink = sum(1 for y in range(34, 52) for x in range(14, 110) if sum(im.getpixel((x, y))) < 300)
     check('fixes: v8.3: a new game\'s egg shows no name on its status card', ink == 0, f'ink {ink}')
+    # v8.3: petting's cooldown is set where the original sets it (90 one-second ticks) and counts down every tick
+    sc = BOOT + DAY + [p8(PET + 7, 1), *p16(PET + 0x40, 0)] + ['press RIGHT', 'wait 6'] * 6 + ['press A'] + \
+         [x for _ in range(8) for x in ('wait 15', f'peek {PET + 0x40:08x} 2')] + ['wait 2700', f'peek {PET + 0x40:08x} 2', 'wait 2820', f'peek {PET + 0x40:08x} 2']
+    cd = [int.from_bytes(x[1], 'little') for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('fixes: v8.3: petting rests 90 s (the cooldown starts at 90, counts a second a tick)', max(cd[:8]) == 90 and 42 <= cd[8] <= 47 and cd[9] == 0, str(cd))
     # START right away takes the suggested name; SELECT suggests another
     sc = egg + [f'peek {g("nm"):08x} 8', 'press SELECT', 'wait 3', f'peek {g("nm"):08x} 8', 'press START', 'wait 5', f'peek {g("names"):08x} 8']
     v = pk(run(ROM, sc, copy_save('adult')))
