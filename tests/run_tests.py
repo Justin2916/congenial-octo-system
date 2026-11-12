@@ -845,6 +845,12 @@ def t_yard():
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('yard: A plants a seed in dry soil', v[0][0] == 1 and not v[0][4] & 1, str(list(v[0])))
     check('yard: A again waters it: the watering can comes, keys wait for it', v[1][0] > 60 and v[2][4] & 1 and v[3][0] == 13 and v[4][0] == 0, str(v[1:]))
+    # v8.2c: while the can is out, the cursor can't move to another patch
+    sc = BOOT + ['poke32 0300004c 1f4', p8(PET + 12, 1), 'wait 4', p8(GD + 6, 1), p8(GD + 10, 0), 'press SELECT', 'wait 6', 'press A', 'wait 10', 'press A', 'wait 4',
+                 'press RIGHT', 'wait 4', 'press A', 'wait 2', 'press RIGHT', 'wait 4', 'press LEFT', 'wait 4', f'peek {g("gcur"):08x} 1', f'peek {g("gwater"):08x} 1',
+                 'wait 80', 'press RIGHT', 'wait 4', f'peek {g("gcur"):08x} 1']
+    v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('yard: while the can is out the cursor stays on its patch; after, it moves', v[0] == 1 and v[1] > 0 and v[2] == 2, str(v))
     # a firefly glowing only faintly can be scooped now
     FLY = g('fly'); night = ['poke32 0300004c 1f4', p8(PET + 12, 1), 'wait 4']
     sc = BOOT + night + yard[:3] + ['wait 20', 'press R', 'wait 10'] + [p8(FLY + 12 * i + 8, 0) for i in range(8)] + [p8(FLY + 12 * i + 9, 250) for i in range(8)] + \
