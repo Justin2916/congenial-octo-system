@@ -4985,6 +4985,10 @@ void hook_render(void){
   if(G.mode==M_NONE && SCENE==3 && ANIM_KIND<=1 && PET[P_STAGE]>=1 && PET[P_STAGE]<=7){ DRAW_TARGET=O_BACKBUF(); feed_draw(); }
   if(G.mode==M_NONE && SCENE==4 && PET[P_STAGE]>=1 && PET[P_STAGE]<=7){  // the status card shows boy/girl
     text(G.dex.gender? "GIRL" : "BOY",G.dex.gender? 128 : 131,41,G.dex.gender? C_RED : C_BLUE);
+    // v8.3: the weight in pounds, at least 10 (display only: the stored weight and every care rule are unchanged)
+    { int bg=pget(214,62), fg=bg; for(int y=58;y<67 && fg==bg;y++) for(int x=130;x<136;x++){ int v=pget(x,y); if(v!=bg){ fg=v; break; } }
+      int lb=PET[P_WEIGHT]<10? 10 : PET[P_WEIGHT]; char b[12]; char *q=sint(b,lb); scpy(q," LB");
+      fill(172,57,52,10,bg); text(b,172,58,fg); }
     card_care(); }
   if(title_showing()) title_draw();        // phase 4: our painted title replaces the original's
   switch(G.mode){
