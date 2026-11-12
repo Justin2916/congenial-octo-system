@@ -151,7 +151,7 @@ def t_growth():
     grow(1, care_set('c_grow', garden=130), 16, 'good care, around plants = DUNEROSE')
     grow(1, care_set('c_grow', play=20), 3, 'good care, lots of play = FLUFFBUD')
     grow(1, care_set('c_grow', yard=45, play=30), 3, 'good care, play beats yard time (1.9x vs 1.1x its target) = FLUFFBUD')
-    grow(1, care_set('c_grow', yard=30, garden=60, play=8), 4, 'good care, nothing reaches its target = FRILLO')
+    grow(1, care_set('c_grow', yard=20, garden=50, play=6), 4, 'good care, nothing reaches its target = FRILLO')
     grow(2, care_set('c_grow', miss=(K_PLAY, 40)), 17, 'less care, sad a lot = THORNHOG')
     grow(2, care_set('c_grow', miss=(K_CLEAN, 30)), 18, 'less care, lived in a mess = SMOGWOOL')
     grow(2, care_set('c_grow', miss=(K_FOOD, 30)), 19, 'less care, went hungry = GUNKBILL')
