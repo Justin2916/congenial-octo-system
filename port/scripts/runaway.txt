@@ -1,0 +1,10 @@
+wait 60
+press A
+waitscene 1
+poke8 0300003b 1
+poke8 0300003e 1
+poke8 0300003f 0
+poke8 03000032 1
+TRAIL 2000
+FUZZ 2000 5
+TRAIL 1500

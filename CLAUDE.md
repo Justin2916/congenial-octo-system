@@ -248,7 +248,17 @@ Other details:
 - **Stage 1 is done:** see `port/PORT_MAP.md` (the map of every function, the data and the RAM), `port/orig.lst` (the full
   listing, from `tools/disasm.py`), `gen/orig_data.py` (all the original's data, which rebuilds byte-identical) and
   `tools/lockstep.py` (runs two ROMs on one script and names the first differing RAM bytes or pixels; it uses the
-  emulator's `trail` command). Stage 2, the helpers, is next.
+  emulator's `trail` command).
+- **Stage 2 is done:** every helper now runs from `orig.c` (linked at `0x08012000`, before `ext.c`, which doesn't move).
+  `patch.py` redirects the original's call sites (`redirect`) and puts a jump at each ported entry (`tramp`). Check a
+  port with `python3 tools/port_check.py REF.gba`, where REF is a build from before the change: it must say ALL
+  IDENTICAL. Stage 3 (`game_update`) is next. See `port/PORT_MAP.md`.
+- **Port rules learned:** a call the original makes at a site `patch.py` hooks must still go through that hook in the
+  port. For example, every `draw_sprite` call in the original goes to `ext.c`'s `hook_sprite`, so ported code calls
+  `hook_sprite`, not `o_draw_sprite`. Check `patch.py`'s hook lists for the function being ported.
+  Write VRAM 16 bits at a time (`volatile u16`), since a byte store writes both pixels. Check
+  odd library routines against the original with `tools/orig_call.py` (needs `pip install unicorn`). New `orig.c` data
+  goes to `.rodata`, which is fine; writable globals are still not allowed.
 
 ## Pinned for later (owner, Nov 12 2026)
 

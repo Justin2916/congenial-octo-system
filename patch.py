@@ -44,7 +44,14 @@ def redirect(orig_addr, name, sym):
     return n
 PORTED=[(0x0800e840,'sub_0800e840','o_rng_mix'), (0x0800f5f8,'back_buffer','o_back_buffer'), (0x0800f614,'dma_copy','o_dma_copy'),
         (0x0800f6c0,'save_write','o_save_write'), (0x0800f6e0,'sub_0800f6e0','o_save_read'), (0x0800f2a4,'sub_0800f2a4','o_hline'),
-        (0x0800efb4,'draw_box','o_draw_box')]
+        (0x0800efb4,'draw_box','o_draw_box'),
+        (0x0800f98c,'sub_0800f98c','o_udiv'), (0x0800f9d8,'sub_0800f9d8','o_udivmod'), (0x0800fa34,'sub_0800fa34','o_sdiv'),
+        (0x0800faa0,'sub_0800faa0','o_sdivmod'), (0x0800e854,'sub_0800e854','o_set_message'), (0x0800ec74,'draw_text','o_draw_text'),
+        (0x0800f63c,'sound_play','o_sound_play'),
+        (0x0800f070,'draw_sprite','o_draw_sprite'), (0x0800f37c,'sub_0800f37c','o_draw_hearts'),
+        (0x0800edb8,'sub_0800edb8','o_draw_stars'), (0x0800cc94,'sub_0800cc94','o_build_palette'),
+        (0x0800e8f0,'sub_0800e8f0','o_minigame_start'), (0x0800ce5c,'sub_0800ce5c','o_game_init'),
+        (0x0800d690,'sub_0800d690','o_prerender')]
 
 for a in (0x0800f7dc,0x0800f7e6,0x0800f7f0,0x0800f7fa,0x0800f804,0x0800f80a,0x0800f810):
     bl_patch(a, syms['hook_update'], 0x080001ac)
@@ -57,6 +64,18 @@ for a in (0x8002bb4,0x8002bca,0x8002e54,0x80037c2,0x8005442,0x8005508,0x80087ac,
     bl_patch(a, syms['hook_sprite'], 0x0800f070)
 bl_patch(0x080047ae, syms['hook_bg_copy'], 0x0800f614)
 ported_calls=sum(redirect(*p) for p in PORTED)   # (after the hooks above, which keep their own call sites)
+# ...and the original function's own entry jumps to ours, so every other caller (ext.c's O_* calls, the hooks) gets the
+# port too: bx pc / nop (to ARM) ; ldr ip, [pc] ; bx ip ; .word ours|1 (16 bytes, 18 when the entry is not 4-aligned)
+SIZES={0x0800e840:16, 0x0800f5f8:18, 0x0800f614:12, 0x0800f6c0:32, 0x0800f6e0:50, 0x0800f2a4:204, 0x0800efb4:188,
+       0x0800f98c:76, 0x0800f9d8:92, 0x0800fa34:108, 0x0800faa0:122, 0x0800e854:110, 0x0800ec74:314, 0x0800f63c:120,
+       0x0800f070:552, 0x0800f37c:624, 0x0800edb8:486, 0x0800cc94:426, 0x0800e8f0:798, 0x0800ce5c:2086, 0x0800d690:4432}
+def tramp(addr, target):
+    o=addr-0x08000000; code=b''
+    if addr%4: code+=struct.pack('<H',0x46C0)
+    code+=struct.pack('<HH',0x4778,0x46C0)+struct.pack('<III',0xE59FC000,0xE12FFF1C,target|1)
+    if len(code)>SIZES[addr]: return 0
+    rom[o:o+len(code)]=code; return 1
+trampolines=sum(tramp(a, syms[s]) for a,n,s in PORTED)
 # critter sprite table and name tables -> RAM copies maintained by the extension (for secret forms)
 RAM_SPR=0x0203D000; RAM_NAMES=0x0203D040
 def lit_patch(addr,new,expect):
@@ -92,4 +111,4 @@ rom[0xBD]=(-(chk+0x19))&0xFF
 # pad to a multiple of 4 KB
 while len(rom)%0x1000: rom.append(0xFF)
 open(os.path.join(HERE,'CritterKeep.gba'),'wb').write(rom)
-print('ok', hex(len(rom)), 'ported calls', ported_calls, 'hook_update', hex(syms['hook_update']), 'hook_render', hex(syms['hook_render']))
+print('ok', hex(len(rom)), 'ported calls', ported_calls, 'entries', trampolines, 'hook_update', hex(syms['hook_update']), 'hook_render', hex(syms['hook_render']))

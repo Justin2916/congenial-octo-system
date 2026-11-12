@@ -412,12 +412,13 @@ static int keybit(const char *k){
 }
 
 static void trail_rec(FILE *tf, long frame){   // per-frame block hashes for tools/lockstep.py
-  u32 rec[2+128+64+10+2]; int r=0; rec[r++]=(u32)frame; rec[r++]=rd32(0x03000020);
+  u32 rec[2+128+64+10+2+2]; int r=0; rec[r++]=(u32)frame; rec[r++]=rd32(0x03000020);
   #define FNV(p,n) ({ u32 h=2166136261u; const u8 *q_=(p); for(int j_=0;j_<(n);j_++){ h^=q_[j_]; h*=16777619u; } h; })
   for(int b=0;b<128;b++) rec[r++]=FNV(iwram+b*256,256);
   for(int b=0;b<64;b++) rec[r++]=FNV(ewram+b*4096,4096);
   { u16 dc=io[0]|(io[1]<<8); const u8 *s=&vram[(dc&0x10)?0xA000:0]; for(int b=0;b<10;b++) rec[r++]=FNV(s+b*3840,3840); }
   rec[r++]=FNV(pal,512); rec[r++]=FNV(pal+512,512);
+  rec[r++]=FNV(io,0x100); rec[r++]=FNV(oam,1024);   // the display and sound registers, and the sprites
   fwrite(rec,4,r,tf);
 }
 int main(int argc, char **argv){

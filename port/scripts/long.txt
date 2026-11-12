@@ -1,0 +1,5 @@
+wait 60
+press A
+waitscene 1
+poke8 0300003b 1
+FUZZ 20000 2026

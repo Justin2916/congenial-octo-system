@@ -7,11 +7,13 @@ import os, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ref = os.path.abspath(sys.argv[1])
+import shutil, tempfile
+CUR = os.path.join(tempfile.mkdtemp(prefix='pc'), 'cur.gba'); shutil.copy(os.path.join(ROOT, 'CritterKeep.gba'), CUR)   # (a rebuild meanwhile can't mix in)
 scripts = sys.argv[2:] or sorted(os.path.join(ROOT, 'port', 'scripts', f) for f in os.listdir(os.path.join(ROOT, 'port', 'scripts')))
-saves = [os.path.join(ROOT, 'tests', 'saves', s + '.sav') for s in ('adult', 'hatched', 'teen', 'oldgrown')]
+saves = [os.path.join(ROOT, 'tests', 'saves', s + '.sav') for s in ('adult', 'hatched', 'teen', 'oldgrown', 'oldchild')]
 def one(job):
     sc, sv = job
-    r = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'lockstep.py'), ref, os.path.join(ROOT, 'CritterKeep.gba'), sc, sv],
+    r = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'lockstep.py'), ref, CUR, sc, sv],
                        capture_output=True, text=True)
     return f'{os.path.basename(sc):12s} {os.path.basename(sv):13s} ' + (r.stdout.strip() or r.stderr.strip()[-300:]), r.returncode
 bad = 0

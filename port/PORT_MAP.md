@@ -141,10 +141,56 @@ over a set of scripts that reach the code (title, room, feeding, every icon, min
 the runaway, a night, the farewell). It must stay identical. The stack area is expected to differ, and so are `ext.c`'s
 own tables if our code moved.
 
+## Stage 2: the helpers (done)
+
+All 22 called helpers now run from our C (`orig.c`, `orig.h`), linked at `0x08012000`, in the gap before `ext.c`, so
+`ext.c` doesn't move. Two hooks in `patch.py` connect them:
+- **Call sites:** `redirect()` points every call the original's own code makes to a ported function at ours. There are
+  319 of them.
+- **Entries:** `tramp()` overwrites the original function's first 16–18 bytes with a jump to ours (`bx pc` / ARM
+  `ldr ip, [pc]; bx ip` / address), so other callers reach the port too: `ext.c`'s `O_*` calls and the hooks.
+
+What each one turned out to be (names in `orig.c`):
+
+| Original | Ours | Notes |
+|---|---|---|
+| `0x0800E840` | `o_rng_mix` | |
+| `0x0800F5F8` | `o_back_buffer` | |
+| `0x0800F614` | `o_dma_copy` | Too small for an entry jump (12 B); its one caller in the original is redirected, and `hook_bg_copy` replaces the other. |
+| `0x0800F6C0`, `0x0800F6E0` | `o_save_write`, `o_save_read` | |
+| `0x0800F2A4` | `o_hline` | **VRAM must be written 16 bits at a time:** the compiler turned a high-byte update into a byte store, and on the GBA a byte store to VRAM writes both pixels. The edge pixels use `volatile u16`. |
+| `0x0800EFB4` | `o_draw_box` | The message box. |
+| `0x0800F98C`, `F9D8`, `FA34`, `FAA0` | `o_udiv`, `o_udivmod`, `o_sdiv`, `o_sdivmod` | The standard ARM divide routines (the ...mod ones return the remainder in `r1`). Dividing by 0 gives all ones, with the dividend as the remainder. Checked against the original with unicorn (`tools/orig_call.py`). |
+| `0x0800E854` | `o_set_message` | Also restarts the message chime and switches an awake critter to its talking animation (scene 3). |
+| `0x0800EC74` | `o_draw_text` | |
+| `0x0800F63C` | `o_sound_play` | |
+| `0x0800F070` | `o_draw_sprite` | Has a fast path (even x and scale, fully on screen). |
+| `0x0800F37C` | `o_draw_hearts` | The status card's 4-heart meter. |
+| `0x0800EDB8` | `o_draw_stars` | 40 twinkling stars (a golden-ratio hash), only drawn on the sky colour. |
+| `0x0800CC94` | `o_build_palette` | The lights-off dimming (7/32) and the night tint. |
+| `0x0800E8F0` | `o_minigame_start` | BERRY CATCH. The original's hint text is an inlined copy of `draw_text`. |
+| `0x0800CE5C` | `o_game_init` | Its "CRITTER" / "KEEP" title letters are four more inlined `draw_text` calls (scale 3). |
+| `0x0800D690` | `o_prerender` | It draws the room by day or night and depends on nothing else, so it is kept as the two pictures it draws (`tools/extract_rooms.py` → `gen/orig_rooms.py` → `orig_rooms.h`, 7.3 KB run-length coded), plus the 19 colour-map entries it sets. Its last 8 drawings, the original critter pictures in two rows, go through `draw_sprite`, which the game hooks (`ext.c`'s `hook_sprite` gives critters their new art). So they are recorded as calls, with the colour map at each, and made at run time through the hook. The extracted pictures match the unpatched original byte for byte. |
+
+**Hooked calls stay hooked:** the original's own `draw_sprite` calls (all of them, including those in the heart meter and
+`prerender`) go to `ext.c`'s `hook_sprite`. The port calls `hook_sprite` at the same places. Missing that shows up as
+different critter or heart pixels.
+
+**Checking:** `tools/port_check.py REF.gba` runs every script in `port/scripts` against 5 saves. The scripts cover the
+room, menus, help, minigames, a new egg, the runaway, the title, and 20,000-frame random-input runs; together they reach
+every scene, 0–9. The ported build must be **identical** to the reference: all RAM except the stack, the screen, both
+palettes, the display and sound registers, and OAM, on every frame. The emulator runs in turbo mode for this (`turbo
+1`: no frame runs out of CPU time), so a faster port stays in step with the original frame for frame. The frame-budget
+tests check speed separately.
+
+Still read from the original ROM: the ported helpers' data (the font, the palettes, the heart pictures, two tunes,
+three strings), at their old addresses (`orig.h`). It moves into our source with the rest of the data in stage 5, when
+nothing else reads it there.
+
 ## The plan from here
 
 1. **Done (stage 1):** this map, the listing, the data extracted byte-identical, and the harness.
-2. **Port the helpers:** `rng_mix`, `set_message`, `hline`, `draw_box`, `draw_text`, `draw_sprite`,
+2. **Done (stage 2), see above. Port the helpers:** `rng_mix`, `set_message`, `hline`, `draw_box`, `draw_text`, `draw_sprite`,
    `draw_specks`, `draw_sprite_row`, the sound player, save read/write, the palette builder, `back_buffer`, `dma_copy`,
    the divides, then `game_init`, `minigame_start` and `prerender`. About 8.5 KB of code.
 

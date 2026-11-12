@@ -17,7 +17,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TURBO = '--real' not in sys.argv   # turbo: the CPU never runs out of time, so a faster port stays frame-for-frame in step
 
 EMU = os.path.join(ROOT, 'emu')
-REC = 2 + 128 + 64 + 10 + 2
+REC = 2 + 128 + 64 + 10 + 2 + 2
 
 # names for the original's RAM (see port/PORT_MAP.md); ranges are [start, end)
 NAMES = [
@@ -92,7 +92,7 @@ def main():
             if j < 128: what.append(f'IWRAM {0x03000000 + j * 256:#x}')
             elif j < 192: what.append(f'EWRAM {0x02000000 + (j - 128) * 4096:#x}')
             elif j < 202: what.append(f'screen rows {(j - 192) * 16}-{(j - 192) * 16 + 15}')
-            else: what.append('BG palette' if j == 202 else 'OBJ palette')
+            else: what.append({202: 'BG palette', 203: 'OBJ palette', 204: 'I/O registers (display, sound)', 205: 'OAM (sprites)'}[j])
         print('  differing blocks:', ', '.join(what))
         ma, va = dump_at(ra, script, save, tmp, 'a', 0, k); mb, vb = dump_at(rb, script, save, tmp, 'b', 0, k)
         diffs = []
@@ -107,6 +107,6 @@ def main():
         pxs = [i for i in range(38400) if va[i] != vb[i]]; print(f'  screen pixels differing: {len(pxs)}')
         for i in pxs[:12]: print(f'    ({i % 240},{i // 240}) colour {va[i]} -> {vb[i]}')
         sys.exit(1)
-    print(f'identical for {len(A)} frames')
+    print(f'identical for {len(A)} frames (scenes {sorted({r[1] for r in A})})')
 
 if __name__ == '__main__': main()
