@@ -41,7 +41,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 201 checks (175 from v8.1, 12 `sprites` and 14 `yard` in v8.2).
+`python3 tests/run_tests.py <sections...>`. There are 202 checks (175 from v8.1, 12 `sprites` and 15 `yard` in v8.2).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: compares the clock against v7, byte for byte, by day only (on its own, it's slow)
@@ -210,20 +210,17 @@ Other details:
   it is restored before the next update).
 - **Runaway (health ran out), "a home in the wild":** `runaway_draw` plays six shots (`RA_T1..RA_T5`, timed by
   FRAMES), each fading in from black: its room at dawn (warm palette, empty bowl, bindle), the yard at sunrise (one
-  look back at the house), the meadow path (it shrinks 3 -> 2 -> 1 as it walks away), the stream where a wild family
-  of its own kind (its form: a grown-up and two little ones) by their burrow under the willow take it in (hearts), the night sky where a faint glow (sprite)
+  look back at the house), the meadow path (it shrinks 3 -> 2 -> 1 as it walks away), the stream where a wild grown-up
+  of its own kind is looking after two little Bliplets by their burrow under the willow (one hops over to say hello;
+  it stays and helps take care of them), the night sky where a faint glow (sprite)
   flickers out at its star's place, and the end card ("NOT EVERY CRITTER BECOMES A STAR."). The words sit in the
   bottom bar (`ra_box`) so the picture stays clear. New art: `gen/meadow.py` -> `meadow.h` (two painted 240x106
-  backgrounds, one 96-colour palette from 144: `runaway_palette`; the family uses the runaway's own critter art).
+  backgrounds, one 96-colour palette from 144: `runaway_palette`; the wild grown-up uses the runaway's own art; the
+  Bliplets are 256-colour sprites (`spr_bliplet`, `bl_tiles_load`: six poses of `CR_PIX` form 1 at 32 px copied to OBJ
+  VRAM from unit `BL_UNIT`, their colours put in the OBJ palette's critter slots) since BG2 has one critter palette).
+  Lore: star-seeds sometimes land in the meadow and hatch wild, with nobody to raise them; the grown-ups there are
+  kindred spirits who left for the same reasons.
 
-
-## Pinned for later (owner, Nov 12 2026)
-
-- **Runaway family, lore fix:** keep the grown-up the same form as the runaway (a kindred spirit shaped by the same
-  kind of life), but make the little ones Bliplets: star-seeds that fell in the meadow and hatched wild. Text idea:
-  "...WHERE A WILD CRITTER, JUST LIKE IT, WAS LOOKING AFTER TWO LITTLE ONES." Needs the Bliplets drawn as hardware
-  sprites (8bpp OBJ with the album art/palette, or 4bpp per-bank), since BG2 can show only one critter palette.
-  Today the family is the runaway's own form at sizes 2 and 1, which clashes with the star-seed origin and stages.
 
 ## Decided against (owner, Nov 11 2026)
 

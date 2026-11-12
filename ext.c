@@ -709,7 +709,7 @@ typedef struct {
   // v8.2: hardware sprites. The render fills this shadow; the next update (in vblank) copies it to OAM/palette
   u16 so[SPR_MAX][3]; s16 sa[SPR_AFF][4]; u16 sp[SPR_PALS][16];
   u8 spr_n, spr_naff, spr_npal, spr_ready, spr_live, spr_shown, spr_win, spr_pad; u8 win[4];   // win: x0,x1,y0,y1
-  u8 jrec, yp_n, v82c_pad[2];   // v8.2c: the RECORDS tab's first row shown; the yard's poops to draw
+  u8 jrec, yp_n, spr_bl, spr_bl_ok;   // (spr_bl: Bliplet sprites wanted this frame; spr_bl_ok: their tiles are in OBJ VRAM)   // v8.2c: the RECORDS tab's first row shown; the yard's poops to draw
 } State;
 
 #define G (*(State*)0x0203E000u)
@@ -1414,6 +1414,7 @@ static void fx_watch(void){
 // sin in Q8 over 64 steps (a full turn)
 static const s16 SIN64[64]={0,25,50,74,98,121,142,162,181,198,213,226,237,245,251,255,256,255,251,245,237,226,213,198,181,162,142,121,98,74,50,25,
   0,-25,-50,-74,-98,-121,-142,-162,-181,-198,-213,-226,-237,-245,-251,-255,-256,-255,-251,-245,-237,-226,-213,-198,-181,-162,-142,-121,-98,-74,-50,-25};
+static void bl_tiles_load(void);
 static void spr_sync(void){
   if(G.spr_ready){
     G.spr_ready=0;
@@ -1425,6 +1426,9 @@ static void spr_sync(void){
     for(int i=G.spr_n;i<G.spr_shown;i++) OAM16[i*4]=0x0200;
     for(int j=0;j<G.spr_naff;j++) for(int k=0;k<4;k++) OAM16[(j*4+k)*4+3]=(u16)G.sa[j][k];
     for(int b=0;b<G.spr_npal;b++) for(int c=0;c<16;c++) OBJ_PAL[b*16+c]=G.sp[b][c];
+    if(G.spr_bl){ if(!G.spr_bl_ok){ bl_tiles_load(); G.spr_bl_ok=1; }
+      for(int i=0;i<CR_SLOTS;i++) OBJ_PAL[CR_SLOT_IDX[i]]=CR_PAL[1][i]; }   // the Bliplet's own colours, in the OBJ palette's critter slots
+    else G.spr_bl_ok=0;
     if(G.spr_win){ REG16(0x04000040)=(u16)((G.win[0]<<8)|G.win[1]); REG16(0x04000044)=(u16)((G.win[2]<<8)|G.win[3]);
       REG16(0x04000048)=0x0034;    // inside window 0 (the open window): BG2, OBJ, blending
       REG16(0x0400004A)=0x0024; }  // everywhere else: BG2 and blending, no OBJ
@@ -1436,7 +1440,25 @@ static void spr_sync(void){
     REG16(0x04000052)=0x1010;                                 // EVA=16, EVB=16: add the light
   }
 }
-static void spr_begin(void){ G.spr_n=0; G.spr_naff=0; G.spr_npal=0; G.spr_win=0; G.spr_ready=1; }
+static void spr_begin(void){ G.spr_n=0; G.spr_naff=0; G.spr_npal=0; G.spr_win=0; G.spr_bl=0; G.spr_ready=1; }
+// v8.2c: Bliplets as 256-colour sprites (their art straight from critters.h, 32 px, a few poses), so they can stand
+// beside a critter of another form: the bitmap has one set of critter colours, the OBJ palette has its own.
+#define BL_UNIT 560                    // first tile (32-byte units) of the Bliplet poses in OBJ VRAM; 32 units a pose
+static const u8 BL_POSES[6]={POSE_IDLE,POSE_BLINK,POSE_HAPPY,POSE_WALK1,POSE_WALK2,POSE_LOVE};
+static void bl_tiles_load(void){
+  for(int j=0;j<6;j++){
+    const u8 *src=CR_PIX+CR_PIXOFF[1][BL_POSES[j]][1], *rows=CR_ROWS+2*CR_ROWOFF[1][BL_POSES[j]][1];
+    volatile u32 *dst=OBJ_VRAM+(BL_UNIT-512+j*32)*8;
+    for(int ty=0;ty<4;ty++) for(int tx=0;tx<4;tx++) for(int r=0;r<8;r++){   // 8bpp, 1D: 16 tiles of 8x8, row by row
+      int y=ty*8+r, a=rows[2*y], b=rows[2*y+1]; u32 w0=0, w1=0;
+      for(int k=0;k<8;k++){ int x=tx*8+k; u32 v= (a!=255 && x>=a && x<=b)? src[y*32+x] : 0; if(k<4) w0|=v<<(8*k); else w1|=v<<(8*(k-4)); }
+      dst[(ty*4+tx)*16+r*2]=w0; dst[(ty*4+tx)*16+r*2+1]=w1; } }
+}
+static void spr_bliplet(int cx,int feet,int pose_i,int flip){   // pose_i: index into BL_POSES; feet: the bottom row
+  if(G.spr_n>=SPR_MAX) return; G.spr_bl=1;
+  int x=cx-16, y=feet-31;
+  u16 *o=G.so[G.spr_n++]; o[0]=(u16)((y&255)|0x2000); o[1]=(u16)((x&511)|0x8000|(flip? 0x1000 : 0)); o[2]=(u16)(BL_UNIT+pose_i*32);
+}
 // a palette bank: 16 colours from 0 (transparent)
 static int spr_pal(void){ if(G.spr_npal>=SPR_PALS) return -1; int b=G.spr_npal++; for(int c=0;c<16;c++) G.sp[b][c]=0; return b; }
 static u16 rgb_scale(u16 c,int k){   // k: 0..256
@@ -2545,18 +2567,23 @@ static void runaway_draw(void){
     if(sc>=2) ra_bindle(cx-4*sc,y-11*sc,sc,-1);
     ra_box("IT WALKED FAR OUT","INTO THE MEADOW...");
   }
-  else if(s==3){   // the stream: a wild family of its own kind, by their burrow, take it in
-    int u=(int)t-RA_T3, wv=u>130 && ((u>>4)&1);
-    // the family is its own kind, living wild: a grown-up just like it, and two little ones (same art, same colours)
-    ra_crit(wv? POSE_WAVE1 : (u>130? POSE_WAVE2 : POSE_IDLE),186,119,2,0);
-    ra_crit(u>150? (((u>>4)&1)? POSE_HAPPY : POSE_IDLE) : (((u>>5)&1)? POSE_BLINK : POSE_IDLE),156,119-(u>150 && ((u>>3)&1)),1,0);
-    ra_crit(u>170? (((u>>4)&1)? POSE_IDLE : POSE_HAPPY) : POSE_IDLE,214,120-(u>170 && !((u>>3)&1)),1,0);
-    int x= u<130? -24+u : 106, pose= u<130? (walk? POSE_WALK1 : POSE_WALK2) : u<190? POSE_IDLE : (((u>>4)&1)? POSE_WAVE1 : POSE_WAVE2);
-    if(u>=230) pose=POSE_LOVE;
-    ra_crit(pose,x,119-(u<130? walk : 0),2,1);
-    if(u<130) ra_bindle(x-8,97-walk,2,-1);
-    if(u>=230){ for(int i=0;i<3;i++){ int q=((u-230)*2+i*22)%60; ra_heart(118+i*26-(i==1? 4 : 0),100-q/2); } }
-    ra_box("...WHERE A WILD FAMILY, JUST","LIKE IT, TOOK IT IN.");
+  else if(s==3){   // the stream: a wild one of its own kind, looking after two little Bliplets by the burrow; it stays
+    int u=(int)t-RA_T3;
+    // the wild grown-up (its own kind: the same art and colours), watching over the little ones
+    ra_crit(u>200? (((u>>4)&1)? POSE_WAVE1 : POSE_WAVE2) : (((u>>5)&3)==1? POSE_BLINK : POSE_IDLE),186,121,3,0);
+    // two Bliplets: shy behind the grown-up at first, then one hops over to say hello
+    { int hop=(u>>3)&1, x1, f1, p1;
+      if(u<150){ x1=156; f1=0; p1= ((u>>4)&3)==2? 1 : 0; }                              // peeking
+      else if(u<210){ x1=156-(u-150)*2/3; f1=0; p1= hop? 3 : 4; }                         // hopping over
+      else { x1=116; f1=0; p1= u>240? 5 : 2; }                                           // hello!
+      spr_bliplet(x1,121-(u>=150 && u<210? hop*2 : 0),p1,f1);
+      spr_bliplet(222,122-(u>230? (((u>>3)&1)? 2 : 0) : 0), u>230? 2 : (((u>>5)&1)? 1 : 0), 1); }
+    int x= u<130? -26+u : 100, pose= u<130? (walk? POSE_WALK1 : POSE_WALK2) : u<210? POSE_IDLE : POSE_LOVE;
+    ra_crit(pose,x,121-(u<130? walk : 0),3,1);
+    if(u<130) ra_bindle(x-12,92-walk,3,-1);
+    if(u>=215){ for(int i=0;i<3;i++){ int q=((u-215)*2+i*22)%60; ra_heart(98+i*22,84-q/2); } }
+    if(u<215) ra_box("...WHERE A WILD ONE, JUST LIKE IT,","WAS LOOKING AFTER TWO LITTLE ONES.");
+    else ra_box("IT STAYED, AND HELPED","TAKE CARE OF THEM.");
   }
   else if(s==4){   // that night: its star's place stays empty
     int u=(int)t-RA_T4;

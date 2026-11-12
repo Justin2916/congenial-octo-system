@@ -867,6 +867,11 @@ def t_yard():
     shots = [v[i][1][0] for i in range(0, 12, 2)]; pal = struct.unpack('<H', v[7][1])[0]
     check('yard: running away plays its six shots in order (room, yard, meadow, stream, sky, end)', shots == [1, 2, 3, 4, 5, 6], str(shots))
     check('yard: the meadow and stream scenes have their own palette', pal == md0, f'{pal} want {md0}')
+    # the stream: two Bliplets as 256-colour sprites, in the Bliplet's own colours (the bitmap shows the grown-ups')
+    crp = re.search(r'CR_PAL\[CR_FORMS\]\[CR_SLOTS\]=\{\{[^}]*\},\{(\d+)', open(f'{CK}/critters.h').read()).group(1)
+    sc = BOOT + DAY + [*p16(PET + 0x16, 1), p8(PET + 6, 0), *p16(PET + 0x36, 200), 'waitscene 9', 'wait 1000', 'peek 07000000 16', 'peek 050002f0 2']
+    v = peeks(run(ROM, sc, copy_save('adult'))); o = struct.unpack('<8H', v[0][1]); pc = struct.unpack('<H', v[1][1])[0]
+    check('yard: by the stream, two Bliplets (256-colour sprites in their own colours)', o[0] & 0x2000 and o[4] & 0x2000 and pc == int(crp), f'{[hex(x) for x in o]} {pc} want {crp}')
     # v8.2c: the RECORDS tab scrolls
     sc = BOOT + DAY + ['press SELECT', 'wait 6', p8(g('mode'), 10), p8(g('jtab'), 5), 'wait 6'] + ['press DOWN', 'wait 4'] * 4 + [f'peek {g("jrec"):08x} 1', 'press UP', 'wait 4', f'peek {g("jrec"):08x} 1']
     v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]

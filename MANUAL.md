@@ -324,7 +324,7 @@ After about 8 years as a grown-up, your critter rises to become a star, around n
 | 60–79% | A happy farewell | +20 coins |
 | Under 60% | A sad goodbye: a dim star | None |
 
-A critter whose health runs out leaves instead: at dawn it packs its little bindle and goes off across the meadow, where a wild family of its own kind takes it in. It finds a new home, but it leaves no star. After any ending a new star-seed falls. Coins start again at 20 plus any bonus, and the bag, toys, decor, shop and garden start fresh. The journal keeps everything.
+A critter whose health runs out leaves instead: at dawn it packs its little bindle and goes off across the meadow, where it helps a wild one of its own kind look after two little ones. It finds a new home, but it leaves no star. After any ending a new star-seed falls. Coins start again at 20 plus any bonus, and the bag, toys, decor, shop and garden start fresh. The journal keeps everything.
 
 ## The journal
 
