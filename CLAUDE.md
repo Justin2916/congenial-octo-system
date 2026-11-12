@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 214 checks (186 in the v8.1 sections, 12 `sprites` and 16 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 216 checks (187 in the v8.1 sections, 13 `sprites` and 16 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
@@ -247,6 +247,13 @@ Other details:
   - The feed menu reopens on the same choice after a MEAL or a SNACK (`live_update`).
   - The runaway's cuts go black at once and hold 2 frames (`fx_hold`, and the check at the top of `hook_render`).
   - The jar's glow shows behind the menus too, kept off a menu's box by window 0 (`menu_box`, `spr_win` 2).
+  - Asleep and sick, the sick symbol (the original's picture `0x0800FFC4`) shows beside the Zs, in colour 11,
+    which stays bright with the lights off (`hook_render`, after `O_RENDER`).
+  - Awake by day with the lights off, it loses an extra happy heart every `DARK_TICKS` (120 s) ("... DOESN'T LIKE THE
+    DARK...", `G.dark_t`).
+  - 15 fireflies drift over the night yard on the garden screen (`yard_fireflies`, not during a round), in tonight's
+    common and uncommon colours. Their palettes are kept in `G.yf_pal` (rebuilt when `yf_key` changes), and
+    `SPR_MAX` is 40.
   - `udivmod` steps once per quotient bit. The old bit-by-bit divide made the night room with the jar drop to 30 fps
     on mGBA.
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its

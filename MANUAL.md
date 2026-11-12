@@ -36,7 +36,7 @@ The eight icons sit along the top and bottom of the screen. Move between them wi
 | Icon | What it does |
 |---|---|
 | FEED | Give a MEAL to fill hunger, or a SNACK to cheer it up. Too many snacks make it overweight and can make it sick. |
-| LIGHTS | Turn the lights off when it falls asleep, and back on in the morning. |
+| LIGHTS | Turn the lights off when it falls asleep, and back on in the morning. Left in the dark while it's awake, it gets glum and slowly loses happiness. |
 | PLAY | Pick one of four minigames and win coins (see **Minigames**). |
 | MEDS | Cure it when it is sick. Sometimes it needs a second dose. Medicine when it isn't sick only makes it pull a yuck face. |
 | CLEAN | Wash away the mess, in the room or in the yard (each keeps its own). A mess soon makes it sick. |

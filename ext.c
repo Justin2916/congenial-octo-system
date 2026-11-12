@@ -644,7 +644,7 @@ typedef struct { s16 x,y; s8 vx,vy; u8 k,t,live,wait,turn,pad; } Fly;   // v8.1:
 typedef struct { Patch p[3]; u8 seeds, vis_day, vis_n, news; u8 vis[3], ok; u32 found; u16 blooms, visits; u16 spare[6]; } Garden;
   // found: bits 0-8 the flowers (GK_*), 9-18 the visitors - kept forever, like the journal
 
-#define SPR_MAX 24
+#define SPR_MAX 40   /* v8.3: 15 yard fireflies take 30 */
 #define SPR_AFF 12
 #define SPR_PALS 12
 typedef struct {
@@ -719,7 +719,9 @@ typedef struct {
   u16 so[SPR_MAX][3]; s16 sa[SPR_AFF][4]; u16 sp[SPR_PALS][16];
   u8 spr_n, spr_naff, spr_npal, spr_ready, spr_live, spr_shown, spr_win, spr_pad; u8 win[4];   // win: x0,x1,y0,y1
   u8 jrec, yp_n, spr_bl, spr_bl_ok;   // (spr_bl: Bliplet sprites wanted this frame; spr_bl_ok: their tiles are in OBJ VRAM)   // v8.2c: the RECORDS tab's first row shown; the yard's poops to draw
-  u8 fx_hold, fx_hpad[3];             // v8.3: frames a fade stays at its start (the runaway's cuts: until both pages hold the new shot)
+  u8 fx_hold, fx_hpad[3];
+  u16 dark_t, dark_pad;
+  u16 yf_key; u8 yf_nk, yf_pad; u16 yf_pal[5][2][7];   // v8.3: the yard fireflies' palettes, for tonight's kinds (yf_key)               // v8.3: ticks awake by day with the lights off (an extra happy heart lost every DARK_TICKS)             // v8.3: frames a fade stays at its start (the runaway's cuts: until both pages hold the new shot)
 } State;
 
 #define G (*(State*)0x0203E000u)
@@ -2176,6 +2178,7 @@ static void life_watch(void){
 // 0x24 clock (u32), 0x28 hunger timer, 0x2A happy timer, 0x2C/0x2E poop timer/interval, 0x30/0x32 call timer/interval,
 // 0x34 call open, 0x36 starving, 0x38 unhappy, 0x3A messy, 0x3C sick, 0x3E lights left on, 0x40 cooldown,
 // 0x42 meds, 0x44 health timer, 0x46 fuss timer
+#define DARK_TICKS       120                /* v8.3: lights off by day, awake: an extra happy heart every 2 minutes */
 #define TICK_FRAMES      60                 /* v8.3: one tick every 60 frames (1 s); a day is 600 clock steps: 8 min of day, 3 of night */
 #define TICK_FRAMES_FAST 24                 /* FAST mode: 2.5 times as fast */
 
@@ -2241,6 +2244,10 @@ static void sim_tick(void){
     if(!PET[P_LIGHTS] && P16(0x3E)<1000){ u16 v=++P16(0x3E); if(v==68){ mistake(); if(PET[P_HAPPY]) PET[P_HAPPY]--; } }
   } else {
     awake=1; sleeping=0;
+    // v8.3: awake by day with the lights off, it gets glum: an extra happy heart every DARK_TICKS (2 minutes)
+    if(day && PET[P_LIGHTS] && !G.outside && st>=1 && st<=7){
+      if(++G.dark_t>=DARK_TICKS){ G.dark_t=0; if(PET[P_HAPPY]){ PET[P_HAPPY]--; { char b[40]; char *q=scpy(b,pet_name()); scpy(q," DOESN'T LIKE THE DARK..."); sim_msg(b); } } } }
+    else G.dark_t=0;
     { u16 v=++P16(0x28); if(v>=HUNGER_RATE[ri]){ P16(0x28)=0; if(PET[P_HUNGER] && --PET[P_HUNGER]==0){ sfx(0,SEQ_ALERT); P16(0x46)=0; } } }
     { u16 v=++P16(0x2A); if(v>=HAPPY_RATE[ri]){ P16(0x2A)=0; if(PET[P_HAPPY] && --PET[P_HAPPY]==0){ sfx(0,SEQ_ALERT); P16(0x46)=0; } } }
     { u16 v=++P16(0x2C); if(v>=P16(0x2E)){ P16(0x2C)=0; u32 r=orng(); P16(0x2E)=(u16)((((r>>16)*105u)>>16)+pbase); if(MESS_HERE<=3) MESS_HERE++; } }
@@ -3844,6 +3851,7 @@ static void garden_words(void){   // the bars, their words and any message: draw
   textc(h,120,144,wish_open()? GP_Y : C_HINT);   // (a shooting star: in gold)
   DRAW_TARGET=sv;
 }
+static void yard_fireflies(void);
 static void garden_screen_draw(void){
   if(G.bg_state!=4) build_bg(4);
   { const Patch *p=&G.gdn.p[G.gcur];
@@ -3858,6 +3866,7 @@ static void garden_screen_draw(void){
   if(G.gwater) can_draw(PATCH_X[G.gcur],PATCH_Y[G.gcur],CAN_T-G.gwater);   // v8.2b: the watering can
   copy_rect(0,0,240,28); copy_rect(0,134,240,160);
   if(G.gmsg_t){ int w=slen(G.gmsg)*6+12; copy_rect(120-w/2,32,120+w/2,48); }
+  yard_fireflies();
 }
 
 static void dex_text(const char *s,int x,int y,int c);
@@ -4678,6 +4687,35 @@ static u16 fly_out(void){   // who's out right now
   if(G.more.spare[0]==(u16)(G.ext.day+1)) m|=1u<<10;        // a wish made tonight
   return m;
 }
+// v8.3: fireflies all over the yard at night (sprites, like the release): 15 drift slowly and blink, in tonight's common
+// and uncommon colours (never a rare one). Only on the garden screen, and not during a round (those are the catchable ones).
+#define YF_N 15
+static const u8 YF_BX[YF_N]={14,67,120,173,226,67,120,173,14,67,120,173,226,67,120}, YF_BY[YF_N]={54,83,112,71,100,59,88,117,76,105,64,93,122,81,110};
+static void yard_fireflies(void){
+  if(G.mode!=M_GARDEN || !is_night()) return;
+  fly_tonight();
+  u16 m=fly_out()&0xFF; if(!m) return;
+  if(m!=G.yf_key){                                            // tonight's colours: a bright and a dim palette each (kept)
+    G.yf_key=m; G.yf_nk=0;
+    static const u8 GL[5]={0,18,50,100,170};
+    for(int k=0;k<8 && G.yf_nk<5;k++) if((m>>k)&1){ u16 kc=PAL[FK[k].col];
+      for(int d=0;d<2;d++){ int f= d? 110 : 256; u16 *q=G.yf_pal[G.yf_nk][d]; q[0]=0;
+        for(int L=1;L<=4;L++) q[L]=rgb_scale(kc,GL[L]*f>>8);
+        q[5]=rgb_scale(kc,f); q[6]=rgb_scale(rgb_mix(kc,0x7FFF,180),f); }
+      G.yf_nk++; } }
+  int nk=G.yf_nk, bank[5][2];
+  for(int j=0;j<nk;j++) for(int d=0;d<2;d++){ int b=spr_pal(); bank[j][d]=b; if(b>=0) for(int L=0;L<7;L++) G.sp[b][L]=G.yf_pal[j][d][L]; }
+  int t=(int)G.sky_t, j=0;
+  for(int i=0;i<YF_N;i++, j= j+1<nk? j+1 : 0){
+    int ph=((t>>1)+i*23)&127;                                 // its blink: bright, dim, a rest in the dark
+    if(ph>=104) continue;
+    int dim= ph<8 || ph>=88, b=bank[j][dim]; if(b<0) continue;
+    int x=YF_BX[i]+((SIN64[((t>>2)+i*9)&63]-128)*18>>8), y=YF_BY[i]+((SIN64[((t>>1)+i*13)&63]-128)*7>>8);
+    if(y<50) y=50; if(y>128) y=128;
+    if(!dim) spr_add(x,y,0,((t>>3)+i)&1? SPT_FCORE : SPT_FCORE2,b,-1,0,0);   // the bright heart, on top
+    spr_add(x,y,1,SPT_FGLOW,b,-1,0,0);                                       // its glow
+  }
+}
 static int fly_rounds_left(void){ fly_tonight(); return FLY_ROUNDS-(G.more.spare[7]&3); }
 static int fly_level(const Fly *f){   // 0 dark, 1 faint, 2 lit, 3 bright
   const FKind *K=&FK[f->k]; int per=K->on+K->gap, t=f->t;
@@ -5040,6 +5078,12 @@ void hook_render(void){
     if(G.mode==M_MENU) SCENE=1;              // our menu replaces the original's box
     O_RENDER();
     SCENE=sc;
+    // v8.3: asleep and sick, the sick symbol shows beside the Zs (the original only draws it while it is awake).
+    // In colour 11, which the lights-off dimming leaves bright.
+    if(sc==1 && G.mode==M_NONE && !G.outside && PET[P_ASLEEP] && PET[P_SICK] && PET[P_STAGE]>=1 && PET[P_STAGE]<=7){
+      u8 keep=CMAP['x']; CMAP['x']=11;
+      hook_sprite((const void*)0x0800FFC4u, 126, 42+(int)((FRAMES>>3)&2), 2, 0, 99);   // (the original's sick picture)
+      CMAP['x']=keep; }
   }
   if(help){ DRAW_TARGET=O_BACKBUF(); help_draw(); }
   if(G.mode==M_NONE && SCENE==9) runaway_draw(); else { G.gone_t=0; G.gone_bg=0; }
