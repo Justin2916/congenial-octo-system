@@ -877,6 +877,11 @@ def t_yard():
     sc = BOOT + DAY + ['press SELECT', 'wait 6', p8(g('mode'), 10), p8(g('jtab'), 5), 'wait 6'] + ['press DOWN', 'wait 4'] * 4 + [f'peek {g("jrec"):08x} 1', 'press UP', 'wait 4', f'peek {g("jrec"):08x} 1']
     v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('yard: RECORDS scrolls down to its last rows and back up', v == [2, 1], str(v))
+    # v8.3: weight is kept at least its stage's lightest (baby 5, child 10, teen 20, grown-up 30); the overweight line is unchanged
+    W = PET + 9
+    v = [x[1][0] for x in peeks(run(ROM, BOOT + DAY + [p8(W, 3), 'wait 3', f'peek {W:08x} 1'], copy_save('adult')))]
+    b = [x[1][0] for x in peeks(run(ROM, BOOT + DAY + [p8(W, 2), 'wait 3', f'peek {W:08x} 1'], copy_save('hatched')))]
+    check('yard: weight never under its stage\'s lightest (grown-up 30, baby 5)', v == [30] and b == [5], f'{v} {b}')
     # eight grown-up days: it says farewell at noon on its eighth day, not before
     DAYA = g('ext', 'e_day'); AD = g('ext', 'e_adult')
     d = struct.unpack('<H', peeks(run(ROM, BOOT + [f'peek {DAYA:08x} 2'], copy_save('adult')))[0][1])[0]

@@ -41,7 +41,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 203 checks (176 in the v8.1 sections, 12 `sprites` and 15 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 204 checks (176 in the v8.1 sections, 12 `sprites` and 16 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: compares the clock against v7, byte for byte, by day only (on its own, it's slow)
@@ -221,6 +221,14 @@ Other details:
   Lore: star-seeds sometimes land in the meadow and hatch wild, with nobody to raise them; the grown-ups there are
   kindred spirits who left for the same reasons.
 
+
+## v8.3 (in progress)
+
+- **Weight** shows in pounds on the status card (the original draws "70G"; we cover it and write "70 LB").
+  `min_weight()`: baby 5, child 10, teen 20 (`PH_TEEN`), grown-up and secret 30; `weight_floor()` keeps the stored
+  weight at least that (every update: growing up, old saves), and salad and Hop Hop stop there. The overweight line
+  (`overfed`, the original's `MIN_W*2+24`: 34/44/60/80) is deliberately unchanged.
+- **Secret forms** can't appear before the 4th grown-up day (`check_special`: `day - adult_day < 3`).
 
 ## Decided against (owner, Nov 11 2026)
 

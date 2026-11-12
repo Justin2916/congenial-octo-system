@@ -2262,7 +2262,11 @@ static void live_update(u32 k){ sim_frame(); O_UPDATE(k); life_watch(); }
 // ================================================================== LIFE CYCLE
 static int grown_days(void){ return (u16)(G.ext.day - G.ext.adult_day); }
 static const u8 MIN_W[8]={0,5,10,18,18,28,28,28};    // the original's lightest weight per stage
-static int overfed(void){ u8 st=PET[P_STAGE]; return st<=7 && PET[P_WEIGHT]>=MIN_W[st]*2+24; }
+static int overfed(void){ u8 st=PET[P_STAGE]; return st<=7 && PET[P_WEIGHT]>=MIN_W[st]*2+24; }   // (v8.3: the line stays on the original's table)
+// v8.3: each stage's lightest weight, in pounds: baby 5, child 10, teen 20, grown-up and secret forms 30. The weight
+// is kept at least this (growing up, salad, Hop Hop, old saves); the overweight line above is unchanged.
+static int min_weight(void){ u8 st=PET[P_STAGE]; return st<=1? 5 : st==2? 10 : G.dex.phase==PH_TEEN? 20 : 30; }
+static void weight_floor(void){ u8 st=PET[P_STAGE]; if(st>=1 && st<=7){ int lo=min_weight(); if(PET[P_WEIGHT]<lo) PET[P_WEIGHT]=(u8)lo; } }
 static CareWin *care_win(void){ return (G.dex.phase==PH_GROW || G.dex.phase==PH_TEEN)? &G.care.grow : &G.care.adult; }
 static void cw_add(u16 *v,int k){ u32 t=*v+(u32)k; *v=(u16)(t>60000? 60000 : t); }
 static void care_play(int pts){ u8 st=PET[P_STAGE]; if(st>=1 && st<=7){ cw_add(&care_win()->play,pts); } }
@@ -2975,7 +2979,7 @@ static void apply_item(int it){
   PET[P_HUNGER]=(u8)clampi(PET[P_HUNGER]+I->hunger,0,4);
   PET[P_HAPPY]=(u8)clampi(PET[P_HAPPY]+I->happy,0,4);
   PET[P_BOND]=(u8)clampi(PET[P_BOND]+I->bond,0,4);
-  PET[P_WEIGHT]=(u8)clampi(PET[P_WEIGHT]+I->weight,1,99);
+  PET[P_WEIGHT]=(u8)clampi(PET[P_WEIGHT]+I->weight,min_weight(),99);
 }
 static const char *bag_status(int it){
   if(IS_TOY(it)) return G.ext.active_toy==it? "IN USE" : "TOY";
@@ -3197,7 +3201,7 @@ static void mini_finish(void){
 }
 static void mini_apply(u16 keys){
   int r=G.rating, g=G.game;
-  if(g==G_HOP) PET[P_WEIGHT]=(u8)clampi(PET[P_WEIGHT]-1,1,99);
+  if(g==G_HOP) PET[P_WEIGHT]=(u8)clampi(PET[P_WEIGHT]-1,min_weight(),99);
   if(r>=1) PET[P_HAPPY]=(u8)clampi(PET[P_HAPPY]+(r>2? 2 : r)+(g==G_GUESS),0,4);
   if(r>=2){ PET[P_BOND]=(u8)clampi(PET[P_BOND]+1,0,4); if(G.ext.stars<255) G.ext.stars++; }
   if(r>=1){   // what a good round does for its kind of care
@@ -3986,6 +3990,7 @@ void hook_update(u32 keys){
   fx_watch();   // (v8 phase 6: near the start of the frame, where register changes don't tear)
   spr_sync();   // (v8.2: the sprites the last render asked for)
   poop_sync();
+  weight_floor();   // (v8.3: growing up, old saves: never under its stage's lightest)
   flush_crit_palette();
   // the original reloads the palette every vblank (40-63 to black): put the food's colours back straight away, so
   // they are right for the whole frame on hardware, not only from wherever the draw gets to
@@ -4985,10 +4990,9 @@ void hook_render(void){
   if(G.mode==M_NONE && SCENE==3 && ANIM_KIND<=1 && PET[P_STAGE]>=1 && PET[P_STAGE]<=7){ DRAW_TARGET=O_BACKBUF(); feed_draw(); }
   if(G.mode==M_NONE && SCENE==4 && PET[P_STAGE]>=1 && PET[P_STAGE]<=7){  // the status card shows boy/girl
     text(G.dex.gender? "GIRL" : "BOY",G.dex.gender? 128 : 131,41,G.dex.gender? C_RED : C_BLUE);
-    // v8.3: the weight in pounds, at least each stage's lowest (display only: the stored weight and every care rule are unchanged)
+    // v8.3: the weight in pounds (kept at least its stage's lightest: weight_floor)
     { int bg=pget(214,62), fg=bg; for(int y=58;y<67 && fg==bg;y++) for(int x=130;x<136;x++){ int v=pget(x,y); if(v!=bg){ fg=v; break; } }
-      u8 st=PET[P_STAGE]; int lo= st<=1? 5 : st==2? 10 : G.dex.phase==PH_TEEN? 20 : 30;   // each stage's lowest: baby, child, teen, grown-up (and secret)
-      int lb=PET[P_WEIGHT]<lo? lo : PET[P_WEIGHT]; char b[12]; char *q=sint(b,lb); scpy(q," LB");
+      int lb=PET[P_WEIGHT]; char b[12]; char *q=sint(b,lb); scpy(q," LB");
       fill(172,57,52,10,bg); text(b,172,58,fg); }
     card_care(); }
   if(title_showing()) title_draw();        // phase 4: our painted title replaces the original's
