@@ -1,5 +1,6 @@
 # build outputs (build.sh)
 ext.o
+orig.o
 ext.elf
 ext.bin
 patch.log
