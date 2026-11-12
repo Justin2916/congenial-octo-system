@@ -235,6 +235,18 @@ Other details:
   teen 2 mornings, grown-up 8 days), so they take 2/3 the real time. Growth targets a third lower (`T_YARD` 27,
   `T_GARDEN` 80, `T_PLAY` 11); Sunpuff 40 yard samples (10 min), Glimmer `T_GLIMMER` 80 (10 min with its plants).
 
+## Pinned for later (owner, Nov 12 2026)
+
+- **Port the original game into our source** (no more `CritterKeep_original.gba` + `patch.py`). The original is ~70 KB:
+  about 20 functions (compiled with little optimisation; two big ones, the per-frame update and the screen drawing)
+  plus its art, font, messages, sound tables and data. We call it through 9 entry points (`O_UPDATE`, `O_RENDER`,
+  `O_BACKBUF`, `O_DMACOPY`, `O_SOUND`, `O_SAVE`, `O_BOX`, `O_TEXT`, `O_SPRITE`) and patched hooks. Plan, keeping a working
+  game after every stage, each checked against the original in the test emulator (RAM and screen identical):
+  1. map the code, extract its data into generators; 2. port the helpers (save, sound, text, box, sprite);
+  3. port the update (scenes, icon actions, hatch/evolve, its runaway part); 4. port the drawing; 5. our own startup
+  code, a standalone build. Estimate: 5-8 working rounds (~15-25 h). It would retire the workarounds: re-ORing DISPCNT,
+  the poop swap and hiding, drawing "LB" over "70G", watching the original's timers (PET's cooldown).
+
 ## Decided against (owner, Nov 11 2026)
 
 - Keeping the critter out of decorated room corners, or drawing decor in front of it: the critter covering decor
