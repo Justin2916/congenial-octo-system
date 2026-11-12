@@ -106,7 +106,7 @@ Your critter grows while it is awake.
 
 ## Day and night
 
-Each day ends with a night that lasts about 4 minutes (about 1½ minutes on FAST). At night the clock moves more slowly, but your critter's needs keep their usual pace. When your critter gets sleepy, turn the lights off; turn them on again in the morning. While it sleeps there is still plenty to do:
+Each day ends with a night that lasts about 3 minutes (about 1¼ minutes on FAST). At night the clock moves more slowly, but your critter's needs keep their usual pace. When your critter gets sleepy, turn the lights off; turn them on again in the morning. While it sleeps there is still plenty to do:
 
 - **A wishing star** crosses the sky on some nights.
 - **A bedtime story** can be read from the SELECT menu, one a night.

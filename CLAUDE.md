@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 213 checks (185 in the v8.1 sections, 12 `sprites` and 16 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 214 checks (186 in the v8.1 sections, 12 `sprites` and 16 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
@@ -86,7 +86,7 @@ Other details:
   `PET_CLOCK` at `0x0300004C`.
 - **Time:**
   - A day is 600 clock steps; night is steps 480–599. A tick is 1 s (v8.3).
-  - By day the clock moves 8 steps every 7 ticks (7 minutes); at night 1 step every 2 ticks (4 minutes): an 11-minute
+  - By day the clock moves a step every tick (8 minutes); at night 2 steps every 3 ticks (3 minutes): an 11-minute
     day. The critter's own counters count every tick, and every care timer in `sim_tick` counts 1.5x the ticks it
     did before v8.3, so care keeps the same real-time pace (the `fidelity` checks). PET's cooldown (`P16(0x40)`, set
     when petting raises happiness) is set to 90 in the original's own code (`orig_update.c`, was 60) and counts down
@@ -242,6 +242,13 @@ Other details:
 - **Faster drain (option C; B, 0.6x, is the fallback if it feels too fast):** `HUNGER_RATE` {30,45,60,72} and
   `HAPPY_RATE` {36,51,66,78} ticks per heart (0.4x the time; a grown-up loses a hunger heart every 72 s, a happy one
   every 78 s). Bond and the other care timers are unchanged.
+- **Nov 12 fixes:**
+  - Day is 8 min and night 3 (was 7 and 4).
+  - The feed menu reopens on the same choice after a MEAL or a SNACK (`live_update`).
+  - The runaway's cuts go black at once and hold 2 frames (`fx_hold`, and the check at the top of `hook_render`).
+  - The jar's glow shows behind the menus too, kept off a menu's box by window 0 (`menu_box`, `spr_win` 2).
+  - `udivmod` steps once per quotient bit. The old bit-by-bit divide made the night room with the jar drop to 30 fps
+    on mGBA.
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its
   grown-up days start): Sunpuff = an Oakhart in the yard with `PET_CLOCK` < 150 on 3 days (`Dex.yard`, the day marker
   in `Life.pad`; "BASKS IN THE MORNING SUN!"); Glimmer = a Dunerose with 8 fireflies in the lantern in one night

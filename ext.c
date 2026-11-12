@@ -162,7 +162,16 @@ void __aeabi_memclr(void *d, unsigned n){ memset(d,0,n); }
 void __aeabi_memclr4(void *d, unsigned n){ memset(d,0,n); }
 void __aeabi_memcpy(void *d, const void *s, unsigned n){ memcpy(d,s,n); }
 void __aeabi_memcpy4(void *d, const void *s, unsigned n){ memcpy(d,s,n); }
-static u32 udivmod(u32 n, u32 d, u32 *rem){ u32 q=0, r=0; int i=31; while(i>0 && !(n>>i)) i--; for(;i>=0;i--){ r=(r<<1)|((n>>i)&1); if(r>=d){ r-=d; q|=1u<<i; } } if(rem) *rem=r; return q; }
+// v8.3: the divisor is shifted up to the dividend and back, a step per bit of the quotient (so x%5 for a small x is a few
+// steps; it was over 30, enough that the night room's firefly jar pushed it past a frame on real hardware)
+static u32 udivmod(u32 n, u32 d, u32 *rem){
+  u32 q=0; int s=0;
+  if(n>=d){
+    while(!(d&0x80000000u) && (d<<1)<=n){ d<<=1; s++; }
+    for(;;){ if(n>=d){ n-=d; q|=1u<<s; } if(!s) break; d>>=1; s--; }
+  }
+  if(rem) *rem=n; return q;
+}
 u32 __aeabi_uidiv(u32 n, u32 d){ return d? udivmod(n,d,0) : 0; }
 s32 __aeabi_idiv(s32 n, s32 d){ if(!d) return 0; int neg=(n<0)^(d<0); u32 q=udivmod(n<0?-n:n, d<0?-d:d, 0); return neg?-(s32)q:(s32)q; }
 unsigned long long __aeabi_uidivmod(u32 n, u32 d){ u32 r=0, q= d? udivmod(n,d,&r):0; return ((unsigned long long)r<<32)|q; }
@@ -710,6 +719,7 @@ typedef struct {
   u16 so[SPR_MAX][3]; s16 sa[SPR_AFF][4]; u16 sp[SPR_PALS][16];
   u8 spr_n, spr_naff, spr_npal, spr_ready, spr_live, spr_shown, spr_win, spr_pad; u8 win[4];   // win: x0,x1,y0,y1
   u8 jrec, yp_n, spr_bl, spr_bl_ok;   // (spr_bl: Bliplet sprites wanted this frame; spr_bl_ok: their tiles are in OBJ VRAM)   // v8.2c: the RECORDS tab's first row shown; the yard's poops to draw
+  u8 fx_hold, fx_hpad[3];             // v8.3: frames a fade stays at its start (the runaway's cuts: until both pages hold the new shot)
 } State;
 
 #define G (*(State*)0x0203E000u)
@@ -1365,7 +1375,8 @@ static void fx_shake(int t){ G.shake_t=(u8)t; }
 static void fx_tick(void){
   int lvl=G.fx_lvl>>8;
   REG_BLDCNT = lvl? (u16)(0x0034|(G.fx_kind<<6)) : 0; REG_BLDY=(u16)lvl;     // BG2 and the backdrop
-  if(G.fx_lvl) G.fx_lvl = G.fx_lvl>G.fx_step? G.fx_lvl-G.fx_step : 0;
+  if(G.fx_hold) G.fx_hold--;
+  else if(G.fx_lvl) G.fx_lvl = G.fx_lvl>G.fx_step? G.fx_lvl-G.fx_step : 0;
   if(G.mos_fix){ int m=G.mos_fix>15? 15 : G.mos_fix; REG_BG2CNT|=0x40; REG_MOSAIC=(u16)(m|(m<<4)); }
   else if(G.mos_t){ int t=G.mos_t--, h=G.mos_len/2; if(!h) h=1; int m= t>h? (G.mos_len-t)*G.mos_max/h : t*G.mos_max/h; if(m>15) m=15;
     REG_BG2CNT|=0x40; REG_MOSAIC=(u16)(m|(m<<4)); }
@@ -1429,8 +1440,9 @@ static void spr_sync(void){
       for(int i=0;i<CR_SLOTS;i++) OBJ_PAL[CR_SLOT_IDX[i]]=CR_PAL[1][i]; }   // the Bliplet's own colours, in the OBJ palette's critter slots
     else G.spr_bl_ok=0;
     if(G.spr_win){ REG16(0x04000040)=(u16)((G.win[0]<<8)|G.win[1]); REG16(0x04000044)=(u16)((G.win[2]<<8)|G.win[3]);
-      REG16(0x04000048)=0x0034;    // inside window 0 (the open window): BG2, OBJ, blending
-      REG16(0x0400004A)=0x0024; }  // everywhere else: BG2 and blending, no OBJ
+      if(G.spr_win==2){ REG16(0x04000048)=0x0024; REG16(0x0400004A)=0x0034; }   // a menu's box: no OBJ inside it
+      else { REG16(0x04000048)=0x0034;    // inside window 0 (the open window): BG2, OBJ, blending
+      REG16(0x0400004A)=0x0024; } }  // everywhere else: BG2 and blending, no OBJ
     G.spr_shown=G.spr_n; G.spr_live=G.spr_n? 1 : 0;
   }
   // OBJ, 1D tile mapping and window 0: ours to set and clear (main keeps them when it flips the page)
@@ -2164,7 +2176,7 @@ static void life_watch(void){
 // 0x24 clock (u32), 0x28 hunger timer, 0x2A happy timer, 0x2C/0x2E poop timer/interval, 0x30/0x32 call timer/interval,
 // 0x34 call open, 0x36 starving, 0x38 unhappy, 0x3A messy, 0x3C sick, 0x3E lights left on, 0x40 cooldown,
 // 0x42 meds, 0x44 health timer, 0x46 fuss timer
-#define TICK_FRAMES      60                 /* v8.3: one tick every 60 frames (1 s); a day is 600 clock steps: 7 min of day, 4 of night */
+#define TICK_FRAMES      60                 /* v8.3: one tick every 60 frames (1 s); a day is 600 clock steps: 8 min of day, 3 of night */
 #define TICK_FRAMES_FAST 24                 /* FAST mode: 2.5 times as fast */
 
 static const u8 HUNGER_RATE[4]={30,45,60,72}, HAPPY_RATE[4]={36,51,66,78};   // (v8.3: ticks per heart; a grown-up loses one every ~1:12 / 1:18)   // baby, child, teen, grown-up
@@ -2205,7 +2217,8 @@ static void sim_tick(void){
   // critter does still runs at its usual pace, since that counts these steps (P32 0x1C), not the clock
   // v8.3: daylight moves 8 steps every 7 ticks (7 min), the night a step every 2 ticks (4 min); the critter's own
   // counters still count every tick, and every care timer below counts 1.5 times the ticks it did, so care keeps its pace
-  { u32 c=P32(0x24); if(c<480) c+= (P32(0x1C)%7==0)? 2 : 1; else if(!(P32(0x1C)&1)) c++; P32(0x24)= c>=600? 0 : c; }
+  // v8.3 (Nov 12): daylight a step every tick (8 min), the night two steps in three ticks (3 min): still an 11-minute day
+  { u32 c=P32(0x24); if(c<480) c++; else if(P32(0x1C)%3) c++; P32(0x24)= c>=600? 0 : c; }
   if(sv>=14){ SAVE_CNT=0; sim_save(); }
   if(st==0){                                                  // the egg hatches after 20 steps, in the room
     if(P32(0x20)<20 || SCENE!=1) return;
@@ -2277,7 +2290,13 @@ static void sim_frame(void){
   sim_tick();                             // take that step now, use the numbers in order, then wind back one step
   ORIG_RNG=xs_back(G.sim_r);                // so the original's own step lands exactly where the clock left off
 }
-static void live_update(u32 k){ sim_frame(); O_UPDATE(k); life_watch(); }
+static void live_update(u32 k){
+  u32 sc=SCENE, ak=ANIM_KIND;
+  sim_frame(); O_UPDATE(k); life_watch();
+  // v8.3: after a MEAL or a SNACK the feed menu opens again, on the same choice (B closes it, as always)
+  if(sc==3 && ak<=1 && SCENE==1 && G.mode==M_NONE && PET[P_STAGE]>=1 && PET[P_STAGE]<=7 && !PET[P_ASLEEP]){
+    SCENE=2; *(volatile u32*)0x030002D4=ak; }
+}
 
 // ================================================================== LIFE CYCLE
 static int grown_days(void){ return (u16)(G.ext.day - G.ext.adult_day); }
@@ -2548,7 +2567,7 @@ static void runaway_draw(void){
   u32 t=FRAMES-G.sendoff_t; if(t>4000) t=4000;
   int s=ra_shot();
   if(G.gone_t!=(u16)(s+1)){   // a new shot: build its background once, and fade in from black
-    G.gone_t=(u16)(s+1); fx_fade(FX_BLACK,16,26);
+    G.gone_t=(u16)(s+1); fx_fade(FX_BLACK,16,26); G.fx_hold=2;   // (black until both pages hold the new picture)
     if(s==0 || s==1){ build_bg(s==0? 1 : 3); u8 *d=YARD_BG; for(int i=0;i<28*240;i++) d[i]=C_OUTLINE; for(int i=134*240;i<160*240;i++) d[i]=C_OUTLINE;   // no icon bars: a cutscene
       if(s==1) sfx(0,SEQ_RUNAWAY); }
     else if(s==2) ra_bg_md(MD_BG_WALK);
@@ -4870,8 +4889,22 @@ static void fly_rel_sprites(int r){
 }
 // v8.2b: the jar's light is a soft glow (a hardware sprite, added to the picture) instead of specks round it: its
 // colour drifts slowly through the kinds inside, it breathes, and more fireflies make it bigger and brighter
+// the box a menu over the room covers (x, y, w, h), or 0 when none: the jar's glow (a sprite) stays outside it
+static int menu_box(int *r){
+  switch(G.mode){
+    case M_MENU:   r[0]=52; r[1]=34; r[2]=136; r[3]=92; return 1;
+    case M_EXTRAS: if(G.ex_yard) return 0; r[0]=136; r[1]=30; r[2]=96; r[3]=100; return 1;
+    case M_BAG:  { int rows=G.bag_n>5? 5 : G.bag_n; if(rows<2) rows=2; r[0]=24; r[1]=29; r[2]=192; r[3]=36+rows*12; return 1; }
+    case M_SURE:   r[0]=14; r[1]=44; r[2]=212; r[3]=74; return 1;
+    default: return 0;
+  }
+}
 static void jar_glow(int t){
-  if(G.mode!=M_NONE || SCENE!=1 || !G.fly_n) return;
+  // v8.3: it keeps glowing behind the menus too (in the room, outside the menu's box)
+  int box[4], boxed=0;
+  if(G.mode==M_NONE || G.mode==M_EAT){ if(SCENE!=1 && SCENE!=3) return; }
+  else if(!(boxed=menu_box(box))) return;
+  if(!G.fly_n) return;
   int ks[FK_N], m=0; for(int k=0;k<FK_N;k++) if((G.fly_kinds>>k)&1) ks[m++]=k; if(!m) return;
   int ph=t>>2, a=(ph>>6)%m, b=(a+1)%m, f=(ph&63)*4;                     // the colour drifts from one kind to the next
   u16 col=rgb_mix(PAL[FK[ks[a]].col],PAL[FK[ks[b]].col],f);
@@ -4881,6 +4914,8 @@ static void jar_glow(int t){
   static const u8 JG[7]={0,18,40,66,100,145,200};
   for(int L=1;L<=6;L++) G.sp[bk][L]=rgb_scale(col,JG[L]*br>>8);
   spr_add(LANT_X+6,LANT_Y+9,2,SPT_SGLOW,bk,spr_aff(sc,0),1,0);
+  if(boxed && !G.spr_win){   // window 0 = the menu's box, with no sprites inside it (spr_sync: spr_win 2)
+    G.spr_win=2; G.win[0]=(u8)box[0]; G.win[1]=(u8)(box[0]+box[2]); G.win[2]=(u8)box[1]; G.win[3]=(u8)(box[1]+box[3]); }
 }
 static void lantern_draw(void){
   if(G.outside) return;
@@ -4994,6 +5029,9 @@ void hook_render(void){
   spr_begin();
   G.sky_t++;
   if((G.sky_t&63)==1) check_window_panes();
+  // v8.3: the runaway's cuts: black at once, before this frame's palette is the next shot's (the old picture would
+  // otherwise show for a frame in the new shot's colours)
+  { int s=ra_shot(); if(s>=0 && G.gone_t!=(u16)(s+1)){ REG_BLDCNT=(u16)(0x0034|(FX_BLACK<<6)); REG_BLDY=16; } }
   set_extra_palette(); set_special_cmap();
   int help = G.mode==M_NONE && SCENE==7;    // our HOW TO PLAY pages cover the whole screen
   if(!help && (G.mode==M_NONE || G.mode==M_MENU || (G.mode==M_EXTRAS && !G.ex_yard) || G.mode==M_BAG || G.mode==M_EAT || G.mode==M_SURE)){
