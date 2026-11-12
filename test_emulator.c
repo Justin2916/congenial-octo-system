@@ -348,8 +348,10 @@ static void run_timers(int cyc){
 }
 
 static const int CPI = 2; // cycles per instruction (approx)
+static int turbo = 0;   // 'turbo 1': the CPU is never short of time (port lockstep: builds of different speed stay in step)
 static void run_cycles(int n){
   int done=0;
+  if(turbo){ long cap=4000000; check_irq(); while(!halted && !fault && cap--){ step(); check_irq(); } run_timers(n); return; }
   while(done<n && !fault){
     check_irq();
     if(halted){ run_timers(n-done); done=n; break; }
@@ -409,6 +411,15 @@ static int keybit(const char *k){
   for(int i=0;i<10;i++) if(!strcmp(k,names[i])) return 1<<i; fprintf(stderr,"bad key %s\n",k); return 0;
 }
 
+static void trail_rec(FILE *tf, long frame){   // per-frame block hashes for tools/lockstep.py
+  u32 rec[2+128+64+10+2]; int r=0; rec[r++]=(u32)frame; rec[r++]=rd32(0x03000020);
+  #define FNV(p,n) ({ u32 h=2166136261u; const u8 *q_=(p); for(int j_=0;j_<(n);j_++){ h^=q_[j_]; h*=16777619u; } h; })
+  for(int b=0;b<128;b++) rec[r++]=FNV(iwram+b*256,256);
+  for(int b=0;b<64;b++) rec[r++]=FNV(ewram+b*4096,4096);
+  { u16 dc=io[0]|(io[1]<<8); const u8 *s=&vram[(dc&0x10)?0xA000:0]; for(int b=0;b<10;b++) rec[r++]=FNV(s+b*3840,3840); }
+  rec[r++]=FNV(pal,512); rec[r++]=FNV(pal+512,512);
+  fwrite(rec,4,r,tf);
+}
 int main(int argc, char **argv){
   if(argc<3){ fprintf(stderr,"usage: emu rom.gba script [sram]\n"); return 1; }
   FILE *f=fopen(argv[1],"rb"); fseek(f,0,SEEK_END); romsize=ftell(f); fseek(f,0,SEEK_SET); rom=malloc(romsize+4); fread(rom,1,romsize,f); fclose(f);
@@ -476,24 +487,19 @@ int main(int argc, char **argv){
           if(b<18) keys&=~1; else if(b<30) keys&=~2; else if(b<36) keys&=~4; else if(b<39) keys&=~8; else if(b<50) keys&=~16; else if(b<61) keys&=~32; else if(b<70) keys&=~64; else if(b<79) keys&=~128; }
         run_frame(); frame++; u32 v=rd32(ad); if(v!=last){ printf("f%ld rng %08x FRAMES %u scene %u mode %u msg %u\n",frame,v,rd32(0x03000018),rd32(0x03000020),rd8(0x0203E008),rd8(0x0300003a)); last=v; } }
       keys=0x3FF; }
-    else if(!strcmp(cmd,"fuzz")){ int k=atoi(a1); unsigned r=strtoul(a2,0,0)|1; int mc[8]={0};
+    else if(!strcmp(cmd,"fuzz")){ int k=atoi(a1); unsigned r=strtoul(a2,0,0)|1; int mc[8]={0}; FILE *tf= a3[0]? fopen(a3,"ab") : 0;   // (a3: also record a trail)
       for(int i=0;i<k && !fault;i++){ if(i%6==0){ r^=r<<13; r^=r>>17; r^=r<<5; int b=r%100; keys=0x3FF;
           if(b<18) keys&=~1; else if(b<30) keys&=~2; else if(b<36) keys&=~4; else if(b<39) keys&=~8; else if(b<50) keys&=~16; else if(b<61) keys&=~32; else if(b<70) keys&=~64; else if(b<79) keys&=~128; }
-        run_frame(); frame++; mc[rd8(0x0203E008)&7]++; }
+        run_frame(); frame++; mc[rd8(0x0203E008)&7]++; if(tf) trail_rec(tf,frame); }
+      if(tf) fclose(tf);
       keys=0x3FF; printf("fuzz done frame %ld scene %u mode %u | mode frames:",frame,rd32(0x03000020),rd8(0x0203E008)); for(int m=0;m<8;m++) printf(" %d",mc[m]); printf("\n"); }
     else if(!strcmp(cmd,"objlog")){ int k=atoi(a1); FILE *lf=fopen(a2,"a"); for(int i=0;i<k&&!fault;i++){ run_frame(); frame++; u32 G=0x0203E000; fprintf(lf,"%ld %d",frame,rd8(G+0xec)); for(int j=0;j<10;j++){ u32 o=G+0x120+j*20; if(rd8(o+17)) fprintf(lf," %d:%d:%d:%d",j,(s32)rd32(o),(s32)rd32(o+4),rd8(o+16)); } fprintf(lf,"\n"); } fclose(lf); }
     else if(!strcmp(cmd,"trace")){ int k=atoi(a1); u32 ad=strtoul(a2,0,16); u32 last=0xFFFFFFFF; for(int i=0;i<k&&!fault;i++){ run_frame(); frame++; u32 v=rd32(ad); if(v!=last){ printf("f%ld %08x scene %u mode %u\n",frame,v,rd32(0x03000020),rd8(0x0203E008)); last=v; } } }
     else if(!strcmp(cmd,"trail")){   // port harness: for a1 frames, append per-frame block hashes to a2 (see tools/lockstep.py)
       int k=atoi(a1); FILE *tf=fopen(a2,"ab");
-      for(int i=0;i<k&&!fault;i++){ run_frame(); frame++;
-        u32 rec[2+128+64+10+2]; int r=0; rec[r++]=(u32)frame; rec[r++]=rd32(0x03000020);
-        #define FNV(p,n) ({ u32 h=2166136261u; const u8 *q_=(p); for(int j_=0;j_<(n);j_++){ h^=q_[j_]; h*=16777619u; } h; })
-        for(int b=0;b<128;b++) rec[r++]=FNV(iwram+b*256,256);              // IWRAM, 256-byte blocks
-        for(int b=0;b<64;b++) rec[r++]=FNV(ewram+b*4096,4096);             // EWRAM, 4 KB blocks
-        { u16 dc=io[0]|(io[1]<<8); const u8 *s=&vram[(dc&0x10)?0xA000:0]; for(int b=0;b<10;b++) rec[r++]=FNV(s+b*3840,3840); }   // the shown page, 16 rows each
-        rec[r++]=FNV(pal,512); rec[r++]=FNV(pal+512,512);
-        fwrite(rec,4,r,tf); }
+      for(int i=0;i<k&&!fault;i++){ run_frame(); frame++; trail_rec(tf,frame); }
       fclose(tf); }
+    else if(!strcmp(cmd,"turbo")){ turbo=atoi(a1); }
     else if(!strcmp(cmd,"echo")){ printf("%s", line+5); }
   }
   if(sramfn){ FILE *s=fopen(sramfn,"wb"); fwrite(sram,1,sizeof sram,s); fclose(s); }

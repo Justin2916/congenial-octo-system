@@ -5,13 +5,17 @@ screen or palette differ (and exactly which bytes, by name).
   python3 tools/lockstep.py A.gba B.gba script.txt save.sav [--frames N]
 
 The script is an ordinary ./emu script (wait, press, poke...). Its steps run as usual; after them the harness records
-N more frames (default 600; --frames=N). The stack (IWRAM 0x03007000+) is ignored unless --stack with the emulator's 'trail' command. A script line 'TRAIL n' records n frames at that
-point instead (several are allowed), so the inputs can sit between recordings.
+N more frames (default 600; --frames=N). Runs in the emulator's turbo mode (no frame ever runs out of
+CPU time, so builds of different speed stay in step; --real for real timing). The stack (IWRAM 0x03007000+) is ignored unless --stack with the emulator's 'trail' command. A script line 'TRAIL n' records n frames at that
+point instead (several are allowed), so the inputs can sit between recordings; 'FUZZ n seed' records n frames of
+random keys (the emulator's fuzz command, the same keys in both runs).
 Both ROMs start from their own copy of the save. Exit status 0 = identical, 1 = they differ.
 """
 import os, shutil, struct, subprocess, sys, tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TURBO = '--real' not in sys.argv   # turbo: the CPU never runs out of time, so a faster port stays frame-for-frame in step
+
 EMU = os.path.join(ROOT, 'emu')
 REC = 2 + 128 + 64 + 10 + 2
 
@@ -40,7 +44,9 @@ def run(rom, script, save, tmp, tag):
     lines = []
     for l in script:
         if l.startswith('TRAIL '): lines.append(f'trail {l.split()[1]} {tag}.trail')
+        elif l.startswith('FUZZ '): lines.append(f'fuzz {l.split()[1]} {l.split()[2]} {tag}.trail')
         else: lines.append(l)
+    if TURBO: lines.insert(0, 'turbo 1')
     sc = os.path.join(tmp, tag + '.txt'); open(sc, 'w').write('\n'.join(lines) + '\n')
     subprocess.run([EMU, rom, sc, sv], cwd=tmp, capture_output=True, timeout=1800)
     d = open(tr, 'rb').read() if os.path.exists(tr) else b''
@@ -51,10 +57,12 @@ def dump_at(rom, script, save, tmp, tag, n_before, k):
     sv = os.path.join(tmp, tag + 'd.sav'); shutil.copy(save, sv)
     lines = []; left = k + 1
     for l in script:
-        if l.startswith('TRAIL '):
-            n = int(l.split()[1]); m = min(n, left); lines.append(f'wait {m}'); left -= m
+        if l.startswith('TRAIL ') or l.startswith('FUZZ '):
+            n = int(l.split()[1]); m = min(n, left)
+            lines.append(f'wait {m}' if l.startswith('TRAIL ') else f'fuzz {m} {l.split()[2]}'); left -= m
             if left == 0: break
         else: lines.append(l)
+    if TURBO: lines.insert(0, 'turbo 1')
     lines += [f'dump {tag}.ram', f'vdump {tag}.vid']
     sc = os.path.join(tmp, tag + 'd.txt'); open(sc, 'w').write('\n'.join(lines) + '\n')
     subprocess.run([EMU, rom, sc, sv], cwd=tmp, capture_output=True, timeout=1800)
@@ -68,7 +76,7 @@ def main():
     if len(args) != 4: sys.exit(__doc__)
     ra, rb, scp, save = [os.path.abspath(x) for x in args]
     script = [l.rstrip('\n') for l in open(scp) if l.strip() and not l.startswith('#')]
-    if not any(l.startswith('TRAIL ') for l in script): script.append(f'TRAIL {frames}')
+    if not any(l.startswith(('TRAIL ', 'FUZZ ')) for l in script): script.append(f'TRAIL {frames}')
     tmp = tempfile.mkdtemp(prefix='lock')
     A = run(ra, script, save, tmp, 'a'); B = run(rb, script, save, tmp, 'b')
     if not A or len(A) != len(B):
@@ -96,7 +104,8 @@ def main():
             off = addr - 0x03000000 if addr >= 0x03000000 else addr - 0x02000000 + 32768
             print(f'  {addr:#010x} {name(addr):28s} {ma[off]:02x} -> {mb[off]:02x}')
         if len(diffs) > 24: print(f'  ... {len(diffs)} bytes in all')
-        px = sum(1 for i in range(38400) if va[i] != vb[i]); print(f'  screen pixels differing: {px}')
+        pxs = [i for i in range(38400) if va[i] != vb[i]]; print(f'  screen pixels differing: {len(pxs)}')
+        for i in pxs[:12]: print(f'    ({i % 240},{i // 240}) colour {va[i]} -> {vb[i]}')
         sys.exit(1)
     print(f'identical for {len(A)} frames')
 

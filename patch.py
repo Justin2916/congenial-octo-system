@@ -1,4 +1,4 @@
-import os, struct, subprocess, sys
+import os, re, struct, subprocess, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 orig = bytearray(open(os.path.join(HERE,'CritterKeep_original.gba'),'rb').read())
 ext = open(os.path.join(HERE,'ext.bin'),'rb').read()
@@ -13,7 +13,9 @@ for l in hdr.splitlines():
     if len(p)>=3 and p[1] in ('.data','.bss') and int(p[2],16)!=0: sys.exit('writable section present: '+l)
 
 BASE=0x08020000
-rom = orig + b'\xff'*(BASE-0x08000000-len(orig))
+PORT=0x08012000   # orig.c (the ported original) sits in the gap before ext.c; ext.bin starts there
+assert len(orig) <= PORT-0x08000000
+rom = orig + b'\xff'*(PORT-0x08000000-len(orig))
 rom += ext
 
 def bl_decode(addr):
@@ -30,6 +32,20 @@ def bl_patch(addr,target,expect):
     o=addr-0x08000000; rom[o:o+4]=struct.pack('<HH',hi,lo)
     assert bl_decode(addr)==target
 
+# --- the port (orig.c): every call the original's own code makes to a ported function goes to ours instead.
+# Call sites come from the listing (port/orig.lst, made by tools/disasm.py).
+CALLS={}
+for m in re.finditer(r'^  ([0-9a-f]{8})  [0-9a-f]{8}  bl (\w+)', open(os.path.join(HERE,'port','orig.lst')).read(), re.M):
+    CALLS.setdefault(m.group(2),[]).append(int(m.group(1),16))
+def redirect(orig_addr, name, sym):
+    n=0
+    for a in CALLS.get(name,[]):
+        if bl_decode(a)==orig_addr: bl_patch(a, syms[sym], orig_addr); n+=1
+    return n
+PORTED=[(0x0800e840,'sub_0800e840','o_rng_mix'), (0x0800f5f8,'back_buffer','o_back_buffer'), (0x0800f614,'dma_copy','o_dma_copy'),
+        (0x0800f6c0,'save_write','o_save_write'), (0x0800f6e0,'sub_0800f6e0','o_save_read'), (0x0800f2a4,'sub_0800f2a4','o_hline'),
+        (0x0800efb4,'draw_box','o_draw_box')]
+
 for a in (0x0800f7dc,0x0800f7e6,0x0800f7f0,0x0800f7fa,0x0800f804,0x0800f80a,0x0800f810):
     bl_patch(a, syms['hook_update'], 0x080001ac)
 for a in (0x0800f752,0x0800f814):
@@ -40,6 +56,7 @@ bl_patch(0x08007012, syms['hook_room_critter'], 0x0800f070)
 for a in (0x8002bb4,0x8002bca,0x8002e54,0x80037c2,0x8005442,0x8005508,0x80087ac,0x800973e,0x8009bf4,0x8009fce,0x800a064,0x800a0f8,0x800cc6c,0x800e738,0x800f452,0x800f4d6,0x800f55a,0x800f5e0):
     bl_patch(a, syms['hook_sprite'], 0x0800f070)
 bl_patch(0x080047ae, syms['hook_bg_copy'], 0x0800f614)
+ported_calls=sum(redirect(*p) for p in PORTED)   # (after the hooks above, which keep their own call sites)
 # critter sprite table and name tables -> RAM copies maintained by the extension (for secret forms)
 RAM_SPR=0x0203D000; RAM_NAMES=0x0203D040
 def lit_patch(addr,new,expect):
@@ -75,4 +92,4 @@ rom[0xBD]=(-(chk+0x19))&0xFF
 # pad to a multiple of 4 KB
 while len(rom)%0x1000: rom.append(0xFF)
 open(os.path.join(HERE,'CritterKeep.gba'),'wb').write(rom)
-print('ok', hex(len(rom)), 'hook_update', hex(syms['hook_update']), 'hook_render', hex(syms['hook_render']))
+print('ok', hex(len(rom)), 'ported calls', ported_calls, 'hook_update', hex(syms['hook_update']), 'hook_render', hex(syms['hook_render']))

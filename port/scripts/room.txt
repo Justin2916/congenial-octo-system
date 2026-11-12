@@ -1,0 +1,4 @@
+wait 60
+press A
+waitscene 1
+TRAIL 900
