@@ -380,9 +380,9 @@ Only read on if you're stuck.
 | Riddle | Secret form | What it takes |
 |---|---|---|
 | "Not one need missed, not one call unanswered." | Starwing | Any grown-up whose care stays near perfect |
-| "What does the keeper of the woods become in the sun?" | Sunpuff | An Oakhart that spends 10 minutes outside |
-| "It waits for a dandelion clock that plays its very best, again and again." | Zippit | A Fluffbud with 6 AMAZING! or PERFECT! games |
-| "It waits for a sweet bloom with a garden and a full heart." | Glimmer | A Dunerose with a Garden placed in the yard (for about 10 minutes) and full bond |
+| "Who rises with the sun, morning after morning?" | Sunpuff | An Oakhart that is out in the yard early in the morning (the first couple of minutes after sunrise) on 3 different mornings |
+| "What chases comets for wishes of its own?" | Zippit | A Fluffbud that wishes on 2 shooting stars as a grown-up |
+| "Whose lantern is full of little lights?" | Glimmer | A Dunerose that catches 8 fireflies in one night as a grown-up |
 | "What weaves its fern fronds when every corner is cozy?" | Nestle | A Frillo with all 4 room decor spots filled |
 | "What blooms when smoky wool is washed, day after day?" | Petalamb | A Smogwool kept clean for two days |
 | "Not one hungry day for the oily paddler." | Lilybill | A Gunkbill kept well fed for two days |

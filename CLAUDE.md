@@ -41,10 +41,10 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 205 checks (177 in the v8.1 sections, 12 `sprites` and 16 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 211 checks (183 in the v8.1 sections, 12 `sprites` and 16 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
-1. `fidelity`: since v8.3, the real-time care pace (hunger and happy hearts per minute); the old v7 clock match is retired
+1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
 2. `growth secrets care save fast rebal`
 3. `games fixes unlocks journal b1 stories health`
 4. `garden budget fuzz`
@@ -233,7 +233,15 @@ Other details:
 - **Secret forms** can't appear before the 4th grown-up day (`check_special`: `day - adult_day < 3`).
 - **Faster clock (~2-hour life):** see Time above. Stages keep their step/day counts (egg 20 ticks, baby 240, child 600,
   teen 2 mornings, grown-up 8 days), so they take 2/3 the real time. Growth targets a third lower (`T_YARD` 27,
-  `T_GARDEN` 80, `T_PLAY` 11); Sunpuff 40 yard samples (10 min), Glimmer `T_GLIMMER` 80 (10 min with its plants).
+  `T_GARDEN` 80, `T_PLAY` 11).
+- **Faster drain (option C; B, 0.6x, is the fallback if it feels too fast):** `HUNGER_RATE` {30,45,60,72} and
+  `HAPPY_RATE` {36,51,66,78} ticks per heart (0.4x the time; a grown-up loses a hunger heart every 72 s, a happy one
+  every 78 s). Bond and the other care timers are unchanged.
+- **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its
+  grown-up days start): Sunpuff = an Oakhart in the yard with `PET_CLOCK` < 150 on 3 days (`Dex.yard`, the day marker
+  in `Life.pad`; "BASKS IN THE MORNING SUN!"); Glimmer = a Dunerose with 8 fireflies in the lantern in one night
+  (`More.pad1` bit 2); Zippit = a Fluffbud that wished on 2 shooting stars (`Dex.games`). `Dex.yard/games` were only
+  read when a pre-v9 save converts. Nestle, Starwing and the less-care secrets are unchanged; the `PH_OLD` rules too.
 
 ## Pinned for later (owner, Nov 12 2026)
 

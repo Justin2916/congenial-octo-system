@@ -525,13 +525,13 @@ static const Form FORMS[N_FORMS] = {
  /* 7*/ {"DRIZZLE",2,ST_ADULT,2,0,300,
         "A SMALL RAIN CLOUD|THAT WATERS ITSELF.", ""},
  /* 8*/ {"SUNPUFF",1,ST_SECRET,0,0,700,
-        "AN OAKHART THAT LIVED|IN THE SUN. ITS PETALS|TURN TO FOLLOW THE SUN|ALL DAY LONG.", "AN OAKHART THAT|SPENDS 10 MINUTES|OUTSIDE."},
+        "AN OAKHART THAT LIVED|IN THE SUN. ITS PETALS|TURN TO FOLLOW THE SUN|ALL DAY LONG.", "AN OAKHART THAT|GREETS THE MORNING|SUN ON 3 DAYS."},
  /* 9*/ {"CHONKLE",2,ST_SECRET,2,0,260,
         "IT STUFFS ITS CHEEKS|WITH SEEDS FOR LATER,|THEN FORGETS WHERE IT|PUT LATER.", ""},
  /*10*/ {"ZIPPIT",1,ST_SECRET,1,0,820,
-        "FAST AS A COMET, IT|LEAVES A TRAIL OF|DANDELION FLUFF. IT|NEVER ADMITS IT LOST.", "A FLUFFBUD WITH 6|AMAZING! OR PERFECT!|GAMES."},
+        "FAST AS A COMET, IT|LEAVES A TRAIL OF|DANDELION FLUFF. IT|NEVER ADMITS IT LOST.", "A FLUFFBUD THAT|WISHES ON 2|SHOOTING STARS."},
  /*11*/ {"GLIMMER",1,ST_SECRET,0,0,990,
-        "ITS CACTUS FLOWERS|OPEN AT NIGHT AND GLOW|LIKE LANTERNS. FIRE-|FLIES FOLLOW IT HOME.", "A DUNEROSE WITH A|GARDEN AND FULL|BOND."},
+        "ITS CACTUS FLOWERS|OPEN AT NIGHT AND GLOW|LIKE LANTERNS. FIRE-|FLIES FOLLOW IT HOME.", "A DUNEROSE WITH 8|FIREFLIES IN ITS|LANTERN IN ONE NIGHT."},
  /*12*/ {"NESTLE",1,ST_SECRET,1,0,520,
         "IT WOVE ITS FRONDS|INTO A NEST AND GUARDS|THE EGG INSIDE. IT|LOVES A COZY HOME.", "A FRILLO IN A ROOM|WITH ALL 4 DECOR|SPOTS FILLED."},
  /*13*/ {"BLOOMLE",1,ST_TEEN,0,0,680,
@@ -558,9 +558,9 @@ static const Form FORMS[N_FORMS] = {
 // v8.1: before a secret form is found, the field guide shows only a riddle (the answers are in the manual)
 static const char *const RIDDLE[N_FORMS] = {
   [F_STARWING]="NOT ONE NEED MISSED,|NOT ONE CALL|UNANSWERED.",
-  [8]="WHAT DOES THE KEEPER|OF THE WOODS BECOME|IN THE SUN?",
-  [10]="IT WAITS FOR A|DANDELION CLOCK THAT|PLAYS ITS VERY BEST,|AGAIN AND AGAIN.",
-  [11]="IT WAITS FOR A SWEET|BLOOM WITH A GARDEN|AND A FULL HEART.",
+  [8]="WHO RISES WITH THE|SUN, MORNING AFTER|MORNING?",
+  [10]="WHAT CHASES COMETS|FOR WISHES OF ITS|OWN?",
+  [11]="WHOSE LANTERN IS FULL|OF LITTLE LIGHTS?",
   [12]="WHAT WEAVES ITS FERN|FRONDS WHEN EVERY|CORNER IS COZY?",
   [F_PETALAMB]="WHAT BLOOMS WHEN|SMOKY WOOL IS WASHED,|DAY AFTER DAY?",
   [F_LILYBILL]="NOT ONE HUNGRY DAY|FOR THE OILY|PADDLER.",
@@ -1290,9 +1290,10 @@ static void wish_tick(void){
   if(G.mode==M_GARDEN){ G.gmsg_t=0; G.gui_key=0; }   // the yard says so in its bottom bar, keeping the sky clear
   else { set_msg("A SHOOTING STAR! A: MAKE A WISH"); MSG_TIMER=WISH_LEN+WISH_WAIT; }
 }
+static void secret_wish(void); static void sun_morning(void); static void secret_lantern(void); static void secret_counts_reset(void);
 static int wish_try(u16 pr){   // A while it crosses (or just after): a wish
   if(SCENE!=1 || !G.wish_t || G.wish_got || G.wish_t>WISH_LEN+WISH_WAIT || !(pr&K_A)) return 0;
-  G.wish_got=1; if(G.more.wishes<65535) G.more.wishes++; G.more.spare[0]=(u16)(G.ext.day+1);   // (spare[0]: the night of the last wish, for the moonflowers)
+  G.wish_got=1; secret_wish(); if(G.more.wishes<65535) G.more.wishes++; G.more.spare[0]=(u16)(G.ext.day+1);   // (spare[0]: the night of the last wish, for the moonflowers)
   add_coins(WISH_COINS); sfx(0,SEQ_WISH);
   if(G.mode==M_GARDEN) garden_msg("YOU MADE A WISH! +5 COINS"); else set_msg("YOU MADE A WISH! +5 COINS");
   return 1;
@@ -1546,7 +1547,8 @@ static void outside_tick(void){
   if(PET[P_SICK]){ go_inside(" FEELS SICK..."); return; }
   if(PET[P_LIGHTS]){ go_inside(" WENT BACK INSIDE."); return; }
   G.yard_night=(u8)is_night();
-  // time outside (for SUNPUFF) and fresh air
+  sun_morning();   // (v8.3: SUNPUFF)
+  // time outside and fresh air
   if(++G.yard_frames>=3600){ G.yard_frames=0; if(G.ext.yard_mins<60000) G.ext.yard_mins++; ext_save(); }   // (old grown-ups' SUNPUFF)
   int interval = fastdiv(2700); if(toy_on(IT_KITE)) interval = fastdiv(1800);
   if(++G.fresh>=interval){ G.fresh=0; if(PET[P_HAPPY]<4){ PET[P_HAPPY]++; set_msg_name(" LOVES THE FRESH AIR!"); } }
@@ -2004,7 +2006,6 @@ static int has_item(int it,int s0,int s1){ for(int s=s0;s<s1;s++) if(G.deco.slot
 #define T_YARD   27
 #define T_GARDEN 80
 #define T_PLAY   11
-#define T_GLIMMER 80   // v8.3: a Dunerose's 10 minutes with its plants as a grown-up (was T_GARDEN, 15 minutes)
 static void care_lean(const CareWin *w,u32 *yard,u32 *garden,u32 *play){
   *yard=(u32)w->yard*1000u/T_YARD; *garden=(u32)w->garden*1000u/T_GARDEN; *play=(u32)w->play*1000u/T_PLAY; }
 static int pick_grown_up(void){
@@ -2036,9 +2037,21 @@ static void teen_grow_up(void){
 static void grown_up_done(void){   // the growing-up scene has finished
   G.dex.phase=PH_ADULT; G.dex.mess_day=(u8)G.ext.day;
   G.ext.adult_day=G.ext.day; G.ext.stars=0; G.ext.yard_mins=0;            // its grown-up days start now
+  secret_counts_reset();
   memset(&G.care.adult,0,sizeof(CareWin)); for(int k=0;k<N_NEEDS;k++){ G.care.run[k]=0; G.care.miss_day[k]=(u8)G.ext.day; }
   G.life.warned=0; save_all();
 }
+// v8.3: what the good-side secrets count, as a grown-up (Dex.yard and Dex.games, old v7 fields only read when a
+// pre-v9 save converts; Life.pad; More.pad1 bit 2): sunny mornings in the yard, wishes, a lantern of 8 fireflies
+static void secret_counts_reset(void){ G.dex.yard=0; G.dex.games=0; G.life.pad=0; G.more.pad1&=(u8)~4; }
+static int grown_now(void){ u8 st=PET[P_STAGE]; return st>=3 && st<=7 && G.dex.phase==PH_ADULT && !G.ext.special; }
+static void sun_morning(void){   // in the yard early in the morning (the first ~2 minutes of daylight), once a day
+  if(!grown_now() || !G.outside || PET_CLOCK>=150 || G.life.pad==(u8)(G.ext.day+1)) return;
+  G.life.pad=(u8)(G.ext.day+1); if(G.dex.yard<255) G.dex.yard++; save_all(); G.check_special=1;
+  if(!MSG_TIMER) set_msg_name(" BASKS IN THE MORNING SUN!");
+}
+static void secret_wish(void){ if(grown_now()){ if(G.dex.games<255) G.dex.games++; G.check_special=1; } }
+static void secret_lantern(void){ if(grown_now() && G.fly_n>=8 && !(G.more.pad1&4)){ G.more.pad1|=4; G.check_special=1; } }
 static void check_special(void){
   u8 st=PET[P_STAGE];
   if(G.ext.special || st<3 || st>7 || G.dex.phase==PH_GROW || G.dex.phase==PH_TEEN) return;
@@ -2052,9 +2065,9 @@ static void check_special(void){
     else if(decor_in(0) && decor_in(1) && decor_in(2) && decor_in(3)) f=SF_NESTLE;
   } else if(G.dex.side==1){       // v8: each good-side grown-up has its own secret, keeping up what it is good at
     const CareWin *w=&G.care.adult; u32 g=w->good, b=w->bad; int a=G.dex.adult;
-    if(a==F_OAKHART && w->yard>=40) f=SF_SUNPUFF;                                      // 10 minutes outside (v8.3: was 15)
-    else if(a==F_DUNEROSE && w->garden>=T_GLIMMER && PET[P_BOND]>=4) f=SF_GLIMMER;     // 10 minutes with its plants, and full bond
-    else if(a==F_FLUFFBUD && G.ext.stars>=6) f=SF_ZIPPIT;                             // 6 WHAT A STAR! games
+    if(a==F_OAKHART && G.dex.yard>=3) f=SF_SUNPUFF;                                    // v8.3: greets the morning sun on 3 days
+    else if(a==F_DUNEROSE && (G.more.pad1&4)) f=SF_GLIMMER;                            // v8.3: 8 fireflies in its lantern in one night
+    else if(a==F_FLUFFBUD && G.dex.games>=2) f=SF_ZIPPIT;                             // v8.3: wished on 2 shooting stars
     else if(a==F_FRILLO && decor_in(0) && decor_in(1) && decor_in(2) && decor_in(3)) f=SF_NESTLE;   // a full room
     else if(g+b>=20 && g*10>=(g+b)*9) f=SF_STARWING;                                  // any of them: near-perfect care
   } else {                        // less-care grown-ups turn around when what they missed stays fixed for two days
@@ -2086,7 +2099,7 @@ static void track_stage(void){
   if(st>=3 && st<=7 && prev==2 && G.dex.phase==PH_GROW){   // the original grew it up: it becomes a teen first
     G.dex.phase=PH_TEEN; G.dex.side=(u8)care_side(); G.dex.teen_day=(u8)G.ext.day; dex_save(); }
   if(st==1 && prev==0){ G.want_name=1; G.life.hatch_day=G.ext.day; memset(&G.care.adult,0,sizeof(CareWin)); G.life.warned=0; life_save(); }
-  if(st>=3 && st<=7 && (prev<3 || prev==8)){ G.ext.adult_day=G.ext.day; G.ext.stars=0; G.ext.yard_mins=0; G.ext.special=0;
+  if(st>=3 && st<=7 && (prev<3 || prev==8)){ G.ext.adult_day=G.ext.day; G.ext.stars=0; G.ext.yard_mins=0; G.ext.special=0; secret_counts_reset();
     memset(&G.care.adult,0,sizeof(CareWin)); G.life.warned=0; life_save(); }
   if(st>=1 && st<=7) G.cry_delay=120;
   ext_save(); refresh_tables();
@@ -2151,7 +2164,7 @@ static void life_watch(void){
 #define TICK_FRAMES      60                 /* v8.3: one tick every 60 frames (1 s); a day is 600 clock steps: 7 min of day, 4 of night */
 #define TICK_FRAMES_FAST 24                 /* FAST mode: 2.5 times as fast */
 
-static const u8 HUNGER_RATE[4]={75,113,150,180}, HAPPY_RATE[4]={90,128,165,195};   // (v8.3: 1.5x the ticks, the same real time)   // baby, child, teen, grown-up
+static const u8 HUNGER_RATE[4]={30,45,60,72}, HAPPY_RATE[4]={36,51,66,78};   // (v8.3: ticks per heart; a grown-up loses one every ~1:12 / 1:18)   // baby, child, teen, grown-up
 static u32 orng(void){ u32 x=G.sim_r; x^=x<<13; x^=x>>17; x^=x<<5; G.sim_r=x; return x; }
 static u32 xs_back(u32 y){   // the step before y (xorshift is reversible)
   u32 x=y; for(int i=0;i<7;i++) x=y^(x<<5); y=x;
@@ -4700,7 +4713,7 @@ static void fly_catch(void){
     if(dx<=8 && dy<=9 && dx+dy<bd){ bd=dx+dy; best=i; } }
   if(best<0){ sfx(0,SEQ_TICK); return; }
   Fly *f=&G.fly[best]; int k=f->k; f->live=0; f->wait=(u8)(30+rnd(60));
-  if(G.fly_n<255) G.fly_n++; G.fly_rn++; G.fly_kinds|=(u16)(1u<<k); if(G.more.spare[4]<65535) G.more.spare[4]++;
+  if(G.fly_n<255) G.fly_n++; G.fly_rn++; secret_lantern(); G.fly_kinds|=(u16)(1u<<k); if(G.more.spare[4]<65535) G.more.spare[4]++;
   G.fly_pop=30; G.fly_popk=(u8)k;
   if(!((fly_found()>>k)&1)){ G.more.spare[3]|=(u16)(1u<<k); G.fly_state=1; G.fly_card=(u8)k; G.fly_key=0; sfx(0,SEQ_NEWSTAR); save_all(); }
   else sfx(0,SEQ_CATCH);

@@ -46,7 +46,7 @@ def offsets():
               'obj': 'State,obj', 'st_seq': 'State,st_seq', 'tune': 'State,tune', 'rating': 'State,rating', 'pk_w': 'State,pk_w',
               'keep': 'State,keep', 'k_un0': 'Keep,un0', 'k_un1': 'Keep,un1', 'k_best': 'Keep,best', 'k_ok': 'Keep,ok',
               'd_unlock': 'Deco,unlock_lvl', 'names': 'State,names', 'nm': 'State,nm', 'want_name': 'State,want_name', 'nm_x': 'State,nm_x', 'd_owned': 'Deco,owned',
-              'jr': 'State,jr', 'jtab': 'State,jtab', 'jstar': 'State,jstar', 'jcare': 'State,jcare', 'j_s': 'Journal,s', 'j_coins': 'Journal,coins', 'j_games': 'Journal,games', 'so_pend': 'State,sendoff_pending', 'retired': 'Life,retired', 'more': 'State,more', 'm_rn': 'More,rn', 'm_rmiss': 'More,rmiss', 'jitem': 'State,jitem', 'm_found0': 'More,found0', 'm_found_ok': 'More,found_ok', 'm_wishes': 'More,wishes', 'wish_t': 'State,wish_t', 'wish_cd': 'State,wish_cd', 'm_spare': 'More,spare', 'e_inv': 'Ext,inv', 'dex_cur': 'State,dex_cur', 'stock': 'State,stock', 'st_cur': 'State,st_cur', 'st_page': 'State,st_page', 'm_stories': 'More,stories', 'st_pad': 'State,st_pad', 'rng': 'State,rng', 'gdn': 'State,gdn', 'gcur': 'State,gcur', 'g_found': 'Garden,found', 'g_seeds': 'Garden,seeds', 'g_vis_n': 'Garden,vis_n', 'g_vis': 'Garden,vis', 'g_vis_day': 'Garden,vis_day', 'e_day': 'Ext,day', 'gpad': 'State,gpad', 'gdetail': 'State,gdetail', 'bg_state': 'State,bg_state', 'weak_warned': 'State,weak_warned', 'outside': 'State,outside', 'gpad2': 'State,gpad2', 'dex_from': 'State,dex_from', 'gmsg': 'State,gmsg', 'ex_yard': 'State,ex_yard', 'jt_first': 'State,jt_first', 'fly': 'State,fly', 'fly_t': 'State,fly_t', 'fly_kinds': 'State,fly_kinds', 'fly_night': 'State,fly_night', 'fly_rel': 'State,fly_rel', 'fly_n': 'State,fly_n', 'fly_state': 'State,fly_state', 'fly_card': 'State,fly_card', 'jx': 'State,jx', 'jy': 'State,jy', 'jfly': 'State,jfly', 'f_x': 'Fly,x', 'f_y': 'Fly,y', 'f_k': 'Fly,k', 'f_t': 'Fly,t', 'f_live': 'Fly,live', 'spr_n': 'State,spr_n', 'spr_live': 'State,spr_live', 'spr_win': 'State,spr_win', 'win': 'State,win', 'm_pad0': 'More,pad0', 'm_pad1': 'More,pad1', 'gwater': 'State,gwater', 'e_adult': 'Ext,adult_day', 'gcur': 'State,gcur', 'gone_t': 'State,gone_t', 'jrec': 'State,jrec'}
+              'jr': 'State,jr', 'jtab': 'State,jtab', 'jstar': 'State,jstar', 'jcare': 'State,jcare', 'j_s': 'Journal,s', 'j_coins': 'Journal,coins', 'j_games': 'Journal,games', 'so_pend': 'State,sendoff_pending', 'retired': 'Life,retired', 'l_pad': 'Life,pad', 'more': 'State,more', 'm_rn': 'More,rn', 'm_rmiss': 'More,rmiss', 'jitem': 'State,jitem', 'm_found0': 'More,found0', 'm_found_ok': 'More,found_ok', 'm_wishes': 'More,wishes', 'wish_t': 'State,wish_t', 'wish_cd': 'State,wish_cd', 'm_spare': 'More,spare', 'e_inv': 'Ext,inv', 'dex_cur': 'State,dex_cur', 'stock': 'State,stock', 'st_cur': 'State,st_cur', 'st_page': 'State,st_page', 'm_stories': 'More,stories', 'st_pad': 'State,st_pad', 'rng': 'State,rng', 'gdn': 'State,gdn', 'gcur': 'State,gcur', 'g_found': 'Garden,found', 'g_seeds': 'Garden,seeds', 'g_vis_n': 'Garden,vis_n', 'g_vis': 'Garden,vis', 'g_vis_day': 'Garden,vis_day', 'e_day': 'Ext,day', 'gpad': 'State,gpad', 'gdetail': 'State,gdetail', 'bg_state': 'State,bg_state', 'weak_warned': 'State,weak_warned', 'outside': 'State,outside', 'gpad2': 'State,gpad2', 'dex_from': 'State,dex_from', 'gmsg': 'State,gmsg', 'ex_yard': 'State,ex_yard', 'jt_first': 'State,jt_first', 'fly': 'State,fly', 'fly_t': 'State,fly_t', 'fly_kinds': 'State,fly_kinds', 'fly_night': 'State,fly_night', 'fly_rel': 'State,fly_rel', 'fly_n': 'State,fly_n', 'fly_state': 'State,fly_state', 'fly_card': 'State,fly_card', 'jx': 'State,jx', 'jy': 'State,jy', 'jfly': 'State,jfly', 'f_x': 'Fly,x', 'f_y': 'Fly,y', 'f_k': 'Fly,k', 'f_t': 'Fly,t', 'f_live': 'Fly,live', 'spr_n': 'State,spr_n', 'spr_live': 'State,spr_live', 'spr_win': 'State,spr_win', 'win': 'State,win', 'm_pad0': 'More,pad0', 'm_pad1': 'More,pad1', 'gwater': 'State,gwater', 'e_adult': 'Ext,adult_day', 'gcur': 'State,gcur', 'gone_t': 'State,gone_t', 'jrec': 'State,jrec'}
     src = f'#include "{CK}/ext.c"\nconst unsigned TEST_OFFS[] = {{ ' + ', '.join(f'__builtin_offsetof({v})' for v in fields.values()) + ' };\n'
     c, o, b = f'{TMP}/offs.c', f'{TMP}/offs.o', f'{TMP}/offs.bin'
     open(c, 'w').write(src)
@@ -111,16 +111,16 @@ def check(name, cond, detail=''):
 def t_fidelity():
     """v8.3: the clock is faster (a tick every second, an 11-minute day), so the old check that it matched v7 step for
     step is retired. What must not change is how fast care is needed in real time: a grown-up still loses a hunger
-    heart every 3 minutes and a happy heart every 3 1/4 minutes, a baby a hunger heart every 75 seconds."""
+    heart every 72 s and a happy heart every 78 s, a baby a hunger heart every 30 s (v8.3: 60% faster)."""
     def frames(save, idx, cnt, rate_s):
         sc = BOOT + DAY + [p8(PET + 12, 0), p8(PET + 6, 4), p8(PET + 7, 4), *p16(PET + cnt, 0), 'scene', f'waitb {PET + idx:08x} 3', 'scene']
         f = [int(m) for m in re.findall(r'frame (\d+) scene', run(ROM, sc, copy_save(save)))]
         return (f[1] - f[0]) / 60.0 if len(f) == 2 else -1
-    for save, idx, cnt, want, what in (('adult', 6, 0x28, 180, 'a grown-up loses a hunger heart every 3 minutes'),
-                                       ('adult', 7, 0x2A, 195, 'a grown-up loses a happy heart every 3 1/4 minutes'),
-                                       ('hatched', 6, 0x28, 75, 'a baby loses a hunger heart every 75 seconds')):
+    for save, idx, cnt, want, what in (('adult', 6, 0x28, 72, 'a grown-up loses a hunger heart every 72 s'),
+                                       ('adult', 7, 0x2A, 78, 'a grown-up loses a happy heart every 78 s'),
+                                       ('hatched', 6, 0x28, 30, 'a baby loses a hunger heart every 30 s')):
         s = frames(save, idx, cnt, want)
-        check(f'pace: {what} (as before the faster clock): {s:.0f} s', want - 2 <= s <= want + 2, f'{s:.1f} s')
+        check(f'pace: {what} (v8.3: 60% faster): {s:.0f} s', want - 2 <= s <= want + 2, f'{s:.1f} s')
 
 def grow(side, setup_extra, expect, note):
     """A teen two days old, awake in its room by day: the next clock step grows it up."""
@@ -198,14 +198,31 @@ def secret(adult, side, setup, expect_sf, expect_name, note, back=3):
 
 def t_secrets():
     md = G + OFF['care'] + OFF['c_miss_day']
-    secret(15, 1, care_set('c_adult', yard=60), 1, 'SUNPUFF', 'an OAKHART 15 minutes outside becomes a SUNPUFF')
-    secret(15, 1, care_set('c_adult', yard=60), 0, '', 'v8.3: but not before its 4th grown-up day (on its 3rd it stays)', back=2)
-    secret(16, 1, care_set('c_adult', garden=120) + [p8(PET + 8, 4)], 4, 'GLIMMER', 'a DUNEROSE with a garden and full bond becomes a GLIMMER')
-    secret(16, 1, care_set('c_adult', garden=120) + [p8(PET + 8, 2)], 0, '', 'a DUNEROSE without full bond stays')
-    secret(3, 1, [p8(g('ext', 'e_stars'), 6)], 3, 'ZIPPIT', 'a FLUFFBUD with 6 WHAT A STAR! games becomes a ZIPPIT')
+    YD, WG, P1 = g('dex', 'd_yard'), g('dex', 'd_games'), g('more', 'm_pad1')
+    secret(15, 1, [p8(YD, 3)], 1, 'SUNPUFF', 'v8.3: an OAKHART out in the morning sun on 3 days becomes a SUNPUFF')
+    secret(15, 1, [p8(YD, 3)], 0, '', 'v8.3: but not before its 4th grown-up day (on its 3rd it stays)', back=2)
+    secret(15, 1, [p8(YD, 2), *care_set('c_adult', yard=80)], 0, '', 'v8.3: an OAKHART with 2 sunny mornings stays (time outside alone no longer counts)')
+    secret(16, 1, [p8(P1, 4)], 4, 'GLIMMER', 'v8.3: a DUNEROSE with 8 fireflies in its lantern in one night becomes a GLIMMER')
+    secret(16, 1, [p8(P1, 0), *care_set('c_adult', garden=120), p8(PET + 8, 4)], 0, '', 'v8.3: a DUNEROSE with only a garden and full bond stays')
+    secret(3, 1, [p8(WG, 2)], 3, 'ZIPPIT', 'v8.3: a FLUFFBUD that wished on 2 shooting stars becomes a ZIPPIT')
+    secret(3, 1, [p8(WG, 1), p8(g('ext', 'e_stars'), 6)], 0, '', 'v8.3: a FLUFFBUD with 1 wish (and 6 WHAT A STAR! games) stays')
+    grown = [p8(g('dex', 'd_phase'), 3), p8(g('ext', 'e_special'), 0), p8(YD, 0), p8(WG, 0), p8(g('life', 'l_pad'), 0), p8(P1, 0)]
+    # in the yard early in the morning: counted once that day, with a message
+    sc = BOOT + DAY + grown + ['press SELECT', 'wait 6', 'press A', 'wait 40', p32(0x0300004C, 60), 'wait 200',
+                               f'peek {YD:08x} 1', 'peek 030002a4 32', 'wait 300', f'peek {YD:08x} 1']
+    v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    msg = bytes(v[1]).split(b'\0')[0].decode('ascii', 'replace')
+    check('secrets: v8.3: a grown-up in the yard in the early morning counts a sunny morning (once a day)', v[0][0] == 1 and v[2][0] == 1 and ('MORNING SUN' in msg or 'SHOP' in msg), f'{v[0][0]} {v[2][0]} "{msg}"')
+    sc = BOOT + DAY + grown + ['press SELECT', 'wait 6', 'press A', 'wait 40', p32(0x0300004C, 200), 'wait 300', f'peek {YD:08x} 1']
+    v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('secrets: v8.3: later in the day it does not count', v[0][0] == 0, str(v[0][0]))
+    # a wish counts for ZIPPIT
+    sc = BOOT + grown + ['poke32 0300004c 1f4', 'wait 5', *p16(g('wish_cd'), 20), 'wait 40', 'press A', 'wait 6', f'peek {WG:08x} 1']
+    v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('secrets: v8.3: a grown-up\'s wish on a shooting star is counted', v[0][0] == 1, str(v[0][0]))
     secret(4, 1, [p8(g('deco', 'k_slot') + i, it) for i, it in enumerate((14, 15, 16, 17))], 5, 'NESTLE', 'a FRILLO in a full room becomes a NESTLE')
     secret(15, 1, care_set('c_adult', good=40, bad=2), 6, 'STARWING', 'an OAKHART with near-perfect care becomes a STARWING')
-    secret(4, 1, care_set('c_adult', yard=80), 0, '', 'a FRILLO outside a lot stays (SUNPUFF is the OAKHART secret)')
+    secret(4, 1, [p8(YD, 3)], 0, '', 'a FRILLO out on sunny mornings stays (SUNPUFF is the OAKHART secret)')
     secret(18, 2, [p8(md + K_CLEAN, 7)], 7, 'PETALAMB', 'a SMOGWOOL kept clean two days becomes a PETALAMB')
     secret(19, 2, [p8(md + K_FOOD, 7)], 8, 'LILYBILL', 'a GUNKBILL kept fed two days becomes a LILYBILL')
     secret(17, 2, [p8(md + K_PLAY, 7)], 9, 'JAMBLE', 'a THORNHOG kept happy two days becomes a JAMBLE')
@@ -646,6 +663,12 @@ def t_fly():
          f'peek {g("fly_state"):08x} 1', f'peek {g("fly_n"):08x} 1'] + [p8(FLY + 12 * i + 8, 0) for i in range(8)] + [p8(FLY + 12 * i + 9, 250) for i in range(8)] + \
          put(2, 120, 92, 0, 100) + ['wait 1', 'press A', 'wait 6', f'peek {g("fly_n"):08x} 1',
          'wait 1850', f'peek {g("fly_state"):08x} 1', f'peek {SP + 8:08x} 2', 'press B', 'wait 8', f'peek {MODE:08x} 1', f'savesram {TMP}/fly.sav']
+    # v8.3: the 8th firefly in a grown-up's lantern in one night is GLIMMER's lantern (More.pad1 bit 2)
+    P1 = g('more', 'm_pad1')
+    sl = BOOT + night + yard + [p8(g('dex', 'd_phase'), 3), p8(g('ext', 'e_special'), 0), p8(P1, 0), p8(g('fly_n'), 6), 'press R', 'wait 10'] + \
+         put(0, 120, 92, 0, 100) + ['wait 1', 'press A', 'wait 6', f'peek {P1:08x} 1', 'wait 40'] + put(1, 120, 92, 0, 100) + ['wait 1', 'press A', 'wait 6', f'peek {P1:08x} 1', f'peek {g("fly_n"):08x} 1']
+    w = [x[1] for x in peeks(run(ROM, sl, copy_save('adult')))]
+    check('fly: v8.3: a grown-up\'s 8th firefly of the night fills its lantern (for GLIMMER)', not w[0][0] & 4 and w[1][0] & 4 and w[2][0] == 8, str(w))
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('fly: R in the night yard starts a 20 s round', v[0][0] == 14 and 1170 <= struct.unpack('<H', v[1])[0] <= 1200, str(v[:2]))
     check('fly: scooping a lit one catches it; a new kind shows its card and goes in the guide', v[2][0] == 1 and v[2][1] == 4 and struct.unpack('<H', v[3])[0] & 16, str(v[2:4]))
