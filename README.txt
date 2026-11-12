@@ -21,8 +21,8 @@ What v8.2 adds over v8.1
   - The journal's moonflowers stand on their soil.
 - v8.2c (Nov 12):
   - A new runaway scene: at dawn it packs its bindle, looks back at the house one last time, walks out across the
-    meadow and finds a new home with a family of wild critters by the stream; that night its star's place stays
-    empty. New painted meadow and stream, and new wild critters (gen/meadow.py).
+    meadow and finds a new home with a wild family of its own kind by the stream; that night its star's place stays
+    empty. New painted meadow and stream (gen/meadow.py).
   - Poops in the yard sit at free spots (never on the house, decor, toys or flowers), smaller further back.
   - The journal's RECORDS tab scrolls; the moonflower pictures stand on their soil.
 - No changes to prices; the stat changes above were asked for. Save version unchanged (15).

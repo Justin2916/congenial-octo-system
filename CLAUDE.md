@@ -210,11 +210,11 @@ Other details:
   it is restored before the next update).
 - **Runaway (health ran out), "a home in the wild":** `runaway_draw` plays six shots (`RA_T1..RA_T5`, timed by
   FRAMES), each fading in from black: its room at dawn (warm palette, empty bowl, bindle), the yard at sunrise (one
-  look back at the house), the meadow path (it shrinks 3 -> 2 -> 1 as it walks away), the stream where a family of
-  wild critters by their burrow under the willow take it in (hearts), the night sky where a faint glow (sprite)
+  look back at the house), the meadow path (it shrinks 3 -> 2 -> 1 as it walks away), the stream where a wild family
+  of its own kind (its form: a grown-up and two little ones) by their burrow under the willow take it in (hearts), the night sky where a faint glow (sprite)
   flickers out at its star's place, and the end card ("NOT EVERY CRITTER BECOMES A STAR."). The words sit in the
   bottom bar (`ra_box`) so the picture stays clear. New art: `gen/meadow.py` -> `meadow.h` (two painted 240x106
-  backgrounds and the wild critters in two sizes and two frames, one 96-colour palette from 144: `runaway_palette`).
+  backgrounds, one 96-colour palette from 144: `runaway_palette`; the family uses the runaway's own critter art).
 
 
 ## Decided against (owner, Nov 11 2026)

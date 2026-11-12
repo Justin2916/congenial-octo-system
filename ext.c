@@ -2489,8 +2489,6 @@ static void ra_bg_md(const u8 *src){   // a meadow picture into the background, 
 }
 static void ra_box(const char *a,const char *b){   // the words, down in the bottom bar (the picture stays clear)
   quick_box(8,135,224,24); textc(a,120,138,C_DTEXT); if(b) textc(b,120,148,C_DTEXT); }
-static void ra_blit(const u8 *pix,int w,int h,int x,int y,int flip){
-  for(int r=0;r<h;r++) for(int cc=0;cc<w;cc++){ int v=pix[r*w+(flip? w-1-cc : cc)]; if(v) pset(x+cc,y+r,v); } }
 static void ra_bindle(int x,int y,int sc,int dir){   // a stick over the shoulder (x,y: the shoulder; dir: +1 leans right, -1 left), and a spotted bundle
   int L=6*sc; for(int i=0;i<L;i++) pset(x+i*dir,y-i,C_WOOD_DK);
   int bx=x+(L+1)*dir, by=y-L-1, r=sc+2; disc(bx,by,r,C_OUTLINE); disc(bx,by,r-1,C_RED);
@@ -2547,17 +2545,18 @@ static void runaway_draw(void){
     if(sc>=2) ra_bindle(cx-4*sc,y-11*sc,sc,-1);
     ra_box("IT WALKED FAR OUT","INTO THE MEADOW...");
   }
-  else if(s==3){   // the stream: the wild critters by their burrow take it in
+  else if(s==3){   // the stream: a wild family of its own kind, by their burrow, take it in
     int u=(int)t-RA_T3, wv=u>130 && ((u>>4)&1);
-    ra_blit(wv? WC_BIG1 : WC_BIG0, WC_BIG0_W, WC_BIG0_H, 178, 118-WC_BIG0_H, 1);
-    ra_blit((u>150 && ((u>>4)&1)==0)? WC_KIT11 : WC_KIT10, WC_KIT10_W, WC_KIT10_H, 146, 117-WC_KIT10_H, 0);
-    ra_blit((u>170 && ((u>>4)&1))? WC_KIT21 : WC_KIT20, WC_KIT20_W, WC_KIT20_H, 206, 119-WC_KIT20_H, 1);
+    // the family is its own kind, living wild: a grown-up just like it, and two little ones (same art, same colours)
+    ra_crit(wv? POSE_WAVE1 : (u>130? POSE_WAVE2 : POSE_IDLE),186,119,2,0);
+    ra_crit(u>150? (((u>>4)&1)? POSE_HAPPY : POSE_IDLE) : (((u>>5)&1)? POSE_BLINK : POSE_IDLE),156,119-(u>150 && ((u>>3)&1)),1,0);
+    ra_crit(u>170? (((u>>4)&1)? POSE_IDLE : POSE_HAPPY) : POSE_IDLE,214,120-(u>170 && !((u>>3)&1)),1,0);
     int x= u<130? -24+u : 106, pose= u<130? (walk? POSE_WALK1 : POSE_WALK2) : u<190? POSE_IDLE : (((u>>4)&1)? POSE_WAVE1 : POSE_WAVE2);
     if(u>=230) pose=POSE_LOVE;
     ra_crit(pose,x,119-(u<130? walk : 0),2,1);
     if(u<130) ra_bindle(x-8,97-walk,2,-1);
     if(u>=230){ for(int i=0;i<3;i++){ int q=((u-230)*2+i*22)%60; ra_heart(118+i*26-(i==1? 4 : 0),100-q/2); } }
-    ra_box("...WHERE A FAMILY OF WILD","CRITTERS TOOK IT IN.");
+    ra_box("...WHERE A WILD FAMILY, JUST","LIKE IT, TOOK IT IN.");
   }
   else if(s==4){   // that night: its star's place stays empty
     int u=(int)t-RA_T4;
