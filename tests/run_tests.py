@@ -669,7 +669,7 @@ def t_fly():
     # v8.3: the 8th firefly in a grown-up's lantern in one night is GLIMMER's lantern (More.pad1 bit 2)
     P1 = g('more', 'm_pad1')
     sl = BOOT + night + yard + [p8(g('dex', 'd_phase'), 3), p8(g('ext', 'e_special'), 0), p8(P1, 0), p8(g('fly_n'), 6), 'press R', 'wait 10'] + \
-         put(0, 120, 92, 0, 100) + ['wait 1', 'press A', 'wait 6', f'peek {P1:08x} 1', 'wait 40'] + put(1, 120, 92, 0, 100) + ['wait 1', 'press A', 'wait 6', f'peek {P1:08x} 1', f'peek {g("fly_n"):08x} 1']
+         put(0, 120, 92, 4, 9) + ['wait 1', 'press A', 'wait 6', f'peek {P1:08x} 1', 'press A', 'wait 6'] + put(1, 120, 92, 4, 9) + ['wait 1', 'press A', 'wait 6', f'peek {P1:08x} 1', f'peek {g("fly_n"):08x} 1']
     w = [x[1] for x in peeks(run(ROM, sl, copy_save('adult')))]
     check('fly: v8.3: a grown-up\'s 8th firefly of the night fills its lantern (for GLIMMER)', not w[0][0] & 4 and w[1][0] & 4 and w[2][0] == 8, str(w))
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
