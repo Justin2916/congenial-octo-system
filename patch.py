@@ -52,7 +52,7 @@ PORTED=[(0x0800e840,'sub_0800e840','o_rng_mix'), (0x0800f5f8,'back_buffer','o_ba
         (0x0800edb8,'sub_0800edb8','o_draw_stars'), (0x0800cc94,'sub_0800cc94','o_build_palette'),
         (0x0800e8f0,'sub_0800e8f0','o_minigame_start'), (0x0800ce5c,'sub_0800ce5c','o_game_init'),
         (0x0800d690,'sub_0800d690','o_prerender'),
-        (0x080001ac,'game_update','o_game_update')]
+        (0x080001ac,'game_update','o_game_update'), (0x08001fb4,'game_render','o_game_render')]
 
 for a in (0x0800f7dc,0x0800f7e6,0x0800f7f0,0x0800f7fa,0x0800f804,0x0800f80a,0x0800f810):
     bl_patch(a, syms['hook_update'], 0x080001ac)
@@ -69,7 +69,7 @@ ported_calls=sum(redirect(*p) for p in PORTED)   # (after the hooks above, which
 # port too: bx pc / nop (to ARM) ; ldr ip, [pc] ; bx ip ; .word ours|1 (16 bytes, 18 when the entry is not 4-aligned)
 SIZES={0x0800e840:16, 0x0800f5f8:18, 0x0800f614:12, 0x0800f6c0:32, 0x0800f6e0:50, 0x0800f2a4:204, 0x0800efb4:188,
        0x0800f98c:76, 0x0800f9d8:92, 0x0800fa34:108, 0x0800faa0:122, 0x0800e854:110, 0x0800ec74:314, 0x0800f63c:120,
-       0x0800f070:552, 0x0800f37c:624, 0x0800edb8:486, 0x0800cc94:426, 0x0800e8f0:798, 0x0800ce5c:2086, 0x0800d690:4432, 0x080001ac:7560}
+       0x0800f070:552, 0x0800f37c:624, 0x0800edb8:486, 0x0800cc94:426, 0x0800e8f0:798, 0x0800ce5c:2086, 0x0800d690:4432, 0x080001ac:7560, 0x08001fb4:44224}
 def tramp(addr, target):
     o=addr-0x08000000; code=b''
     if addr%4: code+=struct.pack('<H',0x46C0)

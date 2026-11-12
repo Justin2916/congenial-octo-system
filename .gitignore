@@ -2,6 +2,7 @@
 ext.o
 orig.o
 orig_update.o
+orig_render.o
 ext.elf
 ext.bin
 patch.log
