@@ -1395,8 +1395,8 @@ static void fx_watch(void){
   u8 sc=(u8)SCENE, out=G.outside, mode=G.mode, light=PET[P_LIGHTS], st=PET[P_STAGE];
   if(!G.fx_seen){ G.fx_seen=1; G.fx_scene=sc; G.fx_out=out; G.fx_mode=mode; G.fx_light=light; G.fx_stage=st; if(sc==0) fx_fade(FX_BLACK,16,40); fx_tick(); return; }
   if(sc!=G.fx_scene){
-    if(sc==0) fx_fade(FX_BLACK,16,36);                          // back to the title
-    else if(G.fx_scene==0) fx_fade(FX_BLACK,16,24);             // into the game
+    if(sc==0){ fx_fade(FX_BLACK,16,36); G.fx_hold=2; }          // back to the title (black until both pages hold it)
+    else if(G.fx_scene==0){ fx_fade(FX_BLACK,16,24); G.fx_hold=2; }   // into the game
   }
   if(out!=G.fx_out) fx_fade(FX_BLACK,12,18);                    // room and yard
   if(mode!=G.fx_mode && (mode==M_MINI || G.fx_mode==M_MINI || mode==M_ALBUM || mode==M_DEX || G.fx_mode==M_ALBUM || G.fx_mode==M_DEX || mode==M_STORY || G.fx_mode==M_STORY))
@@ -5070,6 +5070,8 @@ void hook_render(void){
   // v8.3: the runaway's cuts: black at once, before this frame's palette is the next shot's (the old picture would
   // otherwise show for a frame in the new shot's colours)
   { int s=ra_shot(); if(s>=0 && G.gone_t!=(u16)(s+1)){ REG_BLDCNT=(u16)(0x0034|(FX_BLACK<<6)); REG_BLDY=16; } }
+  // ...and the same into or out of the title (a new egg, a new seed): black before this frame's colours change
+  if(G.fx_seen && (u8)SCENE!=G.fx_scene && ((u8)SCENE==0 || G.fx_scene==0)){ REG_BLDCNT=(u16)(0x0034|(FX_BLACK<<6)); REG_BLDY=16; }
   set_extra_palette(); set_special_cmap();
   int help = G.mode==M_NONE && SCENE==7;    // our HOW TO PLAY pages cover the whole screen
   if(!help && (G.mode==M_NONE || G.mode==M_MENU || (G.mode==M_EXTRAS && !G.ex_yard) || G.mode==M_BAG || G.mode==M_EAT || G.mode==M_SURE)){
@@ -5082,7 +5084,7 @@ void hook_render(void){
     // In colour 11, which the lights-off dimming leaves bright.
     if(sc==1 && G.mode==M_NONE && !G.outside && PET[P_ASLEEP] && PET[P_SICK] && PET[P_STAGE]>=1 && PET[P_STAGE]<=7){
       u8 keep=CMAP['x']; CMAP['x']=11;
-      hook_sprite((const void*)0x0800FFC4u, 126, 42+(int)((FRAMES>>3)&2), 2, 0, 99);   // (the original's sick picture)
+      hook_sprite((const void*)0x0800FFC4u, (int)G.room_cx+38, (int)G.room_cy-20+(int)((FRAMES>>3)&2), 2, 0, 99);   // (the original's sick picture, beside the Zs wherever it sleeps)
       CMAP['x']=keep; }
   }
   if(help){ DRAW_TARGET=O_BACKBUF(); help_draw(); }

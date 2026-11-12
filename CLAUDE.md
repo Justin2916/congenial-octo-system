@@ -254,6 +254,9 @@ Other details:
   - 15 fireflies drift over the night yard on the garden screen (`yard_fireflies`, not during a round), in tonight's
     common and uncommon colours. Their palettes are kept in `G.yf_pal` (rebuilt when `yf_key` changes), and
     `SPR_MAX` is 40.
+  - The title -> game cut (and game -> title) goes black at once and holds 2 frames too, so the title picture never
+    shows in the room's colours (`fx_watch`, and the check at the top of `hook_render`).
+  - The sick-while-asleep symbol follows the critter: drawn at `room_cx+38`, `room_cy-20` (beside the Zs).
   - `udivmod` steps once per quotient bit. The old bit-by-bit divide made the night room with the jar drop to 30 fps
     on mGBA.
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its
