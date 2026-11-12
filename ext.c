@@ -525,7 +525,7 @@ static const Form FORMS[N_FORMS] = {
  /* 7*/ {"DRIZZLE",2,ST_ADULT,2,0,300,
         "A SMALL RAIN CLOUD|THAT WATERS ITSELF.", ""},
  /* 8*/ {"SUNPUFF",1,ST_SECRET,0,0,700,
-        "AN OAKHART THAT LIVED|IN THE SUN. ITS PETALS|TURN TO FOLLOW THE SUN|ALL DAY LONG.", "AN OAKHART THAT|SPENDS 15 MINUTES|OUTSIDE."},
+        "AN OAKHART THAT LIVED|IN THE SUN. ITS PETALS|TURN TO FOLLOW THE SUN|ALL DAY LONG.", "AN OAKHART THAT|SPENDS 10 MINUTES|OUTSIDE."},
  /* 9*/ {"CHONKLE",2,ST_SECRET,2,0,260,
         "IT STUFFS ITS CHEEKS|WITH SEEDS FOR LATER,|THEN FORGETS WHERE IT|PUT LATER.", ""},
  /*10*/ {"ZIPPIT",1,ST_SECRET,1,0,820,
@@ -2003,6 +2003,7 @@ static int has_item(int it,int s0,int s1){ for(int s=s0;s<s1;s++) if(G.deco.slot
 #define T_YARD   40
 #define T_GARDEN 120
 #define T_PLAY   16
+#define T_GLIMMER 80   // v8.3: a Dunerose's 10 minutes with its plants as a grown-up (was T_GARDEN, 15 minutes)
 static void care_lean(const CareWin *w,u32 *yard,u32 *garden,u32 *play){
   *yard=(u32)w->yard*1000u/T_YARD; *garden=(u32)w->garden*1000u/T_GARDEN; *play=(u32)w->play*1000u/T_PLAY; }
 static int pick_grown_up(void){
@@ -2050,8 +2051,8 @@ static void check_special(void){
     else if(decor_in(0) && decor_in(1) && decor_in(2) && decor_in(3)) f=SF_NESTLE;
   } else if(G.dex.side==1){       // v8: each good-side grown-up has its own secret, keeping up what it is good at
     const CareWin *w=&G.care.adult; u32 g=w->good, b=w->bad; int a=G.dex.adult;
-    if(a==F_OAKHART && w->yard>=60) f=SF_SUNPUFF;                                      // 15 minutes outside
-    else if(a==F_DUNEROSE && w->garden>=T_GARDEN && PET[P_BOND]>=4) f=SF_GLIMMER;      // a garden and full bond
+    if(a==F_OAKHART && w->yard>=40) f=SF_SUNPUFF;                                      // 10 minutes outside (v8.3: was 15)
+    else if(a==F_DUNEROSE && w->garden>=T_GLIMMER && PET[P_BOND]>=4) f=SF_GLIMMER;     // 10 minutes with its plants, and full bond
     else if(a==F_FLUFFBUD && G.ext.stars>=6) f=SF_ZIPPIT;                             // 6 WHAT A STAR! games
     else if(a==F_FRILLO && decor_in(0) && decor_in(1) && decor_in(2) && decor_in(3)) f=SF_NESTLE;   // a full room
     else if(g+b>=20 && g*10>=(g+b)*9) f=SF_STARWING;                                  // any of them: near-perfect care
@@ -2146,10 +2147,10 @@ static void life_watch(void){
 // 0x24 clock (u32), 0x28 hunger timer, 0x2A happy timer, 0x2C/0x2E poop timer/interval, 0x30/0x32 call timer/interval,
 // 0x34 call open, 0x36 starving, 0x38 unhappy, 0x3A messy, 0x3C sick, 0x3E lights left on, 0x40 cooldown,
 // 0x42 meds, 0x44 health timer, 0x46 fuss timer
-#define TICK_FRAMES      90                 /* one clock step: 90 frames (1.5 s), a day is 600 steps (15 min) */
-#define TICK_FRAMES_FAST 36                 /* FAST mode: 2.5 times as fast */
+#define TICK_FRAMES      60                 /* v8.3: one tick every 60 frames (1 s); a day is 600 clock steps: 7 min of day, 4 of night */
+#define TICK_FRAMES_FAST 24                 /* FAST mode: 2.5 times as fast */
 
-static const u8 HUNGER_RATE[4]={50,75,100,120}, HAPPY_RATE[4]={60,85,110,130};   // baby, child, teen, grown-up
+static const u8 HUNGER_RATE[4]={75,113,150,180}, HAPPY_RATE[4]={90,128,165,195};   // (v8.3: 1.5x the ticks, the same real time)   // baby, child, teen, grown-up
 static u32 orng(void){ u32 x=G.sim_r; x^=x<<13; x^=x>>17; x^=x<<5; G.sim_r=x; return x; }
 static u32 xs_back(u32 y){   // the step before y (xorshift is reversible)
   u32 x=y; for(int i=0;i<7;i++) x=y^(x<<5); y=x;
@@ -2185,13 +2186,15 @@ static void sim_tick(void){
   u32 sv=SAVE_CNT; SAVE_CNT=sv+1;
   // v8.1: at night the clock moves on only two steps in three, so the night lasts 4.5 min (not 3); everything the
   // critter does still runs at its usual pace, since that counts these steps (P32 0x1C), not the clock
-  if(P32(0x24)<480 || P32(0x1C)%3){ u32 c=P32(0x24)+1; P32(0x24)= (c>>3)>74? 0 : c; }
+  // v8.3: daylight moves 8 steps every 7 ticks (7 min), the night a step every 2 ticks (4 min); the critter's own
+  // counters still count every tick, and every care timer below counts 1.5 times the ticks it did, so care keeps its pace
+  { u32 c=P32(0x24); if(c<480) c+= (P32(0x1C)%7==0)? 2 : 1; else if(!(P32(0x1C)&1)) c++; P32(0x24)= c>=600? 0 : c; }
   if(sv>=14){ SAVE_CNT=0; sim_save(); }
   if(st==0){                                                  // the egg hatches after 20 steps, in the room
     if(P32(0x20)<20 || SCENE!=1) return;
     ANIM_T=0; ANIM_KIND=6; ANIM_ARG=1; SCENE=3; sfx(1,SEQ_FANFARE); return;
   }
-  int ri=rate_index(st), pbase= st==1? 80 : 110;
+  int ri=rate_index(st), pbase= st==1? 120 : 165;
   int day=P32(0x24)<480, sleeping, awake;
   u8 asleep=PET[P_ASLEEP];
   if(!asleep && !day){                                        // bedtime
@@ -2205,35 +2208,35 @@ static void sim_tick(void){
   }
   if(asleep){
     awake=0; sleeping=1;
-    if(!PET[P_LIGHTS] && P16(0x3E)<1000){ u16 v=++P16(0x3E); if(v==45){ mistake(); if(PET[P_HAPPY]) PET[P_HAPPY]--; } }
+    if(!PET[P_LIGHTS] && P16(0x3E)<1000){ u16 v=++P16(0x3E); if(v==68){ mistake(); if(PET[P_HAPPY]) PET[P_HAPPY]--; } }
   } else {
     awake=1; sleeping=0;
     { u16 v=++P16(0x28); if(v>=HUNGER_RATE[ri]){ P16(0x28)=0; if(PET[P_HUNGER] && --PET[P_HUNGER]==0){ sfx(0,SEQ_ALERT); P16(0x46)=0; } } }
     { u16 v=++P16(0x2A); if(v>=HAPPY_RATE[ri]){ P16(0x2A)=0; if(PET[P_HAPPY] && --PET[P_HAPPY]==0){ sfx(0,SEQ_ALERT); P16(0x46)=0; } } }
-    { u16 v=++P16(0x2C); if(v>=P16(0x2E)){ P16(0x2C)=0; u32 r=orng(); P16(0x2E)=(u16)((((r>>16)*70u)>>16)+pbase); if(PET[P_POOP]<=3) PET[P_POOP]++; } }
-    if(PET[P_CALL]){ u16 v=++P16(0x34); if(v>=40){ PET[P_CALL]=0; mistake(); } }
+    { u16 v=++P16(0x2C); if(v>=P16(0x2E)){ P16(0x2C)=0; u32 r=orng(); P16(0x2E)=(u16)((((r>>16)*105u)>>16)+pbase); if(PET[P_POOP]<=3) PET[P_POOP]++; } }
+    if(PET[P_CALL]){ u16 v=++P16(0x34); if(v>=60){ PET[P_CALL]=0; mistake(); } }
     else { u16 v=++P16(0x30);
-      if(v>=P16(0x32)){ P16(0x30)=0; P16(0x34)=0; PET[P_CALL]=1; u32 r=orng(); P16(0x32)=(u16)((((r>>16)*150u)>>16)+150); sfx(0,SEQ_ALERT); P16(0x46)=0; } }
+      if(v>=P16(0x32)){ P16(0x30)=0; P16(0x34)=0; PET[P_CALL]=1; u32 r=orng(); P16(0x32)=(u16)((((r>>16)*225u)>>16)+225); sfx(0,SEQ_ALERT); P16(0x46)=0; } }
   }
   u8 hunger=PET[P_HUNGER]; u16 starve=0;
   if(hunger) P16(0x36)=0;
-  else { starve=P16(0x36); if(starve<1000){ starve=++P16(0x36); if(starve==60) mistake(); } }
+  else { starve=P16(0x36); if(starve<1000){ starve=++P16(0x36); if(starve==90) mistake(); } }
   u8 happy=PET[P_HAPPY];
-  if(happy) P16(0x38)=0; else if(P16(0x38)<1000){ if(++P16(0x38)==60) mistake(); }
+  if(happy) P16(0x38)=0; else if(P16(0x38)<1000){ if(++P16(0x38)==90) mistake(); }
   u8 poop=PET[P_POOP]; int mess=poop+G.more.pad0;   // (v8.2b: the room's and the yard's mess both count)
   if(mess<2) P16(0x3A)=0;
-  else if(++P16(0x3A)>=80){                                   // a messy room can make it sick
+  else if(++P16(0x3A)>=120){                                   // a messy room can make it sick
     P16(0x3A)=0;
     if(!(orng()&0x80000000u) && !PET[P_SICK]){ P16(0x3C)=0; PET[P_SICK]=(u8)((orng()>>31)+1); sfx(0,SEQ_ALERT); P16(0x46)=0; }
   }
   int sick=0;
-  if(PET[P_SICK]){ sick=1; if(P16(0x3C)<1000){ if(++P16(0x3C)==120) mistake(); } }
-  if(PET[P_MEDS]){ if(++P16(0x42)>=90){ P16(0x42)=0; PET[P_MEDS]--; } }
+  if(PET[P_SICK]){ sick=1; if(P16(0x3C)<1000){ if(++P16(0x3C)==180) mistake(); } }
+  if(PET[P_MEDS]){ if(++P16(0x42)>=135){ P16(0x42)=0; PET[P_MEDS]--; } }
   if(P16(0x40)) P16(0x40)--;
   u16 ht=++P16(0x44);
-  int sv_starve= starve>30, dmg= (sick && P16(0x3C)>30)? (sv_starve? 2 : 1) : (sv_starve? 1 : 0), healed=0;
-  if(dmg){ if(ht>=3){ P16(0x44)=0; u16 h=P16(0x16); P16(0x16)=(u16)(h>dmg? h-dmg : 0); } }
-  else if(ht>=4){ P16(0x44)=0; if(P16(0x16)<=99) P16(0x16)++; healed=1; }
+  int sv_starve= starve>45, dmg= (sick && P16(0x3C)>45)? (sv_starve? 2 : 1) : (sv_starve? 1 : 0), healed=0;
+  if(dmg){ dmg*=2; if(ht>=9){ P16(0x44)=0; u16 h=P16(0x16); P16(0x16)=(u16)(h>dmg? h-dmg : 0); } }   // (v8.3: 2x the loss every 9 ticks = the old pace)
+  else if(ht>=6){ P16(0x44)=0; if(P16(0x16)<=99) P16(0x16)++; healed=1; }
   // v8.1: health stays hidden, but once it falls below a third the critter says so (once, until it is well again)
   if(dmg && P16(0x16)<34 && P16(0x16) && !G.weak_warned){ G.weak_warned=1; set_msg_name(" LOOKS WEAK... IT NEEDS CARE!"); sfx(0,SEQ_ALERT); }
   else if(P16(0x16)>=60) G.weak_warned=0;
@@ -2242,7 +2245,7 @@ static void sim_tick(void){
   }
   if(!sleeping){                                              // awake: it fusses while it needs something
     int need= !hunger || !happy || poop>2 || sick;
-    if((need || PET[P_CALL]) && ++P16(0x46)>=30){ sfx(0,SEQ_ALERT); P16(0x46)=0; }
+    if((need || PET[P_CALL]) && ++P16(0x46)>=45){ sfx(0,SEQ_ALERT); P16(0x46)=0; }
     if(SCENE==1) sim_grow(st);                                // and grows up only while awake in its room
   }
   (void)awake;
@@ -2305,7 +2308,7 @@ static void check_life(void){
 static void new_egg(void){
   u8 snd=PET[P_SOUNDON], fast=PET[P_FAST];
   for(int i=0;i<0x4C;i++) PET[i]=0;
-  *(volatile u16*)(PET+0x32)=200; *(volatile u16*)(PET+0x2E)=120; *(volatile u16*)(PET+0x16)=100; *(volatile u16*)(PET+6)=0x0202;
+  *(volatile u16*)(PET+0x32)=300; *(volatile u16*)(PET+0x2E)=180; *(volatile u16*)(PET+0x16)=100; *(volatile u16*)(PET+6)=0x0202;
   PET[P_SOUNDON]=snd; PET[P_FAST]=fast;
   *(volatile u32*)0x03000004=120; *(volatile u32*)0x03000008=120; *(volatile u32*)0x0300000C=60; *(volatile u8*)0x030002D0=0;
   *(volatile u32*)PET=0x31504B43u;

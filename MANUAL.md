@@ -11,8 +11,8 @@ This booklet covers everything in the game. The secret forms, rare moonflowers a
 ## Getting started
 
 - **Title screen:** CONTINUE plays your saved critter. NEW SEED starts over with a new star-seed (it asks twice, and your journal is kept). JOURNAL opens the journal.
-- **Hatching:** keep the star-seed company and it hatches in about half a minute. Then give it a name of up to 6 letters. SELECT suggests a name, START accepts it.
-- **Time:** a day in the game lasts about 16½ minutes: 12 of daytime and 4½ of night. With SPEED: FAST in the START menu, everything runs 2.5 times as fast and a day lasts about 6½ minutes. Time passes in the room and the yard, and stands still in menus, the shop, the bag, the journal, stories and minigames. It only passes while the game is switched on.
+- **Hatching:** keep the star-seed company and it hatches in about 20 seconds. Then give it a name of up to 6 letters. SELECT suggests a name, START accepts it.
+- **Time:** a day in the game lasts about 11 minutes: 7 of daytime and 4 of night. With SPEED: FAST in the START menu, everything runs 2.5 times as fast and a day lasts about 4½ minutes. Time passes in the room and the yard, and stands still in menus, the shop, the bag, the journal, stories and minigames. It only passes while the game is switched on.
 - **Age:** your critter ages one year for every day in the game. The status card shows its age, for example "AGE: 1 YEAR" or "AGE: 5 YEARS".
 - **Saving:** the game saves by itself as you play. To stop, press START and choose SAVE AND QUIT before switching off.
 
@@ -82,11 +82,11 @@ Your critter grows while it is awake.
 
 | Stage | Form | About how long |
 |---|---|---|
-| Egg | The star-seed | Half a minute |
-| Baby | **Bliplet** | Half a day |
-| Child | **Sproutle** | A day |
-| Teen | **Bloomle** or **Thornle** | Two days |
-| Grown-up | One of seven forms | About 12 years |
+| Egg | The star-seed | About 20 seconds |
+| Baby | **Bliplet** | About 4 minutes |
+| Child | **Sproutle** | About 10 minutes (a day) |
+| Teen | **Bloomle** or **Thornle** | Two mornings (about 15–20 minutes) |
+| Grown-up | One of seven forms | About 8 years (about 1½ hours) |
 
 - **The teen:** a Sproutle cared for well (a care score of 70% or more) becomes a **Bloomle**. One that had a harder time becomes a **Thornle**.
 - **The grown-up:** a Bloomle grows into whatever it got most of, and a Thornle into whatever it missed most:
@@ -106,7 +106,7 @@ Your critter grows while it is awake.
 
 ## Day and night
 
-Each day ends with a night that lasts about 4½ minutes (about 1 minute 50 seconds on FAST). At night the clock moves more slowly, but your critter's needs keep their usual pace. When your critter gets sleepy, turn the lights off; turn them on again in the morning. While it sleeps there is still plenty to do:
+Each day ends with a night that lasts about 4 minutes (about 1½ minutes on FAST). At night the clock moves more slowly, but your critter's needs keep their usual pace. When your critter gets sleepy, turn the lights off; turn them on again in the morning. While it sleeps there is still plenty to do:
 
 - **A wishing star** crosses the sky on some nights.
 - **A bedtime story** can be read from the SELECT menu, one a night.
@@ -351,7 +351,7 @@ The journal keeps a record of every critter and is never cleared. Open it from t
 
 **What carries over to the next critter?** The journal, with its stars, guide, items and garden pages, and any farewell bonus. Coins, the bag, toys, decor, the shop and the garden start fresh.
 
-**How long does a critter live?** About 12 days in all: half a day as a baby, a day as a child, two as a teen and about 8 as a grown-up.
+**How long does a critter live?** About 2 hours of play (about 12 days in the game): a few minutes as a baby, a day as a child, two as a teen and about 8 as a grown-up.
 
 **Does time pass when the game is off?** No. Your critter waits for you.
 
@@ -380,9 +380,9 @@ Only read on if you're stuck.
 | Riddle | Secret form | What it takes |
 |---|---|---|
 | "Not one need missed, not one call unanswered." | Starwing | Any grown-up whose care stays near perfect |
-| "What does the keeper of the woods become in the sun?" | Sunpuff | An Oakhart that spends 15 minutes outside |
+| "What does the keeper of the woods become in the sun?" | Sunpuff | An Oakhart that spends 10 minutes outside |
 | "It waits for a dandelion clock that plays its very best, again and again." | Zippit | A Fluffbud with 6 AMAZING! or PERFECT! games |
-| "It waits for a sweet bloom with a garden and a full heart." | Glimmer | A Dunerose with a Garden placed in the yard and full bond |
+| "It waits for a sweet bloom with a garden and a full heart." | Glimmer | A Dunerose with a Garden placed in the yard (for about 10 minutes) and full bond |
 | "What weaves its fern fronds when every corner is cozy?" | Nestle | A Frillo with all 4 room decor spots filled |
 | "What blooms when smoky wool is washed, day after day?" | Petalamb | A Smogwool kept clean for two days |
 | "Not one hungry day for the oily paddler." | Lilybill | A Gunkbill kept well fed for two days |
