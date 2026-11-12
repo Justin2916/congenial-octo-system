@@ -208,11 +208,13 @@ def t_secrets():
     secret(3, 1, [p8(WG, 1), p8(g('ext', 'e_stars'), 6)], 0, '', 'v8.3: a FLUFFBUD with 1 wish (and 6 WHAT A STAR! games) stays')
     grown = [p8(g('dex', 'd_phase'), 3), p8(g('ext', 'e_special'), 0), p8(YD, 0), p8(WG, 0), p8(g('life', 'l_pad'), 0), p8(P1, 0)]
     # in the yard early in the morning: counted once that day, with a message
-    sc = BOOT + DAY + grown + ['press SELECT', 'wait 6', 'press A', 'wait 40', p32(0x0300004C, 60), 'wait 200',
-                               f'peek {YD:08x} 1', 'peek 030002a4 32', 'wait 300', f'peek {YD:08x} 1']
+    sc = BOOT + DAY + grown + ['press SELECT', 'wait 6', 'press A', 'wait 40', p32(0x0300004C, 60), 'wait 30',
+                               *[x for _ in range(16) for x in ('wait 30', f'peek {YD:08x} 1', 'peek 030002a4 32')], 'wait 300', f'peek {YD:08x} 1']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
-    msg = bytes(v[1]).split(b'\0')[0].decode('ascii', 'replace')
-    check('secrets: v8.3: a grown-up in the yard in the early morning counts a sunny morning (once a day)', v[0][0] == 1 and v[2][0] == 1 and ('MORNING SUN' in msg or 'SHOP' in msg), f'{v[0][0]} {v[2][0]} "{msg}"')
+    ms = [(v[2 * i][0], bytes(v[2 * i + 1]).split(b'\0')[0].decode('ascii', 'replace')) for i in range(16)]
+    seen = [m for n, m in ms if n == 1]
+    check('secrets: v8.3: a grown-up in the yard in the early morning counts a sunny morning (once a day), when the message box is free',
+          ms[-1][0] == 1 and v[-1][0] == 1 and seen and 'MORNING SUN' in seen[0], str(ms[::3]))
     sc = BOOT + DAY + grown + ['press SELECT', 'wait 6', 'press A', 'wait 40', p32(0x0300004C, 200), 'wait 300', f'peek {YD:08x} 1']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('secrets: v8.3: later in the day it does not count', v[0][0] == 0, str(v[0][0]))
@@ -250,7 +252,8 @@ def t_care():
           *[x for k in range(4) for x in care_set('c_grow', miss=(k, 0))],
           p8(PET + 4, 2), p32(PET + 0x20, 10), p8(PET + 0x12, 1), p8(PET + 0xC, 0), p32(PET + 0x24, 100), p8(PET + 0xD, 0),
           p8(PET + 6, 1), p8(PET + 7, 1), p8(PET + 0xB, 0), p8(PET + 0xA, 0), *p16(PET + 0x28, 0), *p16(PET + 0x2A, 0), *p16(PET + 0x2C, 0), *p16(PET + 0x2E, 300),
-          'wait 1500', f'peek {cw("c_grow", "w_n"):08x} 14']
+          *[x for _ in range(3) for x in ('wait 500', *p16(PET + 0x28, 0), *p16(PET + 0x2A, 0))],   # (v8.3: hearts drain fast; keep them at 1)
+          f'peek {cw("c_grow", "w_n"):08x} 14']
     d = peeks(run(ROM, sc, copy_save('teen')))[0][1]
     n, good, bad = struct.unpack('<3H', d[0:6]); miss = struct.unpack('<4H', d[6:14])
     check('care: hunger 1 and happiness 1 still count as good care (missing only at 0)', n >= 3 and good == n and miss[0] == 0 and miss[1] == 0, f'n {n} good {good} miss {miss}')
@@ -749,7 +752,7 @@ def t_rebal():
     check('rebalance: decor no longer raises happiness (it can only drop)', happy <= 2, f'happy {happy}')
     check('rebalance: play decor still counts as play, 1 point a use', 4 <= play <= 12, f'play {play}')
     # bed: still happy in the morning
-    sc = BOOT + [p8(SL + 0, I['IT_BED'])] + ['poke32 0300004c 257', p8(PET + 12, 1), p8(PET + 7, 1), 'wait 400', f'peek {PET + 7:08x} 1', 'peek 030002a4 24']
+    sc = BOOT + [p8(SL + 0, I['IT_BED'])] + ['poke32 0300004c 257', p8(PET + 12, 1), p8(PET + 7, 1), *p16(PET + 0x2A, 0), 'wait 400', f'peek {PET + 7:08x} 1', 'peek 030002a4 24']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('rebalance: the bed still wakes it up happy +1', v[0][0] >= 2 and b'SLEPT GREAT' in bytes(v[1]), str(v))
 

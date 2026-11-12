@@ -2047,8 +2047,9 @@ static void secret_counts_reset(void){ G.dex.yard=0; G.dex.games=0; G.life.pad=0
 static int grown_now(void){ u8 st=PET[P_STAGE]; return st>=3 && st<=7 && G.dex.phase==PH_ADULT && !G.ext.special; }
 static void sun_morning(void){   // in the yard early in the morning (the first ~2 minutes of daylight), once a day
   if(!grown_now() || !G.outside || PET_CLOCK>=150 || G.life.pad==(u8)(G.ext.day+1)) return;
+  if(MSG_TIMER) return;   // (wait for the message box, so it is always seen)
   G.life.pad=(u8)(G.ext.day+1); if(G.dex.yard<255) G.dex.yard++; save_all(); G.check_special=1;
-  if(!MSG_TIMER) set_msg_name(" BASKS IN THE MORNING SUN!");
+  set_msg_name(" BASKS IN THE MORNING SUN!");
 }
 static void secret_wish(void){ if(grown_now()){ if(G.dex.games<255) G.dex.games++; G.check_special=1; } }
 static void secret_lantern(void){ if(grown_now() && G.fly_n>=8 && !(G.more.pad1&4)){ G.more.pad1|=4; G.check_special=1; } }
