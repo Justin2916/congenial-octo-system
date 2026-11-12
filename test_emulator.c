@@ -483,6 +483,17 @@ int main(int argc, char **argv){
       keys=0x3FF; printf("fuzz done frame %ld scene %u mode %u | mode frames:",frame,rd32(0x03000020),rd8(0x0203E008)); for(int m=0;m<8;m++) printf(" %d",mc[m]); printf("\n"); }
     else if(!strcmp(cmd,"objlog")){ int k=atoi(a1); FILE *lf=fopen(a2,"a"); for(int i=0;i<k&&!fault;i++){ run_frame(); frame++; u32 G=0x0203E000; fprintf(lf,"%ld %d",frame,rd8(G+0xec)); for(int j=0;j<10;j++){ u32 o=G+0x120+j*20; if(rd8(o+17)) fprintf(lf," %d:%d:%d:%d",j,(s32)rd32(o),(s32)rd32(o+4),rd8(o+16)); } fprintf(lf,"\n"); } fclose(lf); }
     else if(!strcmp(cmd,"trace")){ int k=atoi(a1); u32 ad=strtoul(a2,0,16); u32 last=0xFFFFFFFF; for(int i=0;i<k&&!fault;i++){ run_frame(); frame++; u32 v=rd32(ad); if(v!=last){ printf("f%ld %08x scene %u mode %u\n",frame,v,rd32(0x03000020),rd8(0x0203E008)); last=v; } } }
+    else if(!strcmp(cmd,"trail")){   // port harness: for a1 frames, append per-frame block hashes to a2 (see tools/lockstep.py)
+      int k=atoi(a1); FILE *tf=fopen(a2,"ab");
+      for(int i=0;i<k&&!fault;i++){ run_frame(); frame++;
+        u32 rec[2+128+64+10+2]; int r=0; rec[r++]=(u32)frame; rec[r++]=rd32(0x03000020);
+        #define FNV(p,n) ({ u32 h=2166136261u; const u8 *q_=(p); for(int j_=0;j_<(n);j_++){ h^=q_[j_]; h*=16777619u; } h; })
+        for(int b=0;b<128;b++) rec[r++]=FNV(iwram+b*256,256);              // IWRAM, 256-byte blocks
+        for(int b=0;b<64;b++) rec[r++]=FNV(ewram+b*4096,4096);             // EWRAM, 4 KB blocks
+        { u16 dc=io[0]|(io[1]<<8); const u8 *s=&vram[(dc&0x10)?0xA000:0]; for(int b=0;b<10;b++) rec[r++]=FNV(s+b*3840,3840); }   // the shown page, 16 rows each
+        rec[r++]=FNV(pal,512); rec[r++]=FNV(pal+512,512);
+        fwrite(rec,4,r,tf); }
+      fclose(tf); }
     else if(!strcmp(cmd,"echo")){ printf("%s", line+5); }
   }
   if(sramfn){ FILE *s=fopen(sramfn,"wb"); fwrite(sram,1,sizeof sram,s); fclose(s); }

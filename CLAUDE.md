@@ -243,6 +243,13 @@ Other details:
   (`More.pad1` bit 2); Zippit = a Fluffbud that wished on 2 shooting stars (`Dex.games`). `Dex.yard/games` were only
   read when a pre-v9 save converts. Nestle, Starwing and the less-care secrets are unchanged; the `PH_OLD` rules too.
 
+## Porting the original (started Nov 12 2026)
+
+- **Stage 1 is done:** see `port/PORT_MAP.md` (the map of every function, the data and the RAM), `port/orig.lst` (the full
+  listing, from `tools/disasm.py`), `gen/orig_data.py` (all the original's data, which rebuilds byte-identical) and
+  `tools/lockstep.py` (runs two ROMs on one script and names the first differing RAM bytes or pixels; it uses the
+  emulator's `trail` command). Stage 2, the helpers, is next.
+
 ## Pinned for later (owner, Nov 12 2026)
 
 - **Port the original game into our source** (no more `CritterKeep_original.gba` + `patch.py`). The original is ~70 KB:
