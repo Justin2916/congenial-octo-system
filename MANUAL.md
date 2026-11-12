@@ -50,7 +50,7 @@ STATUS shows how your critter is doing:
 
 - **Hunger and happiness:** up to four hearts each. Keep both from running empty.
 - **Bond:** how close it feels to you, up to four hearts. Petting it when it calls, gifts, bedtime stories and great minigame rounds all raise it.
-- **Age and weight:** its age in years, and its weight in pounds (never under 10 LB as a baby, 15 as a child, 20 as a teen and 30 as a grown-up). An overweight critter is not well cared for.
+- **Age and weight:** its age in years, and its weight in pounds (never under 5 LB as a baby, 10 as a child, 20 as a teen and 30 as a grown-up). An overweight critter is not well cared for.
 - **The care corner** (bottom right):
   - The **heart line** shows what it gets most of: OUTSIDE, PLANTS, PLAY, or BALANCED when it's a bit of everything. This decides what a well-cared-for critter grows into.
   - The **! line** appears when one need keeps running out lately: HUNGRY, UNHAPPY, MESSY, SICK or LIGHTS ON. Fix that one first.

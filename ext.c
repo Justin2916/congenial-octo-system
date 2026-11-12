@@ -4987,7 +4987,7 @@ void hook_render(void){
     text(G.dex.gender? "GIRL" : "BOY",G.dex.gender? 128 : 131,41,G.dex.gender? C_RED : C_BLUE);
     // v8.3: the weight in pounds, at least each stage's lowest (display only: the stored weight and every care rule are unchanged)
     { int bg=pget(214,62), fg=bg; for(int y=58;y<67 && fg==bg;y++) for(int x=130;x<136;x++){ int v=pget(x,y); if(v!=bg){ fg=v; break; } }
-      u8 st=PET[P_STAGE]; int lo= st<=1? 10 : st==2? 15 : G.dex.phase==PH_TEEN? 20 : 30;   // each stage's lowest: baby, child, teen, grown-up (and secret)
+      u8 st=PET[P_STAGE]; int lo= st<=1? 5 : st==2? 10 : G.dex.phase==PH_TEEN? 20 : 30;   // each stage's lowest: baby, child, teen, grown-up (and secret)
       int lb=PET[P_WEIGHT]<lo? lo : PET[P_WEIGHT]; char b[12]; char *q=sint(b,lb); scpy(q," LB");
       fill(172,57,52,10,bg); text(b,172,58,fg); }
     card_care(); }
