@@ -2130,13 +2130,13 @@ static void check_special(void){
     else if(PET[P_BOND]>=4 && PET[P_HAPPY]>=4 && PET[P_HUNGER]>=3) f=SF_GLIMMER;
     else if(G.ext.stars>=6) f=SF_ZIPPIT;
     else if(G.ext.yard_mins>=15) f=SF_SUNPUFF;
-    else if(decor_in(0) && decor_in(1) && decor_in(2) && decor_in(3)) f=SF_NESTLE;
+    else if(decor_in(0) && decor_in(1) && decor_in(2) && decor_in(3) && decor_in(6)) f=SF_NESTLE;
   } else if(G.dex.side==1){       // v8: each good-side grown-up has its own secret, keeping up what it is good at
     const CareWin *w=&G.care.adult; u32 g=w->good, b=w->bad; int a=G.dex.adult;
     if(a==F_OAKHART && G.dex.yard>=3) f=SF_SUNPUFF;                                    // v8.3: greets the morning sun on 3 days
     else if(a==F_DUNEROSE && (G.more.pad1&4)) f=SF_GLIMMER;                            // v8.3: 8 fireflies in its lantern in one night
     else if(a==F_FLUFFBUD && G.dex.games>=2) f=SF_ZIPPIT;                             // v8.3: wished on 2 shooting stars
-    else if(a==F_FRILLO && decor_in(0) && decor_in(1) && decor_in(2) && decor_in(3)) f=SF_NESTLE;   // a full room
+    else if(a==F_FRILLO && decor_in(0) && decor_in(1) && decor_in(2) && decor_in(3) && decor_in(6)) f=SF_NESTLE;   // a full room (v8.3: all five spots, the corner too)
     else if(g+b>=20 && g*10>=(g+b)*9) f=SF_STARWING;                                  // any of them: near-perfect care
   } else {                        // less-care grown-ups turn around when what they missed stays fixed for two days
     u8 d=(u8)G.ext.day; int a=G.dex.adult;

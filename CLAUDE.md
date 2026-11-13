@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 228 checks (187 in the v8.1 sections, 13 `sprites` and 28 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 229 checks (188 in the v8.1 sections, 13 `sprites` and 28 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
@@ -315,7 +315,7 @@ Other details:
   grown-up days start): Sunpuff = an Oakhart in the yard with `PET_CLOCK` < 150 on 3 days (`Dex.yard`, the day marker
   in `Life.pad`; "BASKS IN THE MORNING SUN!"); Glimmer = a Dunerose with 8 fireflies in the lantern in one night
   (`More.pad1` bit 2); Zippit = a Fluffbud that wished on 2 shooting stars (`Dex.games`). `Dex.yard/games` were only
-  read when a pre-v9 save converts. Nestle, Starwing and the less-care secrets are unchanged; the `PH_OLD` rules too.
+  read when a pre-v9 save converts. Nestle needs all five room spots (v8.3: the corner too). Starwing and the less-care secrets are unchanged; the `PH_OLD` rules too.
 
 ## Porting the original (started Nov 12 2026)
 

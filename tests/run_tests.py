@@ -222,7 +222,10 @@ def t_secrets():
     sc = BOOT + grown + ['poke32 0300004c 1f4', 'wait 5', *p16(g('wish_cd'), 20), 'wait 40', 'press A', 'wait 6', f'peek {WG:08x} 1']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('secrets: v8.3: a grown-up\'s wish on a shooting star is counted', v[0][0] == 1, str(v[0][0]))
-    secret(4, 1, [p8(g('deco', 'k_slot') + i, it) for i, it in enumerate((14, 15, 16, 17))], 5, 'NESTLE', 'a FRILLO in a full room becomes a NESTLE')
+    # (v8.3: a full room is all five spots: the window, the picture, the wall, the ceiling and the corner)
+    full = [p8(g('deco', 'k_slot') + i, it) for i, it in enumerate((14, 35, 18, 23))]
+    secret(4, 1, full + [p8(g('deco', 'd_pad'), 15)], 5, 'NESTLE', 'a FRILLO in a full room (all five spots) becomes a NESTLE')
+    secret(4, 1, full + [p8(g('deco', 'd_pad'), 0xFF)], 0, None, 'a FRILLO with the corner empty stays a FRILLO')
     secret(15, 1, care_set('c_adult', good=40, bad=2), 6, 'STARWING', 'an OAKHART with near-perfect care becomes a STARWING')
     secret(4, 1, [p8(YD, 3)], 0, '', 'a FRILLO out on sunny mornings stays (SUNPUFF is the OAKHART secret)')
     secret(18, 2, [p8(md + K_CLEAN, 7)], 7, 'PETALAMB', 'a SMOGWOOL kept clean two days becomes a PETALAMB')

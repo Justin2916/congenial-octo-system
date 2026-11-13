@@ -389,7 +389,7 @@ Only read on if you're stuck.
 | "Who rises with the sun, morning after morning?" | Sunpuff | An Oakhart that is out in the yard early in the morning (the first couple of minutes after sunrise) on 3 different mornings |
 | "What chases comets for wishes of its own?" | Zippit | A Fluffbud that wishes on 2 shooting stars as a grown-up |
 | "Whose lantern is full of little lights?" | Glimmer | A Dunerose that catches 8 fireflies in one night as a grown-up |
-| "What weaves its fern fronds when every corner is cozy?" | Nestle | A Frillo with the window, picture, wall and ceiling spots all filled |
+| "What weaves its fern fronds when every corner is cozy?" | Nestle | A Frillo with all five room decor spots filled |
 | "What blooms when smoky wool is washed, day after day?" | Petalamb | A Smogwool kept clean for two days |
 | "Not one hungry day for the oily paddler." | Lilybill | A Gunkbill kept well fed for two days |
 | "What ripens on a bramble coat that smiles for days?" | Jamble | A Thornhog kept happy for two days |
