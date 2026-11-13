@@ -59,6 +59,26 @@ def build():
     o.append('static const u16 DEC_PAL[DEC_N][2][DEC_BANDN]={%s};\n' % ','.join('{{%s},{%s}}' % (','.join(map(str, d)), ','.join(map(str, n))) for d, n in pals))
     o.append('static const u8 DEC_PIX[%d]={%s};\n' % (len(pix), ','.join(map(str, pix))))
     o.append('static const u8 DEC_ROWS[%d]={%s};\n' % (len(rows), ','.join(map(str, rows))))
+    # v8.3: the fireplace's shadow on the wall, and for each room colour (144-207) its shaded colour at three depths
+    import re
+    bh = open(_ROOT + '/bgfx.h').read()
+    def arr(n): return [int(v) for v in re.search(n + r'\[BGX_N\]=\{([^}]*)\}', bh).group(1).split(',')]
+    unp = lambda v: ((v & 31) << 3, ((v >> 5) & 31) << 3, ((v >> 10) & 31) << 3)
+    dpal = [unp(v) for v in arr('BGX_ROOM_DAYPAL')]; npal = [unp(v) for v in arr('BGX_ROOM_NIGHTPAL')]
+    import struct
+    po = lambda n: [unp(v) for v in struct.unpack('<256H', open(_ROOT + '/gen/bg/' + n, 'rb').read())]
+    od, on = po('pal_day.bin'), po('pal_night.bin')        # the original's colours (the wall is its 3 and 4)
+    src = {i: (od[i], on[i]) for i in (3, 4)}; src.update({144+i: (dpal[i], npal[i]) for i in range(len(dpal))})
+    shade = []
+    for k in (0.60, 0.72, 0.86):
+        row = list(range(256))
+        for i2, (cd, cn) in src.items():
+            td = tuple(int(v*k) for v in cd); tn = tuple(int(v*k) for v in cn)
+            row[i2] = 144 + min(range(len(dpal)), key=lambda j: d2(dpal[j], td) + d2(npal[j], tn))
+        shade.append(row)
+    sh = decor.fireplace_shadow(decor.render('FIREPLACE'))
+    o.insert(len(o)-2, '#define FP_SHADOW_N %d\nstatic const u8 FP_SHADOW[FP_SHADOW_N][3]={%s};\n' % (len(sh), ','.join('{%d,%d,%d}' % t for t in sh)))
+    o.insert(len(o)-2, 'static const u8 FP_SHADE[3][%d]={%s};\n' % (256, ','.join('{%s}' % ','.join(map(str, r)) for r in shade)))
     # yard toys: frames share one palette in band 2 (only one toy is out at a time)
     TOYS = ['BALL', 'KITE', 'FRISBEE', 'SPRINKLER', 'PINWHEEL']; tband = BAND0+2*BANDN
     tfr = []; tpal = []

@@ -910,6 +910,28 @@ def t_yard():
     sc = BOOT + night + [p8(MORE0, 4), p8(POOP, 0), p8(PET + 10, 0), 'wait 5400', f'peek {PET + 10:08x} 1', f'peek {PET + 0x3A:08x} 2', f'peek {MORE0:08x} 1']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('yard: asleep, the yard\'s mess doesn\'t count toward getting sick', v[0][0] == 0 and v[1] == b'\x00\x00' and v[2][0] == 4, str(v))
+    # v8.3: a new seed clears the "tonight" marks (they're day+1 and its days start again at 0), so its first night
+    # isn't already used up: before, "NO MORE FIREFLIES TONIGHT." could come before any round
+    SP = g('more', 'm_spare')
+    sv = copy_save('adult')
+    run(ROM, BOOT + [*p16(SP + 12, 1), *p16(SP + 14, 3), *p16(SP + 2, 1), 'wait 4', 'press START', 'wait 8', 'press UP', 'wait 4', 'press A', 'wait 8', 'press A', 'wait 60'], sv)
+    sc = ['wait 60', 'press DOWN', 'wait 10', 'press A', 'wait 20', 'press A', 'wait 20', 'press LEFT', 'wait 10', 'press A', 'waitscene 1', 'wait 30', f'peek {SP:08x} 16']
+    v = struct.unpack('<8H', peeks(run(ROM, sc, sv))[0][1])
+    check('yard: a new seed starts with fresh nights (firefly rounds, wish and story marks cleared)', v[0] == 0 and v[1] == 0 and v[6] == 0 and v[7] == 0, str(v))
+    # v8.3: START opens the menu over the night yard too; B goes back to the yard
+    M = g('mode')
+    sc = BOOT + night + ['press SELECT', 'wait 6', 'press A', 'wait 30', 'press START', 'wait 8', f'peek {M:08x} 1', 'press B', 'wait 8', f'peek {M:08x} 1', 'peek 03000020 1']
+    v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('yard: START opens the menu over the night yard, and B goes back out there', v == [1, 13, 1], str(v))
+    # v8.3: A skips the rest of a MEAL (the original finishes it: same weight as waiting), and of food from the bag
+    res = []
+    for skip in (0, 1):
+        sc = BOOT + DAY + ['press A', 'wait 6', 'press A', 'wait 20'] + (['press A', 'wait 6', 'peek 03000020 1'] if skip else []) + ['wait 150', f'peek {PET + 9:08x} 1']
+        res.append([x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))])
+    INV = g('ext', 'e_inv')
+    sc = BOOT + DAY + [p8(INV, 3), 'wait 2', 'press SELECT', 'wait 6', 'press DOWN', 'wait 4', 'press DOWN', 'wait 4', 'press A', 'wait 10', 'press A', 'wait 15', 'press A', 'wait 3', f'peek {M:08x} 1', f'peek {INV:08x} 1']
+    b = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('yard: A skips the rest of a meal (it still counts) and of food from the bag', res[1][0] != 3 and res[1][1] == res[0][0] and b == [0, 2], f'{res} {b}')
     # v8.2c: running away is a six-shot scene: its room at dawn, a look back from the yard, the meadow path, the
     # stream where wild critters take it in, the empty place in the night sky, the end card
     md0 = int(re.search(r'MD_PAL\[MD_N\]=\{(\d+)', open(f'{CK}/meadow.h').read()).group(1))

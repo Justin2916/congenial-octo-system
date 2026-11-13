@@ -11,6 +11,12 @@ PD=struct.unpack('<256H',rd('pal_day.bin')); PN=struct.unpack('<256H',rd('pal_ni
 rgb=lambda v:((v&31)<<3,((v>>5)&31)<<3,((v>>10)&31)<<3)
 DAYC=[rgb(v) for v in PD]; NIGHTC=[rgb(v) for v in PN]
 ROOM=list(rd('bg_room_day.bin')); YD=list(rd('bg_yard_day.bin')); YN=list(rd('bg_yard_night.bin'))
+# v8.3: the wall picture hangs 8 px higher, to make room for the fireplace under it (ext.c draws the picture at y 35)
+PIC_UP=8
+_pf=[(x,y) for y in range(28,100) for x in range(150,240) if ROOM[y*W+x] in (35,6)]
+_py0=min(p[1] for p in _pf); _keep={p:ROOM[p[1]*W+p[0]] for p in _pf}
+for (x,y) in _pf: ROOM[y*W+x]=ROOM[(_py0-3)*W+x]          # the wall behind it (its stripes run straight down)
+for (x,y),v in _keep.items(): ROOM[(y-PIC_UP)*W+x]=v
 EXTRA0, EXTRA_N = 144, 112
 LOCKED=set(range(80,144))|{9}            # sky/clouds/sun/moon, wall picture, bar colour handled separately
 def clamp(c): return tuple(max(0,min(255,int(round(v)))) for v in c)

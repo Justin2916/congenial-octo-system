@@ -722,7 +722,7 @@ typedef struct {
   u8 fx_hold, fx_hpad[3];
   u16 dark_t, dark_pad;
   u16 yf_key; u8 yf_nk, yf_pad; u16 yf_pal[5][2][7];
-  u8 ex_first, ex_pad[3];   // v8.3: the SELECT menu's first row shown (it scrolls over the night yard, which adds CLEAN UP)
+  u8 ex_first, fp_lit, mn_yard, ex_pad;   // (mn_yard: the START menu is open over the night yard)   // (fp_lit: the room picture has the fireplace's shadow, drawn only while the lights are on)   // v8.3: the SELECT menu's first row shown (it scrolls over the night yard, which adds CLEAN UP)
     // v8.3: the yard fireflies' palettes, for tonight's kinds (yf_key)               // v8.3: ticks awake by day with the lights off (an extra happy heart lost every DARK_TICKS)             // v8.3: frames a fade stays at its start (the runaway's cuts: until both pages hold the new shot)
 } State;
 
@@ -1860,15 +1860,14 @@ static void draw_decor(int anim){
           fill(204,99,24,27,C_OUTLINE); fill(206,97,20,2,C_OUTLINE);
           fill(207,121,18,3,C_WOOD_DK); fill(209,119,14,2,C_BROWN2);
           break; }
-        { static const s8 FLK[8]={0,2,3,1,4,2,0,3};
-          static const u8 FW[12]={0,1,1,2,2,2,3,3,3,3,3,2};   // half-width by depth from the tip: a rounded teardrop
-          for(int i=0;i<3;i++){ int fx=211+i*6, h=8+FLK[((G.sky_t>>2)+i*3)&7], sway=((G.sky_t>>3)+i)&1;
-            static const u16 RC[13]={0,0,0,0,0,0,0,469,402,352,313,282,256};   // 11*256/(h-1): no divide per row
-            for(int r=0;r<h;r++){ int k=(r*RC[h])>>8, w=FW[k>11?11:k], y=119-h+r, cx=fx+((r<h/3)? sway : 0);
+        { static const s8 FLK[8]={0,2,3,1,4,2,0,3};   // v8.3: three small flames in the firebox on the back wall
+          static const u8 FW[12]={0,1,1,1,2,2,2,2,2,2,2,1};   // half-width by depth from the tip: a slim teardrop
+          static const u16 RC[9]={0,0,0,0,0,704,563,469,402};   // 11*256/(h-1): no divide per row
+          for(int i=0;i<3;i++){ int fx=192+i*4, h=6+(FLK[((G.sky_t>>2)+i*3)&7]>>1), sway=((G.sky_t>>3)+i)&1;
+            for(int r=0;r<h;r++){ int k=(r*RC[h])>>8, w=FW[k>11?11:k], y=97-h+r, cx=fx+((r<h/3)? sway : 0);
               fill(cx-w,y,2*w+1,1,C_RED);
               if(w>=2 && r>1) fill(cx-w+1,y,2*w-1,1,C_ORANGE);
-              if(w>=3 && r>h/2) fill(cx-1,y,3,1,C_GOLD);
-              if(r>h-3 && w>=2) pset(cx,y,C_PALEYEL); } } }
+              if(r>h-3) pset(cx,y,C_PALEYEL); } } }
         break;
       case IT_MIRROR:
         if(!anim){
@@ -1963,6 +1962,7 @@ static void draw_decor(int anim){
   if(anim && G.fx_t){
     static const u8 FXX[N_SLOTS]={20,212,142,101,44,186}, FXY[N_SLOTS]={92,90,66,62,90,88};
     int k=90-G.fx_t, s=G.fx_slot, x=FXX[s], y=FXY[s];
+    if(G.deco.slot[s]==IT_FIREPLACE){ x=196; y=62; }   // v8.3: it's on the back wall now, under the picture
     if(YARD_SLOT(s) != G.outside) return;
     int it=G.deco.slot[s];
     if(it==IT_RADIO || it==IT_PIANO || it==IT_GUITAR) { note_icon(x-6+(k>>3),y-k/3); note_icon(x+8-(k>>3),y-8-k/3); }
@@ -2108,6 +2108,9 @@ static void check_special(void){
 }
 static void new_unlock_seed(void);
 static void life_reset(int keep_stars,int bonus);
+// v8.3: the "tonight" marks (a wish, a story, the firefly rounds) are day+1, and a new critter's days start again at 0:
+// clear them, or its first night can look already used (e.g. "NO MORE FIREFLIES TONIGHT." before any round)
+static void night_marks_reset(void){ G.more.spare[0]=G.more.spare[1]=G.more.spare[6]=G.more.spare[7]=0; G.fly_night=0; G.fly_n=0; G.fly_kinds=0; }
 static void journal_end(int ending);
 static void track_stage(void){
   u8 st=PET[P_STAGE];
@@ -2116,7 +2119,7 @@ static void track_stage(void){
   if(st==8 && prev>=1 && prev<=7) journal_end(0);   // it ran out of health and ran away: counted, but no star
   if(st==0 && prev==8){ life_reset(0,0); G.ext.prev_stage=0; }
   if(st==0){ G.ext.special=0; G.ext.stars=0; G.ext.yard_mins=0; new_unlock_seed();
-    G.more.pad0=0; G.more.pad1&=(u8)~3;   // v8.2b: a new egg, a clean yard
+    G.more.pad0=0; G.more.pad1&=(u8)~3; night_marks_reset();   // v8.2b: a new egg, a clean yard (v8.3: and fresh nights)
     G.dex.gender=(u8)rnd(2); G.dex.phase=PH_GROW; G.dex.side=0; G.dex.adult=0; G.dex.games=0; G.dex.yard=0;   // a new egg: boy or girl,
     G.dex.c_good=G.dex.c_bad=G.dex.c_sad=G.dex.c_mess=0; memset(&G.care,0,sizeof(Care));
     G.more.rn[0]=G.more.rn[1]=0; memset(G.more.rmiss,0,sizeof(G.more.rmiss)); G.more.spare[2]=0; memset(G.names.cur,0,8); garden_reset(); dex_save(); }        // and a fresh care record
@@ -2163,7 +2166,7 @@ static void life_watch(void){
   else if(SCENE==1 && !sl && (FRAMES&63)==0 && !G.sendoff_pending) check_life();
   care_sample();
   shop_level_watch();
-  if(G.outside && G.mode!=M_GARDEN && G.mode!=M_FLY && !G.ex_yard) outside_tick();   // (the night yard is its own thing)
+  if(G.outside && G.mode!=M_GARDEN && G.mode!=M_FLY && !G.ex_yard && !G.mn_yard) outside_tick();   // (the night yard is its own thing)
   decor_tick();
 }
 // ================================================================== GAME CLOCK (v8)
@@ -2179,6 +2182,7 @@ static void life_watch(void){
 #define ANIM_T      (*(volatile u32*)0x0300029C)
 #define ANIM_KIND   (*(volatile u32*)0x03000298)
 #define ANIM_ARG    (*(volatile u32*)0x030002A0)
+#define FEED_END    130   // a MEAL or SNACK ends when ANIM_T reaches this (the original's own timing)
 #define GONE_T      (*(volatile u32*)0x030002CC)
 #define SEQ_ALERT   ((const void*)0x0800FBE0u)
 #define SEQ_GONE    ((const void*)0x0800FBF8u)
@@ -2376,7 +2380,7 @@ static void new_egg(void){
 // the ending's bonus coins stack on top of the usual 20.
 static void life_reset(int keep_stars, int bonus){
   u8 mo=G.life.music_off, tips=G.ext.seen_tip, ret=G.life.retired;
-  memset(&G.ext,0,sizeof(Ext));
+  memset(&G.ext,0,sizeof(Ext)); night_marks_reset();
   for(int i=0;i<3;i++) G.ext.slot[i]=0xFF;
   G.ext.active_toy=0xFF; G.ext.last_game=0xFF; G.ext.prev_stage=PET[P_STAGE]; G.ext.coins=(u16)(20+bonus); G.ext.seen_tip=tips;
   ext_save();
@@ -2761,21 +2765,23 @@ static void enter_menu(void){ G.mode=M_MENU; G.cur = G.from_help? 4 : 0; G.from_
 static void dex_open(int from);
 static void jr_garden_keys(u16 pr);
 static void dex_update(u16 pr,u16 keys);
+static void menu_close(u16 keys){   // back to the room, or (v8.3) to the night yard it was opened over
+  if(G.mn_yard){ G.mn_yard=0; SCENE=1; G.mode=M_GARDEN; G.gui_key=0; G.suppress=keys; } else to_room(keys); }
 static void menu_update(u16 pr, u16 keys){
   if(G.confirm){
     if(pr&K_A){
       G.more.pad1=(u16)((G.more.pad1&~1)|(G.outside? 1 : 0)); save_all();   // (v8.2b: remember the yard)
       pet_save(); silence(); sfx(0,SEQ_CONFIRM);
-      MSG_TIMER=0; TITLE_CUR=0; SCENE=0; G.mode=M_NONE; G.suppress=keys; G.confirm=0; G.outside=0;
+      MSG_TIMER=0; TITLE_CUR=0; SCENE=0; G.mode=M_NONE; G.suppress=keys; G.confirm=0; G.outside=0; G.mn_yard=0;
     } else if(pr&K_B){ G.confirm=0; sfx(0,SEQ_BLIP); }
     return;
   }
   if(pr&K_UP){ G.cur=(u8)(G.cur? G.cur-1:5); sfx(0,SEQ_BLIP); }
   if(pr&K_DOWN){ G.cur=(u8)(G.cur>=5?0:G.cur+1); sfx(0,SEQ_BLIP); }
-  if(pr&(K_B|K_START)){ sfx(0,SEQ_BLIP); to_room(keys); return; }
+  if(pr&(K_B|K_START)){ sfx(0,SEQ_BLIP); menu_close(keys); return; }
   if(pr&K_A){
     switch(G.cur){
-      case 0: sfx(0,SEQ_BLIP); to_room(keys); break;
+      case 0: sfx(0,SEQ_BLIP); menu_close(keys); break;
       case 1: PET[P_FAST]=(u8)!PET[P_FAST]; sfx(0,SEQ_BLIP); break;
       case 2: PET[P_SOUNDON]=(u8)!PET[P_SOUNDON]; if(!PET[P_SOUNDON]) silence(); else sfx(0,SEQ_BLIP); break;
       case 3: G.life.music_off=(u8)!G.life.music_off; life_save(); sfx(0,SEQ_BLIP); break;
@@ -3118,8 +3124,9 @@ static void bag_draw(void){
   if(!IS_TOY(it) && !IS_DECOR(it)){ char *p=scpy(G.sbuf2,KIND_NAME[ITEM_KIND[it]]); p=scpy(p,": "); scpy(p,d); d=G.sbuf2; }   // v8: its kind of care
   textc(d,120,50+rows*12,C_DTEXT);
 }
-static void eat_update(u16 keys){
+static void eat_update(u16 pr,u16 keys){
   G.t++;
+  if((pr&K_A) && G.t>4 && G.t<84) G.t=84;   // v8.3: A skips the rest (the food still counts)
   live_update(0);
   if(SCENE!=1 || G.t>=84){
     apply_item(G.eat_item);
@@ -3659,7 +3666,7 @@ static void g_find(int b){ G.gdn.found|=1u<<b; }
 static int g_blooms(void){ int n=0; for(int i=0;i<3;i++) n+= G.gdn.p[i].stage==4; return n; }
 static void garden_palette(void){ for(int i=0;i<GP_N;i++) PAL[GP_IDX[i]]=GP_PAL[i]; PAL[255]=RGB(31,15,5); }   // (255: the ember firefly)
 static int garden_palette_on(void){ return G.mode==M_GARDEN || G.mode==M_FLY || (G.mode==M_MINI && G.outside) ||   // (v8.1: games in the yard show its flowers)
-   G.ex_yard || (G.mode==M_DEX && (G.jtab==JT_GARDEN || G.jtab==JT_FLY)) || ra_shot()==1 ||
+   G.ex_yard || G.mn_yard || (G.mode==M_DEX && (G.jtab==JT_GARDEN || G.jtab==JT_FLY)) || ra_shot()==1 ||
    // v8.2b: every screen over the yard keeps the flowers' colours (menus, the bag, feeding and petting too)
    (G.outside && SCENE>=1 && SCENE<=5 && (G.mode==M_NONE || G.mode==M_MENU || G.mode==M_EXTRAS || G.mode==M_BAG || G.mode==M_EAT || G.mode==M_SURE)); }
 // the colour a flower takes from the care the critter is getting: a weighted pick, so the care it gets most shows most
@@ -3836,6 +3843,7 @@ static void garden_update(u16 pr,u16 keys){
   if(wish_try(pr)) return;
   if(!is_night()){ garden_close(keys); return; }
   if(pr&K_SELECT){ sfx(0,SEQ_BLIP); G.ex_yard=1; G.mode=M_EXTRAS; G.cur=3; G.ex_first=0; G.suppress=keys; return; }   // v8.1: the menu, over the yard
+  if(pr&K_START){ sfx(0,SEQ_BLIP); G.mn_yard=1; enter_menu(); G.suppress=keys; return; }   // v8.3: START works out here too
   // v8.1: the yard opens just for looking; A shows the cursor to tend the moonflowers (G.gpad2), B puts it away
   if(pr&K_R){ if(fly_rounds_left()>0) fly_start(); else { garden_msg("NO MORE FIREFLIES TONIGHT."); sfx(0,SEQ_DENY); } G.suppress=keys; return; }   // v8.1
   if(!G.gpad2){
@@ -4075,6 +4083,8 @@ void hook_update(u32 keys){
   if(SCENE==1) dex_tick();
   switch(G.mode){
     case M_NONE: {
+      // v8.3: A skips the rest of a MEAL or SNACK: the original finishes it as usual (that's where the food counts)
+      if(SCENE==3 && ANIM_KIND<=1 && (pr&K_A) && ANIM_T>4 && ANIM_T<FEED_END-1 && PET[P_STAGE]>=1 && PET[P_STAGE]<=7){ ANIM_T=FEED_END-1; G.suppress=k; }
       if(SCENE==1 && (pr&K_SELECT) && PET[P_STAGE]!=8){ G.mode=M_EXTRAS; G.cur=0; G.ex_first=0; sfx(0,SEQ_BLIP); return; }
       if(SCENE==0){
         // the original asks "START OVER WITH A NEW EGG?" - its YES now leads to a second, louder check
@@ -4123,7 +4133,7 @@ void hook_update(u32 keys){
                    break;
     case M_SHOP:   shop_update(pr,k); sound_tick(); break;
     case M_BAG:    bag_update(pr,k); sound_tick(); break;
-    case M_EAT:    eat_update(k); break;
+    case M_EAT:    eat_update(pr,k); break;
     case M_MINI:   mini_update(k,pr); sound_tick(); break;
     case M_SENDOFF: sendoff_update(pr,k); sound_tick(); break;
     case M_ALBUM: {
@@ -4316,13 +4326,18 @@ static void build_bg(int want){
     garden_still();   // v8.1: the flowers first, so the decor (nearer the front) is drawn over them
     u8 o=G.outside; G.outside=1; draw_decor(0); G.outside=o; DRAW_TARGET=sv; }
   else { O_DMACOPY(YARD_BG, BGX_ROOM); G.bgx_yard=0; u16 *sv=DRAW_TARGET; DRAW_TARGET=(u16*)YARD_BG;   // same picture day and night: the palette darkens it
-    { int base=C_PIC; const u8 *q=PIC_PIX; for(int y=0;y<PIC_H;y++) for(int x=0;x<PIC_W;x++) pset(181+x,43+y,base+*q++); }   // the wall picture
-    u8 o=G.outside; G.outside=0; draw_decor(0); G.outside=o; DRAW_TARGET=sv; }
+    { int base=C_PIC; const u8 *q=PIC_PIX; for(int y=0;y<PIC_H;y++) for(int x=0;x<PIC_W;x++) pset(181+x,35+y,base+*q++); }   // the wall picture
+    u8 o=G.outside; G.outside=0; draw_decor(0); G.outside=o;
+    G.fp_lit=(u8)!PET[P_LIGHTS];   // (with the lights off the original dims the wall almost to black: no shadow then)
+    if(G.fp_lit && G.deco.slot[DECOR_SLOT(IT_FIREPLACE)]==IT_FIREPLACE)   // v8.3: its soft shadow on the wall (the wall's own colours, darker)
+      for(int i=0;i<FP_SHADOW_N;i++){ int x=FP_SHADOW[i][0], y=FP_SHADOW[i][1], c=pget(x,y), d=FP_SHADE[FP_SHADOW[i][2]][c]; if(d!=c) pset(x,y,d); }
+    DRAW_TARGET=sv; }
   G.bg_state=(u8)want;
 }
 void hook_bg_copy(void *dst, const void *src){
   int want = G.outside? 3+is_night() : (src==(const void*)BG_ROOM_NIGHT? 2 : 1);
   portrait_check();
+  if(!G.outside && G.fp_lit!=(u8)!PET[P_LIGHTS] && G.deco.slot[DECOR_SLOT(IT_FIREPLACE)]==IT_FIREPLACE) G.bg_state=0;   // the lights changed: redo the shadow
   if(G.bg_state!=want) build_bg(want);
   O_DMACOPY(dst, YARD_BG);
   if(G.outside){ draw_sky(0); if(SCENE!=3) garden_draw(G.yard_night); draw_decor(1); draw_outside_extras(); yard_poops(); }
@@ -4953,7 +4968,7 @@ static void fly_rel_sprites(int r){
 // the box a menu over the room covers (x, y, w, h), or 0 when none: the jar's glow (a sprite) stays outside it
 static int menu_box(int *r){
   switch(G.mode){
-    case M_MENU:   r[0]=52; r[1]=34; r[2]=136; r[3]=92; return 1;
+    case M_MENU:   if(G.mn_yard) return 0; r[0]=52; r[1]=34; r[2]=136; r[3]=92; return 1;
     case M_EXTRAS: if(G.ex_yard) return 0; r[0]=136; r[1]=30; r[2]=96; r[3]=100; return 1;
     case M_BAG:  { int rows=G.bag_n>5? 5 : G.bag_n; if(rows<2) rows=2; r[0]=24; r[1]=29; r[2]=192; r[3]=36+rows*12; return 1; }
     case M_SURE:   r[0]=14; r[1]=44; r[2]=212; r[3]=74; return 1;
@@ -5097,7 +5112,7 @@ void hook_render(void){
   if(G.fx_seen && (u8)SCENE!=G.fx_scene && ((u8)SCENE==0 || G.fx_scene==0)){ REG_BLDCNT=(u16)(0x0034|(FX_BLACK<<6)); REG_BLDY=16; }
   set_extra_palette(); set_special_cmap();
   int help = G.mode==M_NONE && SCENE==7;    // our HOW TO PLAY pages cover the whole screen
-  if(!help && (G.mode==M_NONE || G.mode==M_MENU || (G.mode==M_EXTRAS && !G.ex_yard) || G.mode==M_BAG || G.mode==M_EAT || G.mode==M_SURE)){
+  if(!help && (G.mode==M_NONE || (G.mode==M_MENU && !G.mn_yard) || (G.mode==M_EXTRAS && !G.ex_yard) || G.mode==M_BAG || G.mode==M_EAT || G.mode==M_SURE)){
     u32 sc=SCENE;
     G.yp_n=G.outside? G.more.pad0 : 0;      // (v8.2c: the yard draws its own, at free spots: yard_poops)
     if(G.mode==M_MENU) SCENE=1;              // our menu replaces the original's box
@@ -5119,7 +5134,7 @@ void hook_render(void){
     card_care(); }
   if(title_showing()) title_draw();        // phase 4: our painted title replaces the original's
   switch(G.mode){
-    case M_MENU:   menu_draw(); break;
+    case M_MENU:   if(G.mn_yard) garden_screen_draw(); menu_draw(); break;
     case M_EXTRAS: if(G.ex_yard) garden_screen_draw(); extras_draw(); break;
     case M_SHOP:   shop_draw(); break;
     case M_BAG:    bag_draw(); break;
@@ -5144,7 +5159,7 @@ void hook_render(void){
     else if(G.mode==M_SHOP) tn=T_SHOP;
     else if(G.mode==M_ALBUM || G.mode==M_DEX) tn=T_ALBUM;
     else if(G.mode==M_STORY){ tn=T_LULLABY; v=3; }
-    else if(G.mode==M_GARDEN || G.mode==M_FLY || G.ex_yard){ tn=T_OUTSIDE_NIGHT; v=3; }
+    else if(G.mode==M_GARDEN || G.mode==M_FLY || G.ex_yard || G.mn_yard){ tn=T_OUTSIDE_NIGHT; v=3; }
     else if(SCENE==0 || G.mode==M_SURE) tn=T_TITLE;
     else if(PET[P_STAGE]==8) tn=T_FAREWELL_SAD;
     else if(PET[P_ASLEEP]){ tn=T_LULLABY; v=3; }

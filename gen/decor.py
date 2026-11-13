@@ -226,23 +226,59 @@ def ARCADE(c):
     rect(c, 218, 116, 2, 3, 'mq', 1)
     for y in range(88, 124, 6): c.px(207, y, (180, 200, 255))
 
-@item('FIREPLACE', {'brick': ramp((200, 100, 80)), 'stone': ramp((210, 200, 190)), 'mantel': ramp((180, 120, 76)), 'soot': ramp((60, 52, 70)), 'log': ramp((140, 90, 60)), 'sock': ramp((236, 80, 90))})
+# v8.3: on the back wall under the picture, at 3/4 size, facing straight out. It stands out from the wall by its mantel
+# (lit top, dark underside), a hearth slab on the floor and a soft shadow round it on the wall (FP_SHADOW, applied by
+# ext.c to the wall's own colours). Green stockings hang just inside the corners, toes to the right.
+FP_X0, FP_Y0, FP_W, FP_H = 181, 72, 30, 30          # the front face (x 181-210, y 72-101); the floor starts at y 101
+FP_SOCKS = (182, 204)
+def _fp_sock_at(x, y): return y < 80 and any(sx-1 <= x <= sx+6 for sx in FP_SOCKS)
+@item('FIREPLACE', {'brick': ramp((200, 100, 80)), 'brickin': ramp((120, 60, 52)), 'stone': ramp((210, 200, 190)), 'mantel': ramp((180, 120, 76)),
+                    'soot': ramp((60, 52, 70)), 'log': ramp((140, 90, 60)), 'sock': ramp((70, 170, 90)), 'glow': ramp((255, 170, 90))})
 def FIREPLACE(c):
-    bevel(c, 196, 86, 40, 41, 'brick', 2)
-    for r_, y in enumerate(range(89, 126, 4)):
-        hline(c, 197, 234, y, mix((200, 100, 80), (240, 220, 200), 0.45))
-        for x in range(199+(r_ & 1)*4, 235, 8): vline(c, x, y+1, y+3, mix((200, 100, 80), (240, 220, 200), 0.45))
-    speckle(c, 197, 87, 38, 39, 'brick', 4, 0.12)
-    bevel(c, 193, 82, 46, 5, 'mantel', 1, r=1)
-    grain(c, 193, 82, 46, 5, 'mantel', 9, 0.15)
-    bevel(c, 202, 97, 28, 30, 'stone', 2, r=3)
-    for yy in range(99, 126):
-        for xx in range(204, 228):
-            if not (yy < 102 and (xx < 206 or xx > 225)): tp(c, xx, yy, 'soot', 4 if yy < 110 else 3)
-    bevel(c, 207, 119, 18, 4, 'log', 2, r=1); bevel(c, 209, 117, 14, 3, 'log', 1, r=1)
-    c.ellipse(208, 121, 1.6, 1.6, 'stone')
-    for x in (198, 230):                                # stockings on the mantel
-        rect(c, x, 87, 5, 7, 'sock', 2); rect(c, x, 87, 5, 2, 'stone', 1); rect(c, x+(3 if x < 210 else -2), 92, 4, 3, 'sock', 3)
+    X0, Y0, W, H = FP_X0, FP_Y0, FP_W, FP_H; mort = mix((200, 100, 80), (240, 220, 200), 0.45)
+    bevel(c, X0, Y0, W, H, 'brick', 2)
+    for r_, y in enumerate(range(Y0+2, Y0+H, 3)):                 # brick courses (smaller bricks: it's further back)
+        for x in range(X0+1, X0+W-1):
+            if not _fp_sock_at(x, y): c.px(x, y, mort)
+        for x in range(X0+1+(r_ & 1)*3, X0+W-1, 6):
+            for yy in (y+1, y+2):
+                if not _fp_sock_at(x, yy): c.px(x, yy, mort)
+    speckle(c, X0, Y0, W, H, 'brick', 4, 0.12)
+    bevel(c, 186, 79, 20, 23, 'stone', 2, r=3)                     # the stone arch
+    for yy in range(82, 101):                                      # the recess: its inner right wall and a sooty back
+        for xx in range(188, 204):
+            if yy < 84 and (xx < 190 or xx > 201): continue
+            inner = xx >= 201-(yy-82)//8
+            tp(c, xx, yy, 'brickin' if inner else 'soot', 3 if inner else (4 if yy < 92 else 3))
+    bevel(c, 190, 96, 13, 3, 'log', 2, r=1); bevel(c, 192, 94, 9, 2, 'log', 1, r=1)
+    for x in range(176, 216): tp(c, x, 64, 'mantel', 0)            # the mantel: lit top, 2 px deep
+    for x in range(176, 216): tp(c, x, 65, 'mantel', 1)
+    bevel(c, 176, 66, 40, 4, 'mantel', 1, r=1); grain(c, 176, 66, 40, 4, 'mantel', 9, 0.15)
+    for x in range(176, 216): tp(c, x, 70, 'mantel', 4)            # its underside
+    for x in FP_SOCKS:                                             # stockings
+        c.part += 1
+        for y in range(71, 79):
+            for xx in range(x, x+4): tp(c, xx, y, 'sock', 1 if xx == x else 2)
+        for xx in range(x+4, x+6):
+            for y in (77, 78): tp(c, xx, y, 'sock', 2)
+        for xx in range(x, x+4): tp(c, xx, 71, 'stone', 0); tp(c, xx, 72, 'stone', 1); tp(c, xx, 75, 'stone', 1)
+        tp(c, x, 77, 'stone', 1); tp(c, x+5, 78, 'stone', 1)
+    for yy, (a, b) in zip(range(101, 105), ((178, 213), (177, 214), (176, 215), (175, 216))):   # the hearth slab
+        for xx in range(a, b+1): tp(c, xx, yy, 'stone', 1)
+    for xx in range(189, 204): tp(c, xx, 101, 'glow', 1); tp(c, xx, 102, 'glow', 2)
+    for yy in (105, 106):
+        for xx in range(175, 217): tp(c, xx, yy, 'stone', 3 if yy == 105 else 4)
+def fireplace_shadow(img):
+    """(x, y, level 0-2) for the wall round the fireplace: a soft, even shadow, a little deeper under the mantel"""
+    m = [[img[y][x] is not None for x in range(240)] for y in range(160)]
+    def near(x, y, dx, dy): return 0 <= y-dy < 160 and 0 <= x-dx < 240 and m[y-dy][x-dx] and (y-dy) < 101
+    out = []
+    for y in range(60, 101):
+        for x in range(168, 226):
+            if m[y][x]: continue
+            for lv, d in enumerate((1, 2, 3)):
+                if near(x, y, d, 0) or near(x, y, -d, 0) or near(x, y, 0, d+1): out.append((x, y, lv)); break
+    return out
 
 # ================================================================== slot 2: wall, centre
 @item('CLOCK', {'frame': WOOD, 'face': ramp((250, 244, 226)), 'bell': ramp((240, 196, 90))})

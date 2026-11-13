@@ -35,7 +35,7 @@ The eight icons sit along the top and bottom of the screen. Move between them wi
 
 | Icon | What it does |
 |---|---|
-| FEED | Give a MEAL to fill hunger, or a SNACK to cheer it up. Too many snacks make it overweight and can make it sick. |
+| FEED | Give a MEAL to fill hunger, or a SNACK to cheer it up. Too many snacks make it overweight and can make it sick. Press A to skip the rest of the eating (it still counts). |
 | LIGHTS | Turn the lights off when it falls asleep, and back on in the morning. Left in the dark while it's awake, it gets glum and slowly loses happiness. |
 | PLAY | Pick one of four minigames and win coins (see **Minigames**). |
 | MEDS | Cure it when it is sick. Sometimes it needs a second dose. Medicine when it isn't sick only makes it pull a yuck face. |
@@ -130,7 +130,7 @@ A or RIGHT turns the page, LEFT goes back, and B closes the book. Stories you ha
 
 ## The moonflower garden
 
-While your critter is asleep at night, the SELECT menu's first choice becomes **GARDEN**. It takes you out to the yard, where three soil patches sit at different spots in the grass, behind any yard decor. At first you're just looking. Press **A** to tend the moonflowers: a cursor appears, LEFT and RIGHT pick a patch, and A plants, waters or takes a closer look. **B** puts the cursor away, and B again goes back inside. SELECT opens a small menu (GO INSIDE or JOURNAL; when the yard has a mess, CLEAN UP appears further down), and **R** starts a firefly round. The clock keeps running out here, so dawn sends you back inside.
+While your critter is asleep at night, the SELECT menu's first choice becomes **GARDEN**. It takes you out to the yard, where three soil patches sit at different spots in the grass, behind any yard decor. At first you're just looking. Press **A** to tend the moonflowers: a cursor appears, LEFT and RIGHT pick a patch, and A plants, waters or takes a closer look. **B** puts the cursor away, and B again goes back inside. SELECT opens a small menu (GO INSIDE or JOURNAL; when the yard has a mess, CLEAN UP appears further down), START the usual menu, and **R** starts a firefly round. The clock keeps running out here, so dawn sends you back inside.
 
 Each new star-seed comes with **3 moonflower seeds**.
 
