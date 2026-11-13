@@ -2869,11 +2869,13 @@ static void garden_screen_draw(void);
 // v8.3: the SELECT menu shows only what works here. In the room: OUTSIDE (GARDEN at night), BAG, SHOP, STORY (only at
 // night) and JOURNAL. Over the night yard: GO INSIDE, CLEAN UP (only while the yard has a mess) and JOURNAL.
 // G.cur is a row of this list; the box grows or shrinks with it. (v8.3: BAG and SHOP work over the yard too.)
+// v8.3v: the bedtime stories are switched off (the owner's call); their code (M_STORY, story_*) stays for later use
+#define STORIES_ON 0
 enum { EX_OUT, EX_SHOP, EX_BAG, EX_JOURNAL, EX_STORY, EX_CLEAN };
 static int extras_list(u8 *id){
   int n=0;
   if(G.ex_yard){ id[n++]=EX_OUT; id[n++]=EX_BAG; id[n++]=EX_SHOP; if(G.more.pad0) id[n++]=EX_CLEAN; id[n++]=EX_JOURNAL; return n; }
-  id[n++]=EX_OUT; id[n++]=EX_BAG; id[n++]=EX_SHOP; if(is_night()) id[n++]=EX_STORY; id[n++]=EX_JOURNAL; return n;
+  id[n++]=EX_OUT; id[n++]=EX_BAG; id[n++]=EX_SHOP; if(STORIES_ON && is_night()) id[n++]=EX_STORY; id[n++]=EX_JOURNAL; return n;
 }
 static int extras_row_of(int want){ u8 id[6]; int n=extras_list(id); for(int i=0;i<n;i++) if(id[i]==want) return i; return 0; }
 static int extras_off(int id){   // greyed out: it's here but can't be used right now

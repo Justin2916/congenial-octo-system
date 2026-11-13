@@ -148,7 +148,7 @@ Other details:
   - Once all 12 are found, they dance at the window every night.
 - **Shooting stars:** about 1 night in 3, one star at a random step of the night. The message reads
   "A SHOOTING STAR! A: MAKE A WISH", and A still works for about 3 s after the star has crossed.
-- **Stories:** one a night.
+- **Stories:** one a night. (v8.3v: switched off, `STORIES_ON` 0 in ext.c; the code stays for later use.)
 - **Journal:** in the SELECT menu, not START. The tab strip scrolls (`jt_first`), and there is a FIREFLIES tab.
 - **Minigames:**
   - A 50% checkerboard fade over the room or yard during a round (drawn once in `prerender_mini`).
@@ -264,7 +264,7 @@ Other details:
     every indoor floor piece, the bed and the stand (the middle-left spot moved to x 92 with the bed). Both share `poops_at()`. The original's poop
     drawing reads `ext_poops_drawn()` (always 0); its call-icon check still reads `ext_mess_drawn()`.
   - The SELECT menu shows only what works (`extras_list()`; `G.cur` is a row of that list, the box fits it): in the
-    room OUTSIDE/GARDEN, BAG, SHOP, STORY (night only) and JOURNAL; over the night yard GO INSIDE, BAG, SHOP, CLEAN UP (only while
+    room OUTSIDE/GARDEN, BAG, SHOP, STORY (night only; v8.3v: switched off) and JOURNAL; over the night yard GO INSIDE, BAG, SHOP, CLEAN UP (only while
     `More.pad0`, which it clears) and JOURNAL. BAG and SHOP opened there set `G.bs_yard`; `bs_leave()` goes back to the
     yard and shows any message there (`garden_msg`). It can scroll 5 rows at a time (`G.ex_first`, `EX_SHOW`) if it grows. While it sleeps, the yard's mess doesn't count toward sickness (`sim_tick`).
   - **Fireplace** (slot 1) stands on the back wall under the picture, at 3/4 size, facing straight out
@@ -315,7 +315,7 @@ Other details:
     ("IT FEELS LOVED!"), plain petting only purrs. The gift's surprise is `gift_surprise()`: a seed 1/2, 10-20 coins
     1/4, a treat (cake, candy or cookie) 1/5, a decor piece not owned yet 1/20 (coins if none). AMAZING gives +5 coins.
     The bookshelf, portrait and piano keep their messages and other effects. The old pre-v7 rules use mistakes now.
-    The story's morning mark (`More.spare[2]`) is still set and cleared, but gives nothing (its new purpose is open).
+    The story's morning mark (`More.spare[2]`) gives nothing; since v8.3v the stories are switched off (`STORIES_ON`), so it is never set.
   - `udivmod` steps once per quotient bit. The old bit-by-bit divide made the night room with the jar drop to 30 fps
     on mGBA.
   - **Minigame rewards (v8.3t):** no bonus coins. NICE! pays coins only; AMAZING! or better gives happy +1 (v8.3u; was +2) and the

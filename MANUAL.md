@@ -12,7 +12,7 @@ This booklet covers everything in the game. The secret forms, rare moonflowers a
 
 - **Title screen:** CONTINUE plays your saved critter. NEW SEED starts over with a new star-seed (it asks twice, and your journal is kept). JOURNAL opens the journal.
 - **Hatching:** keep the star-seed company and it hatches in about 20 seconds. Then give it a name of up to 6 letters. SELECT suggests a name, START accepts it.
-- **Time:** a day in the game lasts about 11 minutes: 7 of daytime and 4 of night. With SPEED: FAST in the START menu, everything runs 2.5 times as fast and a day lasts about 4½ minutes. Time passes in the room and the yard, and stands still in menus, the shop, the bag, the journal, stories and minigames. It only passes while the game is switched on.
+- **Time:** a day in the game lasts about 11 minutes: 7 of daytime and 4 of night. With SPEED: FAST in the START menu, everything runs 2.5 times as fast and a day lasts about 4½ minutes. Time passes in the room and the yard, and stands still in menus, the shop, the bag, the journal and minigames. It only passes while the game is switched on.
 - **Age:** your critter ages one year for every day in the game. The status card shows its age, for example "AGE: 1 YEAR" or "AGE: 5 YEARS".
 - **Saving:** the game saves by itself as you play. To stop, press START and choose SAVE AND QUIT before switching off.
 
@@ -24,7 +24,7 @@ This booklet covers everything in the game. The secret forms, rare moonflowers a
 | A | Use or choose. At night, A also makes a wish when a shooting star crosses the sky |
 | B | Back, or close a box |
 | START | The menu: RESUME, SPEED, SOUND, MUSIC, HOW TO PLAY, SAVE AND QUIT |
-| SELECT | OUTSIDE (or GARDEN at night), BAG, SHOP, STORY (at night only) and JOURNAL. Out in the yard at night: GO INSIDE, BAG, SHOP, CLEAN UP (when the yard needs it) and JOURNAL |
+| SELECT | OUTSIDE (or GARDEN at night), BAG, SHOP and JOURNAL. Out in the yard at night: GO INSIDE, BAG, SHOP, CLEAN UP (when the yard needs it) and JOURNAL |
 | L / R | Turn the journal's tabs. In the yard at night, R starts a firefly round |
 
 The SELECT menu also shows how many coins you have. Each minigame shows its own buttons at the bottom of the screen.
@@ -108,7 +108,6 @@ Your critter grows while it is awake.
 Each day ends with a night that lasts about 3 minutes (about 1¼ minutes on FAST). At night the clock moves more slowly, but your critter's needs keep their usual pace. When your critter gets sleepy, turn the lights off; turn them on again in the morning. While it sleeps there is still plenty to do:
 
 - **A wishing star** crosses the sky on some nights.
-- **A bedtime story** can be read from the SELECT menu, one a night.
 - **The moonflower garden** can be tended from the SELECT menu while it sleeps.
 - **Fireflies** can be caught in the yard, up to three rounds a night.
 - **The moon** changes shape over eight nights, from full to new and back. Watch the window or the yard's sky.
@@ -116,16 +115,6 @@ Each day ends with a night that lasts about 3 minutes (about 1¼ minutes on FAST
 ## Wishing stars
 
 About one night in three, a single shooting star slides across the window (or the yard's sky) at some point in the night, with a soft twinkling sound and the words **A SHOOTING STAR! A: MAKE A WISH**. Press **A** while it crosses, or for about 3 seconds after, to make a wish: **+5 coins**. If you're in a menu or a firefly round when it's due, it waits until you're back. The journal counts every wish you make, and a wish has two more uses: one in the garden and one with the fireflies.
-
-## Bedtime stories
-
-At night, choose **STORY** from the SELECT menu (from the baby stage on). There are three stories of the meadow, each six pages long:
-
-- **The First Star-Seed:** why loved critters become stars.
-- **Why the Moon Changes:** the moon, its phases and the moonflowers.
-- **The Faint Stars:** sad goodbyes, and where wishing stars come from.
-
-A or RIGHT turns the page, LEFT goes back, and B closes the book. Stories you have read get a small star in the list. **There is one story a night**. After that, STORY is greyed out until the next night.
 
 ## The moonflower garden
 

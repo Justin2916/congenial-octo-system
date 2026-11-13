@@ -604,25 +604,12 @@ def t_b1():
     check('wish: no wishing stars in the daytime', int.from_bytes(v[0][1], 'little') == 0, '')
 
 def t_stories():
-    """v8.1: bedtime stories from the SELECT menu at night, one a night (v8.3: they no longer give bond)."""
-    SP = g('more', 'm_spare'); ST = g('more', 'm_stories'); MODE = g('mode')
-    # (v8.3: the menu is OUTSIDE/GARDEN, BAG, SHOP, STORY, JOURNAL, and STORY is only there at night)
-    open_story = ['press SELECT', 'wait 6', 'press UP', 'wait 4', 'press UP', 'wait 4', 'press A', 'wait 20']
-    v = peeks(run(ROM, BOOT + ['poke32 0300004c 64', 'wait 5', 'press SELECT', 'wait 6', 'press UP', 'wait 4', f'peek {g("cur"):08x} 1', 'press A', 'wait 20', f'peek {MODE:08x} 1'], copy_save('adult')))
-    check('stories: not in the daytime (no STORY row: up from the top is the JOURNAL)', v[0][1][0] == 3 and v[1][1][0] == 10, str(v))
-    read = ['press A', 'wait 6'] * 7
-    sc = BOOT + ['poke32 0300004c 1f4', 'wait 5', p8(PET + 8, 1)] + open_story + [f'peek {MODE:08x} 1'] + read + \
-         [f'peek {MODE:08x} 1', f'peek {ST:08x} 2', f'peek {SP:08x} 6', f'peek {g("ext", "e_day"):08x} 2'] + \
-         open_story + ['press DOWN', 'wait 4'] + read + [f'peek {ST:08x} 2', f'peek {SP:08x} 6'] + \
-         [p8(PET + 12, 1), 'wait 10', p8(PET + 12, 0), 'wait 10', f'peek {PET + 8:08x} 1', f'peek {SP:08x} 6']
-    v = peeks(run(ROM, sc, copy_save('adult')))
-    sp = struct.unpack('<3H', v[3][1]); day = struct.unpack('<H', v[4][1])[0]
-    check('stories: STORY opens the book at night', v[0][1][0] == 12, str(v[0]))
-    check('stories: reading one to THE END closes it, marks it read and promises a bond', v[1][1][0] == 0 and v[2][1][0] == 1 and sp[1] == day + 1 and sp[2] == 1, f'{v[1:4]} day {day}')
-    sp2 = struct.unpack('<3H', v[6][1])
-    check('stories: only one story a night (the second stays shut)', v[5][1][0] == 1 and sp2[2] == 1, str(v[5:7]))
-    sp3 = struct.unpack('<3H', v[8][1])
-    check('stories: on waking up, no bond any more (v8.3: bond is gone); the mark is cleared', v[7][1][0] == 1 and sp3[2] == 0, str(v[7:9]))
+    """v8.3v: the bedtime stories are switched off (their code stays for later): no STORY row by day or at night."""
+    MODE = g('mode')
+    # the menu is OUTSIDE/GARDEN, BAG, SHOP, JOURNAL: up from the top is the JOURNAL, day and night
+    for clock, when in (('64', 'by day'), ('1f4', 'at night')):
+        v = peeks(run(ROM, BOOT + [f'poke32 0300004c {clock}', 'wait 5', p8(PET + 8, 1), 'press SELECT', 'wait 6', 'press UP', 'wait 4', f'peek {g("cur"):08x} 1', 'press A', 'wait 20', f'peek {MODE:08x} 1'], copy_save('adult')))
+        check(f'stories: no STORY in the SELECT menu {when} (up from the top is the JOURNAL)', v[0][1][0] == 3 and v[1][1][0] == 10, str(v))
 
 def t_garden():
     """v8.1 B2: the moonflower garden - plant, water, grow, bloom, fade; visitors; the journal keeps what was found."""
@@ -1032,9 +1019,8 @@ def t_yard():
     check('yard: the farewell comes after 8 grown-up days (not 7)', res[0] == [0, 0] and (res[1][0] == 1 or res[1][1] == 3), str(res))
 
 def t_budget():
-    out = run(ROM, ['wait 30', 'cyc 120 title', 'press A', 'waitscene 1', 'wait 30', 'cyc 300 room', 'poke32 0300004c 1f4', 'wait 5',
-                    'press SELECT', 'wait 6', 'press UP', 'wait 4', 'press UP', 'wait 4', 'press A', 'wait 20', 'cyc 120 stories', 'press A', 'wait 10', 'cyc 120 story'], copy_save('adult'))
-    for label, limit in (('title', 240000), ('room', 200000), ('stories', 120000), ('story', 120000)):
+    out = run(ROM, ['wait 30', 'cyc 120 title', 'press A', 'waitscene 1', 'wait 30', 'cyc 300 room'], copy_save('adult'))
+    for label, limit in (('title', 240000), ('room', 200000)):   # (v8.3v: the story screens are switched off)
         m = re.search(rf'{label} avg busy cycles/frame: (\d+)', out)
         v = int(m.group(1)) if m else -1
         check(f'budget: {label} {v} cycles/frame (limit {limit} of 280896)', 0 < v < limit, out[-300:])
