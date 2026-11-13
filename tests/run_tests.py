@@ -705,11 +705,12 @@ def t_fly():
     check('fly: the caught total is kept', struct.unpack('<H', v[8])[0] == 2, str(v[8]))
     v = peeks(run(ROM, ['wait 30', f'peek {SP + 6:08x} 2'], f'{TMP}/fly.sav'))
     check('fly: the guide is kept in the save', struct.unpack('<H', v[0][1])[0] & 16, str(v))
-    # three rounds a night, then no more
-    sc = BOOT + night + yard + ['press R', 'wait 6', 'press B', 'wait 6', 'press A', 'wait 6', 'press B', 'wait 6', 'press A', 'wait 6', 'press B', 'wait 6',
-         f'peek {g("fly_state"):08x} 1', 'press A', 'wait 6', f'peek {MODE:08x} 1', 'press B', 'wait 6', 'press R', 'wait 6', f'peek {MODE:08x} 1', f'peek {g("gmsg"):08x} 26']
+    # three rounds a night, then no more (v8.3: the score card's A goes back to the yard; R there starts the next round)
+    rnd_ = ['press R', 'wait 6', 'press B', 'wait 6']
+    sc = BOOT + night + yard + rnd_ + ['press A', 'wait 6', f'peek {MODE:08x} 1'] + rnd_ + ['press A', 'wait 6'] + rnd_ + \
+         [f'peek {g("fly_state"):08x} 1', 'press A', 'wait 6', f'peek {MODE:08x} 1', 'press R', 'wait 6', f'peek {MODE:08x} 1', f'peek {g("gmsg"):08x} 26']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
-    check('fly: three rounds a night, then no more', v[0][0] == 2 and v[1][0] == 14 and v[2][0] == 13 and bytes(v[3]).startswith(b'NO MORE FIREFLIES TONIGHT.'), str(v))
+    check('fly: after a round, back to the yard; three rounds a night, then no more', v[0][0] == 13 and v[1][0] == 2 and v[2][0] == 13 and v[3][0] == 13 and bytes(v[4]).startswith(b'NO MORE FIREFLIES TONIGHT.'), str(v))
     # tonight's kinds: the three common ones, two of the five others; a full moon brings moonglow; no starfly with no blooms
     seen = set(); moon = None; star = 0
     for day in (8, 9, 10, 11, 12, 13):
@@ -898,16 +899,16 @@ def t_yard():
     check('yard: a faintly glowing firefly can be scooped', v[-1][1][0] >= 1, str(v[-1]))
     # v8.3: SELECT over the night yard scrolls down to CLEAN UP, which cleans the yard while it sleeps inside
     night = ['poke32 0300004c 1f4', p8(PET + 12, 1), 'wait 4']
-    # (v8.3: that menu shows only what works there: GO INSIDE, CLEAN UP while there's a mess, JOURNAL)
+    # (v8.3: that menu shows only what works there: GO INSIDE, BAG, SHOP, CLEAN UP while there's a mess, JOURNAL)
     sc = BOOT + night + [p8(MORE0, 3), 'press SELECT', 'wait 6', 'press A', 'wait 30', 'press SELECT', 'wait 8', 'press UP', 'wait 6',
                          f'peek {g("cur"):08x} 1', 'press A', 'wait 10', f'peek {MORE0:08x} 1', f'peek {g("mode"):08x} 1']
     v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
-    check('yard: the night-yard menu has CLEAN UP while the yard has a mess; it cleans the yard', v == [1, 0, 13], str(v))
+    check('yard: the night-yard menu has CLEAN UP while the yard has a mess; it cleans the yard', v == [3, 0, 13], str(v))   # (GO INSIDE, BAG, SHOP, CLEAN UP, JOURNAL)
     # ...and with the yard clean, there's no CLEAN UP row: the menu has its five rows and doesn't scroll
     sc = BOOT + night + [p8(MORE0, 0), 'press SELECT', 'wait 6', 'press A', 'wait 30', 'press SELECT', 'wait 8', f'peek {g("cur"):08x} 1', 'press DOWN', 'wait 4', 'press DOWN', 'wait 6',
                          f'peek {g("cur"):08x} 1']
     v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
-    check('yard: with the yard clean, the night-yard menu is just GO INSIDE and JOURNAL', v == [1, 1], str(v))
+    check('yard: with the yard clean, the night-yard menu has no CLEAN UP', v == [3, 1], str(v))   # (GO INSIDE, BAG, SHOP, JOURNAL)
     # v8.3: while it sleeps, the yard's mess can't make it sick (the room's still can)
     sc = BOOT + night + [p8(MORE0, 4), p8(POOP, 0), p8(PET + 10, 0), 'wait 5400', f'peek {PET + 10:08x} 1', f'peek {PET + 0x3A:08x} 2', f'peek {MORE0:08x} 1']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
@@ -947,6 +948,11 @@ def t_yard():
                        f'peek {g("jar_t"):08x} 2', f'peek {g("fly_rel"):08x} 2', 'wait 1400', f'peek {g("fly_rel"):08x} 2', f'peek {g("jar_back"):08x} 2', f'peek {g("fly_n"):08x} 1']
     v = [struct.unpack('<H', x[1])[0] if len(x[1]) == 2 else x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('yard: at dawn the jar floats to the window before it opens, and comes back after', 0 < v[0] < 64 and v[1] == 1 and v[2] == 0 and v[3] == 0 and v[4] == 0, str(v))
+    # v8.3: BAG and SHOP open over the night yard too, and go back out there
+    sc = BOOT + night + yard[:4] + ['press SELECT', 'wait 8', 'press UP', 'wait 4', 'press UP', 'wait 4', 'press A', 'wait 10', f'peek {M:08x} 1', 'press B', 'wait 10', f'peek {M:08x} 1',
+                                    'press SELECT', 'wait 8', 'press UP', 'wait 4', 'press A', 'wait 10', f'peek {M:08x} 1', 'press B', 'wait 10', f'peek {M:08x} 1', 'peek 03000020 1']
+    v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('yard: BAG and SHOP open over the night yard and go back to it', v == [5, 13, 4, 13, 1], str(v))
     # v8.2c: running away is a six-shot scene: its room at dawn, a look back from the yard, the meadow path, the
     # stream where wild critters take it in, the empty place in the night sky, the end card
     md0 = int(re.search(r'MD_PAL\[MD_N\]=\{(\d+)', open(f'{CK}/meadow.h').read()).group(1))

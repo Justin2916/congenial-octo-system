@@ -723,7 +723,8 @@ typedef struct {
   u16 dark_t, dark_pad;
   u16 yf_key; u8 yf_nk, yf_pad; u16 yf_pal[5][2][7];
   u8 ex_first, fp_lit, mn_yard, st_baked;   // (st_baked: the jar's stand drawn into the room picture: 0 none, 1+ its spot)
-  u16 jar_t, jar_back;   // v8.3: the jar's trip at dawn from its stand to the window (jar_t), and back (jar_back)   // (mn_yard: the START menu is open over the night yard)   // (fp_lit: the room picture has the fireplace's shadow, drawn only while the lights are on)   // v8.3: the SELECT menu's first row shown (it scrolls over the night yard, which adds CLEAN UP)
+  u16 jar_t, jar_back;
+  u8 bs_yard, bs_pad[3];   // v8.3: the BAG or the SHOP was opened from the night yard (they go back out there)   // v8.3: the jar's trip at dawn from its stand to the window (jar_t), and back (jar_back)   // (mn_yard: the START menu is open over the night yard)   // (fp_lit: the room picture has the fireplace's shadow, drawn only while the lights are on)   // v8.3: the SELECT menu's first row shown (it scrolls over the night yard, which adds CLEAN UP)
     // v8.3: the yard fireflies' palettes, for tonight's kinds (yf_key)               // v8.3: ticks awake by day with the lights off (an extra happy heart lost every DARK_TICKS)             // v8.3: frames a fade stays at its start (the runaway's cuts: until both pages hold the new shot)
 } State;
 
@@ -2168,7 +2169,7 @@ static void life_watch(void){
   else if(SCENE==1 && !sl && (FRAMES&63)==0 && !G.sendoff_pending) check_life();
   care_sample();
   shop_level_watch();
-  if(G.outside && G.mode!=M_GARDEN && G.mode!=M_FLY && !G.ex_yard && !G.mn_yard) outside_tick();   // (the night yard is its own thing)
+  if(G.outside && G.mode!=M_GARDEN && G.mode!=M_FLY && !G.ex_yard && !G.mn_yard && !G.bs_yard) outside_tick();   // (the night yard is its own thing)
   decor_tick();
 }
 // ================================================================== GAME CLOCK (v8)
@@ -2813,6 +2814,7 @@ static void menu_draw(void){
 // ================================================================== SELECT MENU
 static int can_go_outside(void){ return PET[P_STAGE]>=2 && PET[P_STAGE]<=7; }
 static void enter_shop(void);
+static void garden_msg(const char *m);
 static void enter_bag(void);
 static void story_open(void);
 static int story_ok(void);
@@ -2822,11 +2824,11 @@ static void garden_close(u16 keys);
 static void garden_screen_draw(void);
 // v8.3: the SELECT menu shows only what works here. In the room: OUTSIDE (GARDEN at night), BAG, SHOP, STORY (only at
 // night) and JOURNAL. Over the night yard: GO INSIDE, CLEAN UP (only while the yard has a mess) and JOURNAL.
-// G.cur is a row of this list; the box grows or shrinks with it.
+// G.cur is a row of this list; the box grows or shrinks with it. (v8.3: BAG and SHOP work over the yard too.)
 enum { EX_OUT, EX_SHOP, EX_BAG, EX_JOURNAL, EX_STORY, EX_CLEAN };
 static int extras_list(u8 *id){
   int n=0;
-  if(G.ex_yard){ id[n++]=EX_OUT; if(G.more.pad0) id[n++]=EX_CLEAN; id[n++]=EX_JOURNAL; return n; }
+  if(G.ex_yard){ id[n++]=EX_OUT; id[n++]=EX_BAG; id[n++]=EX_SHOP; if(G.more.pad0) id[n++]=EX_CLEAN; id[n++]=EX_JOURNAL; return n; }
   id[n++]=EX_OUT; id[n++]=EX_BAG; id[n++]=EX_SHOP; if(is_night()) id[n++]=EX_STORY; id[n++]=EX_JOURNAL; return n;
 }
 static int extras_row_of(int want){ u8 id[6]; int n=extras_list(id); for(int i=0;i<n;i++) if(id[i]==want) return i; return 0; }
@@ -2851,6 +2853,7 @@ static void extras_update(u16 pr, u16 keys){
   if(G.ex_yard){   // v8.1: the menu over the night yard
     if(id==EX_OUT){ G.ex_yard=0; G.mode=M_GARDEN; garden_close(keys); }
     else if(id==EX_JOURNAL){ G.ex_yard=0; sfx(0,SEQ_JOURNAL); dex_open(2); }
+    else if(id==EX_BAG || id==EX_SHOP){ G.ex_yard=0; G.ex_first=0; G.bs_yard=1; if(id==EX_BAG) enter_bag(); else enter_shop(); }   // v8.3
     else if(id==EX_CLEAN){   // v8.3: clean the yard at night, while it sleeps inside
       G.ex_yard=0; G.mode=M_GARDEN; G.gui_key=0; G.ex_first=0;
       G.more.pad0=0; G.yp_n=0; garden_msg("ALL CLEAN OUT HERE!"); sfx(1,SEQ_HAPPY); }
@@ -3012,12 +3015,16 @@ static void shop_static(void){
   O_BOX(8,98,224,32);
   DRAW_TARGET=save;
 }
+static void bs_leave(u16 keys){   // out of the BAG or the SHOP: back to the room, or (v8.3) to the night yard, with its message
+  if(!G.bs_yard){ to_room(keys); return; }
+  G.bs_yard=0; SCENE=1; G.mode=M_GARDEN; G.gui_key=0; G.suppress=keys;
+  if(MSG_TIMER){ garden_msg((const char*)MSG_BUF); MSG_TIMER=0; } }
 static void enter_shop(void){ G.mode=M_SHOP; G.cur=0; G.t=0; build_stock(); shop_static(); sfx(0,SEQ_DOOR); }
 static void shop_update(u16 pr, u16 keys){
   G.t++; if(MSG_TIMER) MSG_TIMER--;
   if(pr&K_LEFT){ G.cur=(u8)(G.cur?G.cur-1:SHOP_N-1); sfx(0,SEQ_BLIP); }
   if(pr&K_RIGHT){ G.cur=(u8)(G.cur==SHOP_N-1?0:G.cur+1); sfx(0,SEQ_BLIP); }
-  if(pr&K_B){ MSG_TIMER=0; sfx(0,SEQ_DOOR); to_room(keys); return; }
+  if(pr&K_B){ MSG_TIMER=0; sfx(0,SEQ_DOOR); bs_leave(keys); return; }
   if(pr&K_A){
     int it=G.stock[G.cur]; const Item *I=&ITEMS[it];
     if(owned(it)){ set_msg("YOU ALREADY HAVE THAT!"); sfx(0,SEQ_DENY); }
@@ -3076,7 +3083,7 @@ static const char *bag_status(int it){
 }
 static void bag_update(u16 pr, u16 keys){
   G.t++;
-  if(pr&K_B){ sfx(0,SEQ_BLIP); to_room(keys); return; }
+  if(pr&K_B){ sfx(0,SEQ_BLIP); bs_leave(keys); return; }
   if(!G.bag_n) return;
   if(pr&K_UP){ G.cur=(u8)(G.cur?G.cur-1:G.bag_n-1); sfx(0,SEQ_BLIP); }
   if(pr&K_DOWN){ G.cur=(u8)(G.cur+1>=G.bag_n?0:G.cur+1); sfx(0,SEQ_BLIP); }
@@ -3088,14 +3095,14 @@ static void bag_update(u16 pr, u16 keys){
       if(G.ext.active_toy==it){ G.ext.active_toy=0xFF; p=scpy(G.sbuf2,"PUT THE "); p=scpy(p,I->name); scpy(p," AWAY."); }
       else { G.ext.active_toy=(u8)it; toys_reset(150,60);
         p=scpy(G.sbuf2,"TOOK OUT THE "); p=scpy(p,I->name); scpy(p,G.outside? "!" : " (YARD TOY)"); }
-      ext_save(); set_msg(G.sbuf2); sfx(0,SEQ_CONFIRM); to_room(keys); return;
+      ext_save(); set_msg(G.sbuf2); sfx(0,SEQ_CONFIRM); bs_leave(keys); return;
     }
     if(IS_DECOR(it)){
       int s=DECOR_SLOT(it); char *p;
       if(G.deco.slot[s]==it){ G.deco.slot[s]=0xFF; p=scpy(G.sbuf2,"PUT AWAY THE "); scpy(p,I->name); }
       else { G.deco.slot[s]=(u8)it;
         p=scpy(G.sbuf2,"PLACED THE "); p=scpy(p,I->name); scpy(p, YARD_SLOT(s)&&!G.outside? " IN THE YARD!" : "!"); }
-      ext_save(); deco_save(); G.bg_state=0; set_msg(G.sbuf2); sfx(0,SEQ_CONFIRM); to_room(keys); return;
+      ext_save(); deco_save(); G.bg_state=0; set_msg(G.sbuf2); sfx(0,SEQ_CONFIRM); bs_leave(keys); return;
     }
     const char *deny=0;
     if(PET[P_STAGE]==0) deny="IT'S STILL AN EGG!";
@@ -3103,14 +3110,14 @@ static void bag_update(u16 pr, u16 keys){
     else if(it==IT_VITAMIN && !PET[P_SICK] && G.deco.vit_day==(u8)(G.ext.day+1)) deny="IT'S PROTECTED FOR TODAY!";
     else if(it==IT_SOAP && !MESS_HERE) deny="IT'S ALREADY CLEAN!";
     else if(it<N_FOODS && I->hunger && !I->happy && PET[P_HUNGER]>=4) deny="IT'S FULL!";
-    if(deny){ set_msg(deny); sfx(0,SEQ_DENY); to_room(keys); return; }
+    if(deny){ set_msg(deny); sfx(0,SEQ_DENY); bs_leave(keys); return; }
     G.ext.inv[it]--; ext_save();
     if(it<N_FOODS){ G.mode=M_EAT; G.eat_item=(u8)it; G.t=0; SCENE=1; G.suppress=keys; sfx(0,SEQ_CONFIRM); return; }
     if(it==IT_VITAMIN){ int was=PET[P_SICK]; PET[P_SICK]=0; G.deco.vit_day=(u8)(G.ext.day+1); deco_save();
       set_msg(was? "ALL BETTER - AND PROTECTED TODAY!" : "PROTECTED FROM SICKNESS TODAY!"); sfx(1,SEQ_HAPPY); }
     else if(it==IT_SOAP){ MESS_HERE=0; G.poop_hold=0; set_msg_name(" LOVES ITS BUBBLE BATH!"); sfx(1,SEQ_HAPPY); }   // (v8.1: just clean)
     else { apply_item(it); set_msg_name(" LOVES THE GIFT!"); sfx(0,SEQ_FANFARE); }
-    to_room(keys);
+    bs_leave(keys);
   }
 }
 static void bag_draw(void){
@@ -3679,7 +3686,7 @@ static void g_find(int b){ G.gdn.found|=1u<<b; }
 static int g_blooms(void){ int n=0; for(int i=0;i<3;i++) n+= G.gdn.p[i].stage==4; return n; }
 static void garden_palette(void){ for(int i=0;i<GP_N;i++) PAL[GP_IDX[i]]=GP_PAL[i]; PAL[255]=RGB(31,15,5); }   // (255: the ember firefly)
 static int garden_palette_on(void){ return G.mode==M_GARDEN || G.mode==M_FLY || (G.mode==M_MINI && G.outside) ||   // (v8.1: games in the yard show its flowers)
-   G.ex_yard || G.mn_yard || (G.mode==M_DEX && (G.jtab==JT_GARDEN || G.jtab==JT_FLY)) || ra_shot()==1 ||
+   G.ex_yard || G.mn_yard || (G.bs_yard && G.mode==M_BAG) || (G.mode==M_DEX && (G.jtab==JT_GARDEN || G.jtab==JT_FLY)) || ra_shot()==1 ||
    // v8.2b: every screen over the yard keeps the flowers' colours (menus, the bag, feeding and petting too)
    (G.outside && SCENE>=1 && SCENE<=5 && (G.mode==M_NONE || G.mode==M_MENU || G.mode==M_EXTRAS || G.mode==M_BAG || G.mode==M_EAT || G.mode==M_SURE)); }
 // the colour a flower takes from the care the critter is getting: a weighted pick, so the care it gets most shows most
@@ -4845,8 +4852,7 @@ static void fly_update(u16 pr,u16 keys){
   G.gt++;
   if(G.fly_state==1){ if(pr&(K_A|K_B)){ G.fly_state=0; G.fly_key=0; G.fly_cool=8; sfx(0,SEQ_BLIP); } return; }
   if(G.fly_state==2){
-    if((pr&K_A) && fly_rounds_left()>0) fly_start();
-    else if(pr&(K_B|K_SELECT)) fly_back(keys);
+    if(pr&(K_A|K_B|K_SELECT)) fly_back(keys);   // v8.3: back to the yard (R there starts another round)
     return; }
   if(pr&K_B){ fly_finish(); return; }
   // (v8.2b: the jar moves 3 px a frame, was 2)
@@ -4912,7 +4918,7 @@ static void fly_words(void){   // the bars and any box, drawn once into SCRATCH_
     q=scpy(b,"KINDS FOUND: "); q=sint(q,fly_count()); q=scpy(q," OF "); sint(q,FK_N); textc(b,120,54,C_ORANGE);
     if(left>0){ q=sint(b,left); scpy(q,left==1? " MORE ROUND TONIGHT" : " MORE ROUNDS TONIGHT"); } else scpy(b,"NO MORE ROUNDS TONIGHT");
     textc(b,120,68,C_HINT);
-    h= left>0? "A: AGAIN   B: BACK" : "B: BACK TO THE YARD";
+    h= "A: BACK TO THE YARD";
   }
   textc(h,120,144,C_HINT);
   DRAW_TARGET=sv;
@@ -5007,7 +5013,7 @@ static int menu_box(int *r){
   switch(G.mode){
     case M_MENU:   if(G.mn_yard) return 0; r[0]=52; r[1]=34; r[2]=136; r[3]=92; return 1;
     case M_EXTRAS: if(G.ex_yard) return 0; r[0]=136; r[1]=30; r[2]=96; r[3]=extras_h(); return 1;
-    case M_BAG:  { int rows=G.bag_n>5? 5 : G.bag_n; if(rows<2) rows=2; r[0]=24; r[1]=29; r[2]=192; r[3]=36+rows*12; return 1; }
+    case M_BAG:  { if(G.bs_yard) return 0; int rows=G.bag_n>5? 5 : G.bag_n; if(rows<2) rows=2; r[0]=24; r[1]=29; r[2]=192; r[3]=36+rows*12; return 1; }
     case M_SURE:   r[0]=14; r[1]=44; r[2]=212; r[3]=74; return 1;
     default: return 0;
   }
@@ -5152,7 +5158,7 @@ void hook_render(void){
   if(G.fx_seen && (u8)SCENE!=G.fx_scene && ((u8)SCENE==0 || G.fx_scene==0)){ REG_BLDCNT=(u16)(0x0034|(FX_BLACK<<6)); REG_BLDY=16; }
   set_extra_palette(); set_special_cmap();
   int help = G.mode==M_NONE && SCENE==7;    // our HOW TO PLAY pages cover the whole screen
-  if(!help && (G.mode==M_NONE || (G.mode==M_MENU && !G.mn_yard) || (G.mode==M_EXTRAS && !G.ex_yard) || G.mode==M_BAG || G.mode==M_EAT || G.mode==M_SURE)){
+  if(!help && (G.mode==M_NONE || (G.mode==M_MENU && !G.mn_yard) || (G.mode==M_EXTRAS && !G.ex_yard) || (G.mode==M_BAG && !G.bs_yard) || G.mode==M_EAT || G.mode==M_SURE)){
     u32 sc=SCENE;
     G.yp_n=G.outside? G.more.pad0 : 0;      // (v8.2c: the yard draws its own, at free spots: yard_poops)
     if(G.mode==M_MENU) SCENE=1;              // our menu replaces the original's box
@@ -5177,7 +5183,7 @@ void hook_render(void){
     case M_MENU:   if(G.mn_yard) garden_screen_draw(); menu_draw(); break;
     case M_EXTRAS: if(G.ex_yard) garden_screen_draw(); extras_draw(); break;
     case M_SHOP:   shop_draw(); break;
-    case M_BAG:    bag_draw(); break;
+    case M_BAG:    if(G.bs_yard) garden_screen_draw(); bag_draw(); break;
     case M_EAT:    eat_draw(); break;
     case M_MINI:   mini_draw(); break;
     case M_SENDOFF: { G.cpose=(s8)(G.sendoff==E_SAD? POSE_SAD+1 : (((FRAMES>>4)&1)? POSE_WAVE1 : POSE_WAVE2)+1); sendoff_draw();   /* waving goodbye */ G.cpose=0; } break;
@@ -5199,7 +5205,7 @@ void hook_render(void){
     else if(G.mode==M_SHOP) tn=T_SHOP;
     else if(G.mode==M_ALBUM || G.mode==M_DEX) tn=T_ALBUM;
     else if(G.mode==M_STORY){ tn=T_LULLABY; v=3; }
-    else if(G.mode==M_GARDEN || G.mode==M_FLY || G.ex_yard || G.mn_yard){ tn=T_OUTSIDE_NIGHT; v=3; }
+    else if(G.mode==M_GARDEN || G.mode==M_FLY || G.ex_yard || G.mn_yard || G.bs_yard){ tn=T_OUTSIDE_NIGHT; v=3; }
     else if(SCENE==0 || G.mode==M_SURE) tn=T_TITLE;
     else if(PET[P_STAGE]==8) tn=T_FAREWELL_SAD;
     else if(PET[P_ASLEEP]){ tn=T_LULLABY; v=3; }

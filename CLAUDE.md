@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 224 checks (187 in the v8.1 sections, 13 `sprites` and 24 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 225 checks (187 in the v8.1 sections, 13 `sprites` and 25 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
@@ -262,8 +262,9 @@ Other details:
     every indoor floor piece, the bed and the stand (the middle-left spot moved to x 92 with the bed). Both share `poops_at()`. The original's poop
     drawing reads `ext_poops_drawn()` (always 0); its call-icon check still reads `ext_mess_drawn()`.
   - The SELECT menu shows only what works (`extras_list()`; `G.cur` is a row of that list, the box fits it): in the
-    room OUTSIDE/GARDEN, BAG, SHOP, STORY (night only) and JOURNAL; over the night yard GO INSIDE, CLEAN UP (only while
-    `More.pad0`, which it clears) and JOURNAL. It can scroll 5 rows at a time (`G.ex_first`, `EX_SHOW`) if it grows. While it sleeps, the yard's mess doesn't count toward sickness (`sim_tick`).
+    room OUTSIDE/GARDEN, BAG, SHOP, STORY (night only) and JOURNAL; over the night yard GO INSIDE, BAG, SHOP, CLEAN UP (only while
+    `More.pad0`, which it clears) and JOURNAL. BAG and SHOP opened there set `G.bs_yard`; `bs_leave()` goes back to the
+    yard and shows any message there (`garden_msg`). It can scroll 5 rows at a time (`G.ex_first`, `EX_SHOW`) if it grows. While it sleeps, the yard's mess doesn't count toward sickness (`sim_tick`).
   - **Fireplace** (slot 1) stands on the back wall under the picture, at 3/4 size, facing straight out
     (`gen/decor.py` `FIREPLACE`: front x 181-210, y 72-101, mantel y 64-70, hearth slab y 101-106, green stockings).
     Its soft shadow on the wall is `FP_SHADOW`/`FP_SHADE` (decorgen; `FP_SHADE` maps the wall's colours 3/4 and the
@@ -283,6 +284,8 @@ Other details:
     `FP_SHADE`; `shade_list()` in `build_bg`, only while the lights are on.
   - A new critter clears the "tonight" marks (`night_marks_reset`: `More.spare[0]`, `[1]`, `[6]`, `[7]`, the lantern):
     they're day+1 and its days restart at 0, so its first night could read as used ("NO MORE FIREFLIES TONIGHT.").
+  - A firefly round's score card goes back to the yard (A or B); R there starts the next round (no "A: AGAIN").
+  - The picture's move (`PIC_UP`) moves its whole rectangle, so no strip of the old picture is left under it.
   - START opens the menu over the night yard too (`G.mn_yard`; `menu_close()` goes back to `M_GARDEN`).
   - A skips the rest of a MEAL or SNACK (`ANIM_T` jumps to `FEED_END`-1, so the original finishes it as usual) and of
     food from the bag (`eat_update`: `G.t` jumps to 84).
