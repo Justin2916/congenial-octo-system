@@ -24,7 +24,7 @@ This booklet covers everything in the game. The secret forms, rare moonflowers a
 | A | Use or choose. At night, A also makes a wish when a shooting star crosses the sky |
 | B | Back, or close a box |
 | START | The menu: RESUME, SPEED, SOUND, MUSIC, HOW TO PLAY, SAVE AND QUIT |
-| SELECT | OUTSIDE (or GARDEN at night), SHOP, BAG, JOURNAL and STORY. Out in the yard at night: GO INSIDE or JOURNAL |
+| SELECT | OUTSIDE (or GARDEN at night), SHOP, BAG, JOURNAL and STORY. Out in the yard at night: GO INSIDE, JOURNAL or CLEAN UP (scroll down) |
 | L / R | Turn the journal's tabs. In the yard at night, R starts a firefly round |
 
 The SELECT menu also shows how many coins you have. Each minigame shows its own buttons at the bottom of the screen.
@@ -39,7 +39,7 @@ The eight icons sit along the top and bottom of the screen. Move between them wi
 | LIGHTS | Turn the lights off when it falls asleep, and back on in the morning. Left in the dark while it's awake, it gets glum and slowly loses happiness. |
 | PLAY | Pick one of four minigames and win coins (see **Minigames**). |
 | MEDS | Cure it when it is sick. Sometimes it needs a second dose. Medicine when it isn't sick only makes it pull a yuck face. |
-| CLEAN | Wash away the mess, in the room or in the yard (each keeps its own). A mess soon makes it sick. |
+| CLEAN | Wash away the mess, in the room or in the yard (each keeps its own). A mess soon makes it sick, though a mess out in the yard can't while it sleeps. |
 | STATUS | Open its status card (see below). |
 | PET | Answer it when it calls you. |
 | ! | Lights up when it needs something, and it cries. Answer it soon. |
@@ -130,7 +130,7 @@ A or RIGHT turns the page, LEFT goes back, and B closes the book. Stories you ha
 
 ## The moonflower garden
 
-While your critter is asleep at night, the SELECT menu's first choice becomes **GARDEN**. It takes you out to the yard, where three soil patches sit at different spots in the grass, behind any yard decor. At first you're just looking. Press **A** to tend the moonflowers: a cursor appears, LEFT and RIGHT pick a patch, and A plants, waters or takes a closer look. **B** puts the cursor away, and B again goes back inside. SELECT opens a small menu (GO INSIDE or JOURNAL), and **R** starts a firefly round. The clock keeps running out here, so dawn sends you back inside.
+While your critter is asleep at night, the SELECT menu's first choice becomes **GARDEN**. It takes you out to the yard, where three soil patches sit at different spots in the grass, behind any yard decor. At first you're just looking. Press **A** to tend the moonflowers: a cursor appears, LEFT and RIGHT pick a patch, and A plants, waters or takes a closer look. **B** puts the cursor away, and B again goes back inside. SELECT opens a small menu (GO INSIDE, JOURNAL, or CLEAN UP further down to clean the yard), and **R** starts a firefly round. The clock keeps running out here, so dawn sends you back inside.
 
 Each new star-seed comes with **3 moonflower seeds**.
 

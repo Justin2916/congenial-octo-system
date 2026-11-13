@@ -19,6 +19,7 @@ extern char o_sdivmod[];
 extern char o_udiv[];
 extern char o_udivmod[];
 u32 ext_mess_drawn(void);   /* ext.c */
+u32 ext_poops_drawn(void);  /* ext.c */
 void o_game_render(void){
   u32 r0=0,r1=0,r2=0,r3=0,r4=0,r5=0,r6=0,r7=0,r8=0,r9=0,r10=0,r11=0,r12=0,lr=0; u32 N=0,Z=0,C=0,V=0;
   u32 frame_[160]; u32 sp=(u32)&frame_[160];
@@ -6540,7 +6541,7 @@ L_0800546a: ;  { u32 X_=(u32)(r2), Y_=(~(u32)(0u)); unsigned long long W_=(unsig
                if(!Z) goto L_08005472;                                                                              /* 0546e bne #0x8005472 */
 L_08005470: ;  r1=r0; N=(r1)>>31; Z=(r1)==0;                                                                        /* 05470 movs r1, r0 */
 L_08005472: ;  r0=0x03000028u;                                                                                      /* 05472 ldr r0, [pc, #0x338] */
-               r0=ext_mess_drawn();   /* EDITED: the room's poops, none outside (ext.c draws the yard's) */                                                                         /* 05474 ldrb r0, [r0, #0xb] */
+               r0=ext_mess_drawn();   /* EDITED: the room's mess, none outside (for the call icon)   */                                                                         /* 05474 ldrb r0, [r0, #0xb] */
                { u32 X_=(u32)(r0), Y_=(~(u32)(2u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; } /* 05476 cmp r0, #2 */
                r0=*(volatile u32*)((sp+252));                                                                       /* 05478 ldr r0, [sp, #0xfc] */
                if((C&&!Z)) goto L_0800547e;                                                                         /* 0547a bhi #0x800547e */
@@ -6749,7 +6750,7 @@ L_08005612: ;  r0=*(volatile u32*)((sp+248));                                   
                { u32 X_=(u32)(r0), S_=(u32)(2u)&0xFF; u32 R_; if(S_==0){R_=X_;} else {C=(X_>>(32-S_))&1; R_=X_<<S_;} r5=R_; N=R_>>31; Z=R_==0; } /* 05614 lsls r5, r0, #2 */
                r1=*(volatile u32*)((sp+36));                                                                        /* 05616 ldr r1, [sp, #0x24] */
 L_08005618: ;  r0=0x03000028u;                                                                                      /* 05618 ldr r0, [pc, #0x190] */
-               r0=ext_mess_drawn();   /* EDITED: the room's poops, none outside (ext.c draws the yard's) */                                                                         /* 0561a ldrb r0, [r0, #0xb] */
+               r0=ext_poops_drawn();  /* EDITED: none (v8.3: ext.c draws the room's and the yard's) */                                                                               /* 0561a ldrb r0, [r0, #0xb] */
                { u32 X_=(u32)(r0), Y_=(~(u32)(0u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; } /* 0561c cmp r0, #0 */
                *(volatile u32*)((sp+160))=(u32)r5;                                                                  /* 0561e str r5, [sp, #0xa0] */
                r4=*(volatile u32*)((sp+212));                                                                       /* 05620 ldr r4, [sp, #0xd4] */
@@ -6774,7 +6775,7 @@ L_08005642: ;  r0=*(volatile u32*)((sp+220));                                   
                *(volatile u32*)((sp+220))=(u32)r0;                                                                  /* 05646 str r0, [sp, #0xdc] */
                { u32 X_=(u32)(r1), Y_=(u32)(1u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r1=R_; } /* 05648 adds r1, r1, #1 */
                r0=0x03000028u;                                                                                      /* 0564a ldr r0, [pc, #0x160] */
-               r0=ext_mess_drawn();   /* EDITED: the room's poops, none outside (ext.c draws the yard's) */                                                                         /* 0564c ldrb r0, [r0, #0xb] */
+               r0=ext_poops_drawn();  /* EDITED: none (v8.3: ext.c draws the room's and the yard's) */                                                                               /* 0564c ldrb r0, [r0, #0xb] */
                { u32 X_=(u32)(r1), Y_=(~(u32)(r0)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; } /* 0564e cmp r1, r0 */
                if(!C) goto L_08005654;                                                                              /* 05650 blo #0x8005654 */
 L_08005652: ;  goto L_0800588a;                                                                                     /* 05652 b #0x800588a */

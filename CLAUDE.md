@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 216 checks (187 in the v8.1 sections, 13 `sprites` and 16 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 218 checks (187 in the v8.1 sections, 13 `sprites` and 18 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
@@ -189,7 +189,7 @@ Other details:
   they were swapped while outside). `MESS_HERE` (`ext_mess_here()`) is the one where the critter is: the original's
   CLEAN and its mess checks in `orig_update.c` use it, and so do pooping (`sim_tick`), soap and the care record. The
   original's room-poop drawing in `orig_render.c` reads `ext_mess_drawn()`, which is 0 outside. Both messes count
-  toward getting sick (`mess` in `sim_tick`). Note: to make it poop in a test, push the poop timer
+  toward getting sick (`mess` in `sim_tick`; since v8.3 the yard's only while it's awake). Note: to make it poop in a test, push the poop timer
   (`P16(0x2C)`/`P16(0x2E)`), as the `yard` test does.
 - **Moonflower colours:** `garden_palette_on()` is true on every screen over the yard (menus, bag, feeding,
   petting). Outside, the food art uses the wall picture's slots 96–119 (`food_base()`), which the room only needs.
@@ -257,6 +257,12 @@ Other details:
   - The title -> game cut (and game -> title) goes black at once and holds 2 frames too, so the title picture never
     shows in the room's colours (`fx_watch`, and the check at the top of `hook_render`).
   - The sick-while-asleep symbol follows the critter: drawn at `room_cx+38`, `room_cy-20` (beside the Zs).
+  - Room poops are ours too (2.5D, like the yard's): `room_poops()` draws `PET[P_POOP]` at `RP_X/RP_Y` (front by
+    the rug, two middle, a small one at the back of the floor, which starts at y 101), all inside x 52-190, clear of
+    every indoor floor piece (x 3-50 and 192-240, mapped by placing each). Both share `poops_at()`. The original's poop
+    drawing reads `ext_poops_drawn()` (always 0); its call-icon check still reads `ext_mess_drawn()`.
+  - Over the night yard the SELECT menu has a sixth row, CLEAN UP (cleans `More.pad0`), and scrolls 5 rows at a
+    time (`G.ex_first`, `EX_SHOW`). While it sleeps, the yard's mess doesn't count toward sickness (`sim_tick`).
   - `udivmod` steps once per quotient bit. The old bit-by-bit divide made the night room with the jar drop to 30 fps
     on mGBA.
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its

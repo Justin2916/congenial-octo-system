@@ -721,7 +721,9 @@ typedef struct {
   u8 jrec, yp_n, spr_bl, spr_bl_ok;   // (spr_bl: Bliplet sprites wanted this frame; spr_bl_ok: their tiles are in OBJ VRAM)   // v8.2c: the RECORDS tab's first row shown; the yard's poops to draw
   u8 fx_hold, fx_hpad[3];
   u16 dark_t, dark_pad;
-  u16 yf_key; u8 yf_nk, yf_pad; u16 yf_pal[5][2][7];   // v8.3: the yard fireflies' palettes, for tonight's kinds (yf_key)               // v8.3: ticks awake by day with the lights off (an extra happy heart lost every DARK_TICKS)             // v8.3: frames a fade stays at its start (the runaway's cuts: until both pages hold the new shot)
+  u16 yf_key; u8 yf_nk, yf_pad; u16 yf_pal[5][2][7];
+  u8 ex_first, ex_pad[3];   // v8.3: the SELECT menu's first row shown (it scrolls over the night yard, which adds CLEAN UP)
+    // v8.3: the yard fireflies' palettes, for tonight's kinds (yf_key)               // v8.3: ticks awake by day with the lights off (an extra happy heart lost every DARK_TICKS)             // v8.3: frames a fade stays at its start (the runaway's cuts: until both pages hold the new shot)
 } State;
 
 #define G (*(State*)0x0203E000u)
@@ -730,7 +732,8 @@ typedef struct {
 // reads and clears the mess where the critter is through ext_mess_here(), and draws the room's through
 // ext_mess_drawn(), so nothing is swapped any more. More.pad1 bit 1, the old swap flag, is unused.)
 volatile u8 *ext_mess_here(void){ return G.outside? (volatile u8*)&G.more.pad0 : PET+P_POOP; }
-u32 ext_mess_drawn(void){ return G.outside? 0 : PET[P_POOP]; }   // the room's poops (outside, yard_poops draws the yard's)
+u32 ext_mess_drawn(void){ return G.outside? 0 : PET[P_POOP]; }   // the room's mess, for the original's call-icon check
+u32 ext_poops_drawn(void){ return 0; }   // v8.3: the original draws no poops (room_poops and yard_poops draw them)
 #define MESS_HERE (*ext_mess_here())
 static void fly_update(u16 pr,u16 keys); static void fly_screen_draw(void); static void fly_start(void); static int fly_rounds_left(void);
 static void lantern_draw(void); static void win_open_pre(void); static void win_open_post(void); static void fly_dance(void); static void fly_morning(void); static void fly_palette(void); static void jr_fly_keys(u16 pr);
@@ -1621,14 +1624,22 @@ static void outside_tick(void){
 // from every combination). Three depths, smaller further back; the first poop takes the front spot, the last the back.
 // (x, bottom y) of each spot, in the order they fill; drawn back to front.
 static const u8 YP_X[4]={122,86,116,88}, YP_Y[4]={131,120,116,104}, YP_SZ[4]={0,1,1,2};   // size 0 front, 1 middle, 2 back
-static void yard_poops(void){
-  int n= G.mode==M_GARDEN || G.mode==M_FLY? G.more.pad0 : G.yp_n; if(n>4) n=4; if(!n) return;
-  static const u8 ORDER[4]={3,2,1,0};   // back (y 104), middle right (116), middle left (120), front (131)
+static void poops_at(int n,const u8 *X,const u8 *Y,const u8 *SZ){
+  if(n>4) n=4; if(n<=0) return;
+  static const u8 ORDER[4]={3,2,1,0};   // back to front
   for(int o=0;o<4;o++){ int i=ORDER[o]; if(i>=n) continue;
-    int s=YP_SZ[i], w= s==0? POOP_FRONT_W : s==1? POOP_MID_W : POOP_BACK_W, h= s==0? POOP_FRONT_H : s==1? POOP_MID_H : POOP_BACK_H;
-    int x=YP_X[i], y=YP_Y[i]-h+1;
+    int s=SZ[i], w= s==0? POOP_FRONT_W : s==1? POOP_MID_W : POOP_BACK_W, h= s==0? POOP_FRONT_H : s==1? POOP_MID_H : POOP_BACK_H;
+    int x=X[i], y=Y[i]-h+1;
     for(int r=0;r<h;r++) for(int cc=0;cc<w;cc++){ int v= s==0? POOP_FRONT[r][cc] : s==1? POOP_MID[r][cc] : POOP_BACK[r][cc]; if(v) pset(x+cc,y+r,v); } }
 }
+static void yard_poops(void){   // back (y 104), middle right (116), middle left (120), front (131)
+  poops_at(G.mode==M_GARDEN || G.mode==M_FLY? G.more.pad0 : G.yp_n, YP_X, YP_Y, YP_SZ);
+}
+// v8.3: the room's poops are ours too, in 2.5D like the yard's: front by the rug's edge, two in the middle, a small
+// one at the back of the floor (it starts at y 101). Every indoor floor piece covers x 3-50 or x 192-240 (mapped by
+// placing each one), so these spots never overlap decor. Drawn into the background: the critter stands in front.
+static const u8 RP_X[4]={116,160,60,136}, RP_Y[4]={131,117,113,108}, RP_SZ[4]={0,1,1,2};
+static void room_poops(void){ poops_at(PET[P_POOP], RP_X, RP_Y, RP_SZ); }
 static void garden_draw(int glow);
 static void draw_outside_extras(void){
   int cxp=G.room_cx, cyp=G.room_cy? G.room_cy : 62;
@@ -2260,7 +2271,7 @@ static void sim_tick(void){
   else { starve=P16(0x36); if(starve<1000){ starve=++P16(0x36); if(starve==90) mistake(); } }
   u8 happy=PET[P_HAPPY];
   if(happy) P16(0x38)=0; else if(P16(0x38)<1000){ if(++P16(0x38)==90) mistake(); }
-  int mess=PET[P_POOP]+G.more.pad0;   // (v8.2b: the room's and the yard's mess both count)
+  int mess=PET[P_POOP]+(sleeping? 0 : G.more.pad0);   // (v8.2b: both messes count; v8.3: not the yard's while it sleeps)
   if(mess<2) P16(0x3A)=0;
   else if(++P16(0x3A)>=120){                                   // a messy room can make it sick
     P16(0x3A)=0;
@@ -2805,16 +2816,26 @@ static int extras_off(int i){   // greyed out
   if(G.ex_yard) return i==1 || i==2 || i==4;   // over the night yard: just GO INSIDE and JOURNAL
   return (i==0 && !G.outside && !can_go_outside() && !garden_ok()) || (i==4 && !story_ok());
 }
-static void extras_close(u16 keys){ G.suppress=keys; if(G.ex_yard){ G.ex_yard=0; G.mode=M_GARDEN; G.gui_key=0; } else G.mode=M_NONE; }
+static void extras_close(u16 keys){ G.suppress=keys; G.ex_first=0; if(G.ex_yard){ G.ex_yard=0; G.mode=M_GARDEN; G.gui_key=0; } else G.mode=M_NONE; }
+#define EX_SHOW 5
+static int extras_rows(void){ return G.ex_yard? 6 : 5; }   // v8.3: over the night yard, a sixth row: CLEAN UP
 static void extras_update(u16 pr, u16 keys){
-  if(pr&K_UP){ G.cur=(u8)(G.cur?G.cur-1:4); sfx(0,SEQ_BLIP); }
-  if(pr&K_DOWN){ G.cur=(u8)(G.cur>=4?0:G.cur+1); sfx(0,SEQ_BLIP); }
+  int nr=extras_rows();
+  if(G.cur>=nr) G.cur=0;
+  if(pr&K_UP){ G.cur=(u8)(G.cur?G.cur-1:nr-1); sfx(0,SEQ_BLIP); }
+  if(pr&K_DOWN){ G.cur=(u8)(G.cur>=nr-1?0:G.cur+1); sfx(0,SEQ_BLIP); }
+  if(G.ex_first>nr-EX_SHOW) G.ex_first=(u8)(nr-EX_SHOW);
+  if(G.cur<G.ex_first) G.ex_first=G.cur; else if(G.cur>=G.ex_first+EX_SHOW) G.ex_first=(u8)(G.cur-EX_SHOW+1);
   if(pr&(K_B|K_SELECT)){ sfx(0,SEQ_BLIP); extras_close(keys); return; }
   if(pr&K_A){
     G.suppress=keys;
     if(G.ex_yard){   // v8.1: the menu over the night yard
       if(G.cur==0){ G.ex_yard=0; G.mode=M_GARDEN; garden_close(keys); }
       else if(G.cur==3){ G.ex_yard=0; sfx(0,SEQ_JOURNAL); dex_open(2); }
+      else if(G.cur==5){   // v8.3: clean the yard at night, while it sleeps inside
+        G.ex_yard=0; G.mode=M_GARDEN; G.gui_key=0; G.ex_first=0;
+        if(G.more.pad0){ G.more.pad0=0; G.yp_n=0; garden_msg("ALL CLEAN OUT HERE!"); sfx(1,SEQ_HAPPY); }
+        else { garden_msg("THE YARD IS ALREADY CLEAN!"); sfx(0,SEQ_DENY); } }
       else sfx(0,SEQ_DENY);
       return; }
     if(G.cur==3){ sfx(0,SEQ_JOURNAL); dex_open(3); return; }   // v8.1: the journal lives here now
@@ -2837,12 +2858,14 @@ static void extras_update(u16 pr, u16 keys){
 static void extras_draw(void){
   O_BOX(136,30,96,100);
   const char *n0 = G.outside? "GO INSIDE" : garden_ok()? "GARDEN" : "OUTSIDE";
-  const char *n[5]={n0,"SHOP","BAG","JOURNAL","STORY"};
-  for(int i=0;i<5;i++){
-    int y=38+i*14;
+  const char *n[6]={n0,"SHOP","BAG","JOURNAL","STORY","CLEAN UP"};
+  int nr=extras_rows(), top=G.ex_first; if(top>nr-EX_SHOW) top=nr-EX_SHOW;
+  for(int k=0;k<EX_SHOW;k++){ int i=top+k, y=38+k*14;
     if(G.cur==i) text(">",144,y,C_RED);
     text(n[i],154,y,extras_off(i)? (G.ex_yard? C_HINT : C_GRAY) : C_DTEXT);   // (C_GRAY is a garden colour at night)
   }
+  if(top>0) for(int r=0;r<4;r++) fill(222-r,34+r,1+2*r,1,C_HINT);                    // more above
+  if(top+EX_SHOW<nr) for(int r=0;r<4;r++) fill(222-r,106-r,1+2*r,1,C_HINT);          // more below
   coin_icon(146,110); sint(G.sbuf,G.ext.coins); text(G.sbuf,157,110,C_DTEXT);
 }
 
@@ -3812,7 +3835,7 @@ static void garden_update(u16 pr,u16 keys){
   wish_tick();
   if(wish_try(pr)) return;
   if(!is_night()){ garden_close(keys); return; }
-  if(pr&K_SELECT){ sfx(0,SEQ_BLIP); G.ex_yard=1; G.mode=M_EXTRAS; G.cur=3; G.suppress=keys; return; }   // v8.1: the menu, over the yard
+  if(pr&K_SELECT){ sfx(0,SEQ_BLIP); G.ex_yard=1; G.mode=M_EXTRAS; G.cur=3; G.ex_first=0; G.suppress=keys; return; }   // v8.1: the menu, over the yard
   // v8.1: the yard opens just for looking; A shows the cursor to tend the moonflowers (G.gpad2), B puts it away
   if(pr&K_R){ if(fly_rounds_left()>0) fly_start(); else { garden_msg("NO MORE FIREFLIES TONIGHT."); sfx(0,SEQ_DENY); } G.suppress=keys; return; }   // v8.1
   if(!G.gpad2){
@@ -4052,7 +4075,7 @@ void hook_update(u32 keys){
   if(SCENE==1) dex_tick();
   switch(G.mode){
     case M_NONE: {
-      if(SCENE==1 && (pr&K_SELECT) && PET[P_STAGE]!=8){ G.mode=M_EXTRAS; G.cur=0; sfx(0,SEQ_BLIP); return; }
+      if(SCENE==1 && (pr&K_SELECT) && PET[P_STAGE]!=8){ G.mode=M_EXTRAS; G.cur=0; G.ex_first=0; sfx(0,SEQ_BLIP); return; }
       if(SCENE==0){
         // the original asks "START OVER WITH A NEW EGG?" - its YES now leads to a second, louder check
         if(TITLE_CONFIRM==1 && TITLE_CUR==1 && (pr&K_A)){ G.mode=M_SURE; G.sure_cur=1; sfx(0,SEQ_BLIP); break; }
@@ -4303,7 +4326,7 @@ void hook_bg_copy(void *dst, const void *src){
   if(G.bg_state!=want) build_bg(want);
   O_DMACOPY(dst, YARD_BG);
   if(G.outside){ draw_sky(0); if(SCENE!=3) garden_draw(G.yard_night); draw_decor(1); draw_outside_extras(); yard_poops(); }
-  else { win_open_pre(); draw_sky(1); win_open_post(); draw_decor(1); lantern_draw(); }
+  else { win_open_pre(); draw_sky(1); win_open_post(); draw_decor(1); room_poops(); lantern_draw(); }
 }
 
 // ---- HOW TO PLAY pages (drawn in the original's style)
