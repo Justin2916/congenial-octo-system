@@ -65,6 +65,7 @@ def build():
     def arr(n): return [int(v) for v in re.search(n + r'\[BGX_N\]=\{([^}]*)\}', bh).group(1).split(',')]
     unp = lambda v: ((v & 31) << 3, ((v >> 5) & 31) << 3, ((v >> 10) & 31) << 3)
     dpal = [unp(v) for v in arr('BGX_ROOM_DAYPAL')]; npal = [unp(v) for v in arr('BGX_ROOM_NIGHTPAL')]
+    rn = int(re.search(r'#define BGX_ROOM_N (\d+)', bh).group(1)); dpal = dpal[:rn]; npal = npal[:rn]   # (the room's own colours only)
     import struct
     po = lambda n: [unp(v) for v in struct.unpack('<256H', open(_ROOT + '/gen/bg/' + n, 'rb').read())]
     od, on = po('pal_day.bin'), po('pal_night.bin')        # the original's colours (the wall is its 3 and 4)

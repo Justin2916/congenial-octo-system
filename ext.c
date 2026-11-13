@@ -1213,7 +1213,7 @@ static void set_extra_palette(void){
     else if(title_showing() || (G.mode==M_SENDOFF && G.tbg) || ra_shot()==4){   // painted title / star world: their own colours, twinkling stars
       for(int i=0;i<TBG_TWINKLE;i++) PAL[TBG_FIRST+i]=TBG_PAL[i];
       for(int k=0;k<4;k++) PAL[TBG_FIRST+TBG_TWINKLE+k]=TBG_TW[(k+(G.sky_t>>4))&3]; }
-    else { for(int i=0;i<BGX_N;i++) PAL[BGX_FIRST+i]=q[i]; decor_palettes(night); } }
+    else { int nb= G.bgx_yard? BGX_N : BGX_ROOM_N; for(int i=0;i<nb;i++) PAL[BGX_FIRST+i]=q[i]; decor_palettes(night); } }   // (v8.3: indoors 196-207 are the fifth decor band)
   sky_palette();
   farewell_palette();
   if(G.mode==M_STORY) story_palette();

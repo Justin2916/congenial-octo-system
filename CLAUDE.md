@@ -102,7 +102,8 @@ Other details:
     go dark; `C_LTEXT`, `C_LILAC` and `C_ORANGE` stay readable.
   - `40–63`: reset by the original every frame, and borrowed by food (`M_EAT`), stories and the garden.
   - `120–143`: the critter.
-  - `144–207`: room and yard colours (`BGX`).
+  - `144–207`: room and yard colours (`BGX`). v8.3: the room uses only the first 52 (`BGX_ROOM_N`, 144–195), so
+    indoors 196–207 are free for a fifth decor band; the yard keeps all 64.
   - `208–243`: the decor bands.
   - `244–254`: the garden. `garden_palette_on()` decides when it's loaded.
   - `255`: the ember firefly. In the room, `244–255` are the ceiling decor piece's band (v8.3: they used to be
