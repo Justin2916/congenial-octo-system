@@ -45,7 +45,7 @@ def offsets():
               'timer': 'State,timer', 'px': 'State,px', 'py': 'State,py', 'spawn': 'State,spawn', 'lastv': 'State,lastv',
               'obj': 'State,obj', 'st_seq': 'State,st_seq', 'tune': 'State,tune', 'rating': 'State,rating', 'pk_w': 'State,pk_w',
               'keep': 'State,keep', 'k_un0': 'Keep,un0', 'k_un1': 'Keep,un1', 'k_best': 'Keep,best', 'k_ok': 'Keep,ok',
-              'd_unlock': 'Deco,unlock_lvl', 'names': 'State,names', 'nm': 'State,nm', 'want_name': 'State,want_name', 'nm_x': 'State,nm_x', 'd_owned': 'Deco,owned',
+              'd_unlock': 'Deco,unlock_lvl', 'names': 'State,names', 'nm': 'State,nm', 'want_name': 'State,want_name', 'nm_x': 'State,nm_x', 'd_owned': 'Deco,owned', 'd_pad': 'Deco,pad', 'e_toys': 'Ext,toys', 'd_vit': 'Deco,vit_day',
               'jr': 'State,jr', 'jtab': 'State,jtab', 'jstar': 'State,jstar', 'jcare': 'State,jcare', 'j_s': 'Journal,s', 'j_coins': 'Journal,coins', 'j_games': 'Journal,games', 'so_pend': 'State,sendoff_pending', 'retired': 'Life,retired', 'l_pad': 'Life,pad', 'more': 'State,more', 'm_rn': 'More,rn', 'm_rmiss': 'More,rmiss', 'jitem': 'State,jitem', 'm_found0': 'More,found0', 'm_found_ok': 'More,found_ok', 'm_wishes': 'More,wishes', 'wish_t': 'State,wish_t', 'wish_cd': 'State,wish_cd', 'm_spare': 'More,spare', 'e_inv': 'Ext,inv', 'dex_cur': 'State,dex_cur', 'stock': 'State,stock', 'st_cur': 'State,st_cur', 'st_page': 'State,st_page', 'm_stories': 'More,stories', 'st_pad': 'State,st_pad', 'rng': 'State,rng', 'gdn': 'State,gdn', 'gcur': 'State,gcur', 'g_found': 'Garden,found', 'g_seeds': 'Garden,seeds', 'g_vis_n': 'Garden,vis_n', 'g_vis': 'Garden,vis', 'g_vis_day': 'Garden,vis_day', 'e_day': 'Ext,day', 'gpad': 'State,gpad', 'gdetail': 'State,gdetail', 'bg_state': 'State,bg_state', 'weak_warned': 'State,weak_warned', 'outside': 'State,outside', 'gpad2': 'State,gpad2', 'dex_from': 'State,dex_from', 'gmsg': 'State,gmsg', 'ex_yard': 'State,ex_yard', 'jt_first': 'State,jt_first', 'fly': 'State,fly', 'fly_t': 'State,fly_t', 'fly_kinds': 'State,fly_kinds', 'fly_night': 'State,fly_night', 'fly_rel': 'State,fly_rel', 'fly_n': 'State,fly_n', 'fly_state': 'State,fly_state', 'fly_card': 'State,fly_card', 'jx': 'State,jx', 'jy': 'State,jy', 'jfly': 'State,jfly', 'f_x': 'Fly,x', 'f_y': 'Fly,y', 'f_k': 'Fly,k', 'f_t': 'Fly,t', 'f_live': 'Fly,live', 'spr_n': 'State,spr_n', 'spr_live': 'State,spr_live', 'spr_win': 'State,spr_win', 'win': 'State,win', 'm_pad0': 'More,pad0', 'm_pad1': 'More,pad1', 'gwater': 'State,gwater', 'e_adult': 'Ext,adult_day', 'gcur': 'State,gcur', 'gone_t': 'State,gone_t', 'jrec': 'State,jrec', 'sky_t': 'State,sky_t', 'spr_shown': 'State,spr_shown', 'room_cx': 'State,room_cx', 'room_cy': 'State,room_cy', 'ex_first': 'State,ex_first', 'cur': 'State,cur', 'jar_t': 'State,jar_t', 'jar_back': 'State,jar_back', 'st_baked': 'State,st_baked'}
     src = f'#include "{CK}/ext.c"\nconst unsigned TEST_OFFS[] = {{ ' + ', '.join(f'__builtin_offsetof({v})' for v in fields.values()) + ' };\n'
     c, o, b = f'{TMP}/offs.c', f'{TMP}/offs.o', f'{TMP}/offs.bin'
@@ -234,7 +234,7 @@ def t_care():
     """the care record samples every 15 s: needs, yard, plants, play"""
     sav = copy_save('teen')
     sc = ['wait 30', p8(g('dex', 'd_phase'), 1), *[p8(g('deco', 'k_slot') + i, 0xFF) for i in range(6)],
-          p8(g('deco', 'k_slot') + 1, 16), p8(g('deco', 'k_slot') + 4, 43),
+          p8(g('deco', 'd_pad'), 16), p8(g('deco', 'k_slot') + 5, 43),   # (v8.3: the plant's spot is the corner, Deco.pad)
           'press A', 'waitscene 1', 'wait 5', *care_set('c_grow', n=0, good=0, bad=0, garden=0),
           *[x for k in range(4) for x in care_set('c_grow', miss=(k, 0))],
           p8(PET + 4, 2), p32(PET + 0x20, 10), p8(PET + 0x12, 1), p8(PET + 0xC, 0), p32(PET + 0x24, 100),
@@ -269,7 +269,9 @@ def t_save():
             va = [x for x in peeks(run(BASE, parts, a))]
         vb = peeks(run(ROM, parts + [f'savesram {TMP}/after.sav'], b))
         if os.path.exists(BASE):
-            same = all(x[1][4:-4] == y[1][4:-4] if i == 4 else x == y for i, (x, y) in enumerate(zip(va, vb)))
+            # (v8.3: the deco part may differ only where pieces moved to their themed spots: the slots, the corner, its checksum)
+            def keep(i, b): return b[4:-4] if i == 4 else b[:8] + b[14:19] + b[20:24] if i == 2 else b
+            same = all(keep(i, x[1]) == keep(i, y[1]) for i, (x, y) in enumerate(zip(va, vb)))
             check(f'save: v7 save "{name}" converts with nothing lost', same, '')
         d = bytearray(open(f'{TMP}/after.sav', 'rb').read())
         check(f'save: "{name}" has the new save block', save_ver(d) == CUR_VER, '')
@@ -961,6 +963,21 @@ def t_yard():
     sc = BOOT + ['poke32 0300004c 1f4', 'wait 4', p8(K + 3, 24), *p16(SPF, 1), p8(g('fly_n'), 5), *p16(g('fly_kinds'), 7), p8(g('bg_state'), 0), 'wait 30', 'peek 050001e8 24']
     got = list(struct.unpack('<12H', peeks(run(ROM, sc, copy_save('adult')))[0][1]))
     check('yard: the ceiling piece keeps its colours at night (no firefly colours over them)', got == want, f'{got} want {want}')
+    # v8.3: themed spots. An old save's pieces move to their own spots (the fishbowl to the new corner; the plant, whose
+    # spot is then taken, back into the bag); the toy box goes at the bed's foot, only with the bed
+    PAD = g('deco', 'd_pad'); M1 = g('more', 'm_pad1')
+    sv = copy_save('adult')
+    run(ROM, BOOT + [p8(K + i, 0xFF) for i in range(6)] + [p8(K, 15), p8(K + 1, 16), p8(K + 2, 18), p8(PAD, 0), 'wait 4',
+                     'press START', 'wait 8', 'press UP', 'wait 4', 'press A', 'wait 8', 'press A', 'wait 60'], sv)
+    v = [x[1] for x in peeks(run(ROM, BOOT + [f'peek {K:08x} 6', f'peek {PAD:08x} 1'], sv))]
+    check('yard: an old save\'s pieces move to their themed spots (fishbowl to the corner, the plant back in the bag)', list(v[0][:3]) == [0xFF, 0xFF, 18] and v[1][0] == 15, f'{list(v[0])} {v[1][0]}')
+    bag = ['press SELECT', 'wait 6', 'press DOWN', 'wait 4', 'press A', 'wait 10']
+    setup = BOOT + DAY + [p8(K + i, 0xFF) for i in range(6)] + [p8(PAD, 0xFF), p8(M1, 0), p32(g('deco', 'd_owned'), 1 | 64), p8(g('ext', 'e_toys'), 0)] + \
+            [p8(g('ext', 'e_inv') + i, 0) for i in range(11)] + ['wait 4']
+    sc = setup + bag + ['press DOWN', 'wait 4', 'press A', 'wait 10', f'peek {M1:08x} 1'] + bag + ['press A', 'wait 10'] + bag + ['press DOWN', 'wait 4', 'press A', 'wait 10',
+         f'peek {M1:08x} 1', f'peek {K:08x} 1'] + bag + ['press A', 'wait 10', f'peek {M1:08x} 1', f'peek {K:08x} 1']
+    v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('yard: the toy box only goes at the bed\'s foot, and goes away with the bed', v[0] & 8 == 0 and v[1] & 8 and v[2] == 14 and v[3] & 8 == 0 and v[4] == 0xFF, str(v))
     # v8.2c: running away is a six-shot scene: its room at dawn, a look back from the yard, the meadow path, the
     # stream where wild critters take it in, the empty place in the night sky, the end card
     md0 = int(re.search(r'MD_PAL\[MD_N\]=\{(\d+)', open(f'{CK}/meadow.h').read()).group(1))

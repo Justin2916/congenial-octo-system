@@ -198,7 +198,13 @@ You can hold up to 9,999 coins.
 
 - **Food and care items:** use them straight from the bag.
 - **Yard toys:** take one out to the yard at a time.
-- **Decor:** place it in a spot. The room has four spots (two on the floor, one on the wall, one on the ceiling) and the yard has two (by the tree and by the house).
+- **Decor:** place it in its spot. Each spot holds one piece, and each piece has its own spot:
+  - **By the window** (comfort): the bed or the beanbag. The toy box goes at the foot of the bed, so it needs the bed.
+  - **Under the picture** (fun and cozy): the fireplace, the TV on its low cabinet, the radio on its side table, the arcade or the piano.
+  - **The corner** (nature): the plant, or the fishbowl on its little table.
+  - **The wall**: the clock, the bookshelf, the portrait, the mirror or the guitar.
+  - **The ceiling**: the mobile, the lantern, the disco ball or the plane.
+  - **The yard** has two spots (by the tree and by the house).
 
 Now and then, as your critter wanders past a piece of decor, it uses it and you see what it's doing ("DANCES TO THE MUSIC!"). Using decor doesn't make it happier; it helps the piece's kind of care instead: play pieces count as play, outside pieces as time with plants, rest pieces heal it a little, clean pieces keep a mess from making it sick so soon, and the pond gives hunger +1. A few special pieces give bond, and some are just to look at (DECOR). The journal's ITEMS tab gets a page for each item the first time you buy it, and keeps it forever.
 
@@ -383,7 +389,7 @@ Only read on if you're stuck.
 | "Who rises with the sun, morning after morning?" | Sunpuff | An Oakhart that is out in the yard early in the morning (the first couple of minutes after sunrise) on 3 different mornings |
 | "What chases comets for wishes of its own?" | Zippit | A Fluffbud that wishes on 2 shooting stars as a grown-up |
 | "Whose lantern is full of little lights?" | Glimmer | A Dunerose that catches 8 fireflies in one night as a grown-up |
-| "What weaves its fern fronds when every corner is cozy?" | Nestle | A Frillo with all 4 room decor spots filled |
+| "What weaves its fern fronds when every corner is cozy?" | Nestle | A Frillo with the window, picture, wall and ceiling spots all filled |
 | "What blooms when smoky wool is washed, day after day?" | Petalamb | A Smogwool kept clean for two days |
 | "Not one hungry day for the oily paddler." | Lilybill | A Gunkbill kept well fed for two days |
 | "What ripens on a bramble coat that smiles for days?" | Jamble | A Thornhog kept happy for two days |

@@ -506,11 +506,94 @@ def FLOWERS(c):
     grain(c, 166, 121, 44, 7, 'box', 12, 0.15)
 
 # ------------------------------------------------------------------ render
+# ------------------------------------------------------------------ v8.3: where each indoor piece stands
+# The room has five themed spots: under the window (comfort: bed, beanbag; the toy box goes at the bed's foot), under
+# the picture (fun and cozy: fireplace, TV on a low cabinet, radio on a side table, arcade, piano), the right-hand
+# corner (nature: the plant, or the fishbowl on a little table), the wall and the ceiling. The pieces were drawn for
+# the old spots, so here each one is resampled (its material map, then shaded) to its new size and place.
+# PLACE[name] = (scale, centre x, bottom y, stand or None, source rows to drop from y)  -- or ('shift', dx, dy)
+PIC_DX = -12                                         # the picture and the spot under it moved 12 px left
+WALL_DX = -8                                         # the wall spot moved 8 px left
+STAND_R = {'stw': WOOD, 'stm': ramp((246, 238, 222))}
+def cabinet(X, Wd, top, bot):                        # a low TV cabinet: lit top, two doors with small round knobs
+    def f(c):
+        for x in range(X, X+Wd): tp(c, x, top, 'stw', 0); tp(c, x, top+1, 'stw', 1)
+        bevel(c, X+1, top+2, Wd-2, bot-top-3, 'stw', 2, r=1)
+        h = (Wd-7)//2
+        bevel(c, X+3, top+4, h, bot-top-8, 'stw', 3, r=1); bevel(c, X+4+h, top+4, h, bot-top-8, 'stw', 3, r=1)
+        for kx in (X+3+h-2, X+4+h+1): tp(c, kx, top+6, 'stm', 1)
+        rect(c, X+1, bot-1, 2, 2, 'stw', 3); rect(c, X+Wd-3, bot-1, 2, 2, 'stw', 3)
+        grain(c, X, top, Wd, bot-top+1, 'stw', 3)
+    return f
+def side_table(X, Wd, top, bot):                     # a little side table: top, a low shelf, thin legs
+    def f(c):
+        for x in range(X, X+Wd): tp(c, x, top, 'stw', 0); tp(c, x, top+1, 'stw', 1)
+        bevel(c, X, top+2, Wd, 2, 'stw', 2)
+        for lx in (X+1, X+Wd-3): rect(c, lx, top+4, 2, bot-top-4, 'stw', 3)
+        bevel(c, X+2, bot-5, Wd-4, 2, 'stw', 2)
+        grain(c, X, top, Wd, bot-top+1, 'stw', 5)
+    return f
+PCX = 196 + PIC_DX                                    # the centre of the spot under the picture
+NCX = 222                                             # the centre of the right-hand corner
+PLACE = {
+    'BEANBAG':   (0.75, 45, 108, None, None),
+    'TV':        (0.75, PCX, 96, cabinet(PCX-16, 33, 96, 106), None),
+    'RADIO':     (0.75, PCX, 93, side_table(PCX-13, 27, 93, 106), None),
+    'ARCADE':    (0.75, PCX, 106, None, None),
+    'PIANO':     (0.75, PCX, 106, None, None),
+    'FIREPLACE': ('shift', PIC_DX, 0),
+    'PLANT0':    (0.75, NCX, 106, None, None), 'PLANT1': (0.75, NCX, 106, None, None), 'PLANT2': (0.75, NCX, 106, None, None),
+    'FISHBOWL':  (0.75, NCX, 93, side_table(NCX-10, 21, 93, 106), 116),    # (its own wooden base is dropped: it has a table)
+    'CLOCK': ('shift', WALL_DX, 0), 'BOOKSHELF': ('shift', WALL_DX, 0), 'PORTRAIT': ('shift', WALL_DX, 0),
+    'MIRROR': ('shift', WALL_DX, 7), 'GUITAR': ('shift', WALL_DX, 7),      # (they hung higher than the others)
+}
+XF = {}                                               # name -> (source x0, y0, new x0, y0, scale x4): for ext.c's animations
+def _bbox(c):
+    pts = [(x, y) for y in range(160) for x in range(240) if c.mat[y][x] is not None]
+    return min(p[0] for p in pts), min(p[1] for p in pts), max(p[0] for p in pts), max(p[1] for p in pts)
+def _copy(c, c2, sx, sy, X, Y, pid_add=0):
+    c2.mat[Y][X] = c.mat[sy][sx]; c2.tone[Y][X] = c.tone[sy][sx]; c2.flat[Y][X] = c.flat[sy][sx]
+    c2.d[Y][X] = c.d[sy][sx]; c2.pid[Y][X] = c.pid[sy][sx] + pid_add
+def placed_canvas(name):
+    """the piece's canvas at its new place (and its ramps), with any stand drawn under it"""
+    fn, ramps = D[name]; c = SC(); fn(c); ramps = dict(ramps or {'_': ramp((0, 0, 0))})
+    pl = PLACE.get(name)
+    if pl is None: XF[name] = (0, 0, 0, 0, 4); return c, ramps
+    c2 = SC()
+    if pl[0] == 'shift':
+        _, dx, dy = pl
+        for y in range(160):
+            for x in range(240):
+                if c.mat[y][x] is not None and 0 <= x+dx < 240 and 0 <= y+dy < 160: _copy(c, c2, x, y, x+dx, y+dy)
+        c2.part = c.part; XF[name] = (0, 0, dx, dy, 4); return c2, ramps
+    scale, cx, base, stand, drop = pl
+    if drop is not None:
+        for y in range(drop, 160):
+            for x in range(240): c.mat[y][x] = None
+    x0, y0, x1, y1 = _bbox(c); w = x1-x0+1; h = y1-y0+1; W = round(w*scale); H = round(h*scale); nx = cx-W//2; ny = base-H+1
+    off = 0
+    if stand: stand(c2); ramps.update(STAND_R); off = c2.part + 1
+    for y in range(H):
+        for x in range(W):
+            sx = x0+min(w-1, int((x+0.5)/scale)); sy = y0+min(h-1, int((y+0.5)/scale))
+            if c.mat[sy][sx] is None: continue
+            X, Y = nx+x, ny+y
+            if 0 <= X < 240 and 0 <= Y < 160: _copy(c, c2, sx, sy, X, Y, off)
+    c2.part = off + c.part
+    XF[name] = (x0, y0, nx, ny, round(scale*4)); return c2, ramps
 def render(name):
-    fn, ramps = D[name]; c = SC(); fn(c)
-    if not ramps: ramps = {'_': ramp((0, 0, 0))}
-    img = c.rgb(ramps)
-    return img
+    if name == 'BEDTOY':                              # the bed with the toy box at its foot (half size), one palette
+        c, ramps = placed_canvas('BED'); t, tr = D['TOYBOX'][1], None
+        tc = SC(); D['TOYBOX'][0](tc); x0, y0, x1, y1 = _bbox(tc); w = x1-x0+1; h = y1-y0+1
+        W = round(w*0.5); H = round(h*0.5); nx = 45-W//2; ny = 125-H+1; off = c.part + 1
+        for y in range(H):
+            for x in range(W):
+                sx = x0+min(w-1, int((x+0.5)/0.5)); sy = y0+min(h-1, int((y+0.5)/0.5))
+                if tc.mat[sy][sx] is not None: _copy(tc, c, sx, sy, nx+x, ny+y, off)
+        ramps = dict(ramps); ramps.update(D['TOYBOX'][1]); XF['BEDTOY'] = (0, 0, 0, 0, 4)
+        return c.rgb(ramps)
+    c, ramps = placed_canvas(name)
+    return c.rgb(ramps)
 if __name__ == '__main__':
     from PIL import Image
     room = Image.open('/tmp/m_room.ppm').convert('RGB') if len(sys.argv) < 2 else None

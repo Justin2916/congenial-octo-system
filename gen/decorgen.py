@@ -23,9 +23,14 @@ def bgr(c): return (c[0]>>3) | ((c[1]>>3)<<5) | ((c[2]>>3)<<10)
 NAMES = ['BED', 'FISHBOWL', 'PLANT0', 'RADIO', 'CLOCK', 'BOOKSHELF', 'TOYBOX', 'TV', 'PORTRAIT', 'MOBILE', 'LANTERN',
          'SWING', 'SANDBOX', 'BIRDBATH', 'GARDEN', None, None, None,
          'BEANBAG', 'PIANO', 'ARCADE', 'FIREPLACE', 'MIRROR', 'GUITAR', 'DISCO', 'PLANE', 'TRAMPOLINE', 'SLIDE', 'POND', 'FLOWERS',
-         'PLANT1', 'PLANT2']
-SLOT_OF = [0, 0, 1, 1, 2, 2, 0, 1, 2, 3, 3, 4, 4, 5, 5, 0xFF, 0xFF, 0xFF, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 1, 1]
+         'PLANT1', 'PLANT2', 'BEDTOY']
+# v8.3: the themed spots. 0 under the window (bed, beanbag), 1 under the picture (radio, TV, piano, arcade, fireplace),
+# 2 the wall, 3 the ceiling, 4-5 the yard, 6 the right-hand corner (fishbowl, plant), 7 the bed's foot (the toy box,
+# drawn with the bed: BEDTOY shares the bed's palette band)
+SLOT_OF = [0, 6, 6, 1, 2, 2, 7, 1, 2, 3, 3, 4, 4, 5, 5, 0xFF, 0xFF, 0xFF, 0, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 0]
 BAND0, BANDN = 208, 12
+BAND_OF = {0: 208, 1: 220, 2: 232, 3: 244, 4: 208, 5: 220, 6: 196, 7: 208}   # (6: 196-207, free indoors since the room has 52 colours)
+FLOOR = ['BED', 'BEDTOY', 'BEANBAG', 'FIREPLACE', 'TV', 'RADIO', 'ARCADE', 'PIANO', 'FISHBOWL', 'PLANT0', 'PLANT1', 'PLANT2']
 def cl(v): return max(0, min(255, int(round(v))))
 def room_night(c): return (cl(c[0]*0.53), cl(c[1]*0.56), cl(c[2]*0.80+12))      # follows how the game darkens its wall
 def yard_night(c): return (cl(c[0]*0.36+8), cl(c[1]*0.42+14), cl(c[2]*0.55+44))   # the yard's blue night
@@ -41,9 +46,9 @@ def build():
         hist = {}
         for (x, y) in pts: hist[img[y][x]] = hist.get(img[y][x], 0)+1
         pal = reduce_colors(hist, BANDN)
-        slot = SLOT_OF[i]; band = BAND0 + BANDN*(slot if slot < 4 else slot-4)
+        slot = SLOT_OF[i]; band = BAND_OF[slot]
         lut = {c: band+nearest(pal, c) for c in hist}
-        nf = room_night if slot < 4 else yard_night
+        nf = yard_night if slot in (4, 5) else room_night
         pals.append(([bgr(c) for c in pal]+[0]*(BANDN-len(pal)), [bgr(nf(c)) for c in pal]+[0]*(BANDN-len(pal))))
         w = x1-x0+1; h = y1-y0+1
         box.append((x0, y0, w, h)); pixoff.append(len(pix)); rowoff.append(len(rows)//2)
@@ -59,6 +64,9 @@ def build():
     o.append('static const u16 DEC_PAL[DEC_N][2][DEC_BANDN]={%s};\n' % ','.join('{{%s},{%s}}' % (','.join(map(str, d)), ','.join(map(str, n))) for d, n in pals))
     o.append('static const u8 DEC_PIX[%d]={%s};\n' % (len(pix), ','.join(map(str, pix))))
     o.append('static const u8 DEC_ROWS[%d]={%s};\n' % (len(rows), ','.join(map(str, rows))))
+    # v8.3: where each piece's art came from and went (for ext.c's animations): source x0, y0, new x0, y0, scale x4
+    xf = [decor.XF.get(nm, (0, 0, 0, 0, 4)) if nm else (0, 0, 0, 0, 4) for nm in NAMES]
+    o.insert(len(o)-2, 'static const s16 DEC_XF[DEC_N][5]={%s};\n' % ','.join('{%d,%d,%d,%d,%d}' % t for t in xf))
     # v8.3: the fireplace's shadow on the wall, and for each room colour (144-207) its shaded colour at three depths
     import re
     bh = open(_ROOT + '/bgfx.h').read()
@@ -79,12 +87,13 @@ def build():
         shade.append(row)
     # shadows: 0 the fireplace, 1 the bed (on the wall and the floor), 2-3 the jar's stand at its two spots
     stands = [decor.render_fn(decor.stand(X), decor.STAND_RAMPS) for X in decor.STAND_X]
-    shs = [decor.object_shadow(decor.render('FIREPLACE')), decor.object_shadow(decor.render('BED'), floor=True)] + \
+    # one list for each floor piece (by its entry; an empty list for the others), then the stand at each spot
+    shs = [decor.object_shadow(decor.render(nm), floor=nm != 'FIREPLACE') if nm in FLOOR else [] for nm in NAMES] + \
           [decor.object_shadow(im, floor=True) for im in stands]
     flat = []; off = []
     for sh in shs: off.append(len(flat)); flat += sh
     off.append(len(flat))
-    o.insert(len(o)-2, '#define SHADOW_N %d\nstatic const u8 SHADOW[SHADOW_N][3]={%s};\nstatic const u16 SHADOW_OFF[%d]={%s};   // 0 fireplace, 1 bed, 2-3 the stand\n' %
+    o.insert(len(o)-2, '#define SHADOW_N %d\nstatic const u8 SHADOW[SHADOW_N][3]={%s};\nstatic const u16 SHADOW_OFF[%d]={%s};   // by entry (DEC_N of them), then the stand at each spot\n' %
              (len(flat), ','.join('{%d,%d,%d}' % t for t in flat), len(off), ','.join(map(str, off))))
     # the stand, in the room's own colours (144-207: the closest by day and by night)
     sp = []

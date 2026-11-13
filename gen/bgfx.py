@@ -13,11 +13,12 @@ DAYC=[rgb(v) for v in PD]; NIGHTC=[rgb(v) for v in PN]
 ROOM=list(rd('bg_room_day.bin')); YD=list(rd('bg_yard_day.bin')); YN=list(rd('bg_yard_night.bin'))
 # v8.3: the wall picture hangs 8 px higher, to make room for the fireplace under it (ext.c draws the picture at y 35)
 PIC_UP=8
+PIC_DX=-12   # v8.3: and 12 px further left, to give the right-hand corner more room (ext.c draws it at x 169)
 _pf=[(x,y) for y in range(28,100) for x in range(150,240) if ROOM[y*W+x] in (35,6)]
 _x0=min(p[0] for p in _pf); _x1=max(p[0] for p in _pf); _py0=min(p[1] for p in _pf); _y1=max(p[1] for p in _pf)
 _box={(x,y):ROOM[y*W+x] for y in range(_py0,_y1+1) for x in range(_x0,_x1+1)}   # the frame and all that's inside it
 for (x,y) in _box: ROOM[y*W+x]=ROOM[(_py0-3)*W+x]          # the wall behind it (its stripes run straight down)
-for (x,y),v in _box.items(): ROOM[(y-PIC_UP)*W+x]=v
+for (x,y),v in _box.items(): ROOM[(y-PIC_UP)*W+x+PIC_DX]=v
 EXTRA0, EXTRA_N = 144, 112
 LOCKED=set(range(80,144))|{9}            # sky/clouds/sun/moon, wall picture, bar colour handled separately
 def clamp(c): return tuple(max(0,min(255,int(round(v)))) for v in c)

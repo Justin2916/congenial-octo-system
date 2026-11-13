@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 226 checks (187 in the v8.1 sections, 13 `sprites` and 26 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 228 checks (187 in the v8.1 sections, 13 `sprites` and 28 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
@@ -282,8 +282,21 @@ Other details:
     full and glowing at night, empty by day. At dawn (`fly_morning`) it lifts off and arcs to the sill (`jar_at`,
     `G.jar_t` up to `JAR_T`; the window stays shut till then), the release runs as before at `LANT_X/LANT_Y`, then it
     floats back (`G.jar_back`).
-  - Shadows: `SHADOW`/`SHADOW_OFF` (0 fireplace, 1 bed, 2-3 the stand at each spot) darken the wall, floor and rug via
-    `FP_SHADE`; `shade_list()` in `build_bg`, only while the lights are on.
+  - Shadows: `SHADOW`/`SHADOW_OFF` (one list per art entry, then the stand at each spot) darken the wall, floor and rug
+    via `FP_SHADE`; `shade_list()` in `build_bg`, only while the lights are on.
+  - **Themed decor spots** (`SLOT_OF`, in ext.c and `decorgen.py`): 0 under the window (bed, beanbag), 1 under the picture
+    (fireplace, TV, radio, arcade, piano), 2 the wall, 3 the ceiling, 4-5 the yard, 6 the right-hand corner (plant,
+    fishbowl) and 7 the bed's foot (the toy box, only with the bed). 0-5 are `Deco.slot`, 6 is `Deco.pad` and 7 a flag
+    (`More.pad1` bit 3), so the save format didn't change; always go through `deco_get`/`deco_set`/`deco_has`.
+    `deco_migrate()` (at start) moves an old save's pieces to their own spots (or back to the bag if taken). Spot 6 uses
+    palette band 196-207 (free indoors since the room has 52 colours: `SLOT_BAND`); the bed with the toy box is its own
+    art entry (`BEDTOY`, 32) in the bed's band. Use cooldowns: `DCD(s)` (`decor_cd` for 0-5, `decor_cd67` for 6-7).
+  - Pieces are placed by `gen/decor.py` `PLACE`: the floor pieces resampled to 3/4 size against the back wall (TV on a low
+    cabinet, radio and fishbowl on side tables; the fishbowl without its own base), the toy box at 1/2 at the bed's
+    foot, the picture spot and the picture 12 px left (`PIC_DX`; ext.c draws the photo at x 169), the wall 8 px left
+    with the mirror and guitar 7 px lower. `DEC_XF` (source x0/y0, new x0/y0, scale x4) moves each piece's animation
+    with it (`xfx`/`xfy`/`xfill`/`xpset`), and use spots sit just over each piece (`DEC_BOX`). Every floor piece has a
+    shadow list (`SHADOW_OFF` by entry, then the stand's two), applied in `build_bg` while the lights are on.
   - A new critter clears the "tonight" marks (`night_marks_reset`: `More.spare[0]`, `[1]`, `[6]`, `[7]`, the lantern):
     they're day+1 and its days restart at 0, so its first night could read as used ("NO MORE FIREFLIES TONIGHT.").
   - A firefly round's score card goes back to the yard (A or B); R there starts the next round (no "A: AGAIN").

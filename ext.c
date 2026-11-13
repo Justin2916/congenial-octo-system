@@ -193,11 +193,15 @@ enum { IT_APPLE, IT_FISH, IT_CAKE, IT_CANDY, IT_SALAD, IT_PIZZA, IT_MILK, IT_COO
 #define TOYBIT(i) ((i)<=IT_BUBBLES? (i)-IT_BALL : (i)-IT_FRISBEE+3)
 #define DECOBIT(i) ((i)-IT_BED)
 // decor spots: 0 floor left, 1 floor right, 2 wall, 3 ceiling, 4 yard by the tree, 5 yard by the house
-#define N_SLOTS 6
-static const u8 SLOT_OF[30]={0,0,1,1,2,2, 0,1,2,3,3, 4,4,5,5, 0xFF,0xFF,0xFF, 0,0,1,1,2,2,3,3,4,4,5,5};
+// v8.3: the room's themed spots. 0 under the window (bed, beanbag), 1 under the picture (radio, TV, piano, arcade,
+// fireplace), 2 the wall, 3 the ceiling, 4-5 the yard, 6 the right-hand corner (fishbowl, plant), 7 the bed's foot
+// (the toy box). Spots 0-5 are Deco.slot; 6 is Deco.pad and 7 a flag (More.pad1 bit 3): no change to the save.
+#define N_SLOTS 8
+#define SLOT_TOY 7
+static const u8 SLOT_OF[30]={0,6,6,1,2,2, 7,1,2,3,3, 4,4,5,5, 0xFF,0xFF,0xFF, 0,1,1,1,2,2,3,3,4,4,5,5};
 #define DECOR_SLOT(i) (SLOT_OF[(i)-IT_BED])
 #define DECOR_SLOT_OK(i) (IS_DECOR(i)? DECOR_SLOT(i) : 0)
-#define YARD_SLOT(s) ((s)>=4)
+#define YARD_SLOT(s) ((s)==4 || (s)==5)
 
 typedef struct { const char *name; const char *desc; u16 price; s8 hunger, happy, weight, bond; const char *art; } Item;
 
@@ -603,7 +607,7 @@ typedef struct {
 
 typedef struct { s32 x, y, vx, vy; u8 type, active, flip, pad; } Obj;
 // decor data (separate SRAM block; replaces the 3-spot fields in Ext)
-typedef struct { u32 magic; u32 owned; u8 slot[N_SLOTS]; u8 plant_day, garden_day, pond_day, unlock_lvl; u8 vit_day, pad; u32 seed; u32 sum; } Deco;  // vit_day: (day+1) a VITAMIN protects
+typedef struct { u32 magic; u32 owned; u8 slot[6]; u8 plant_day, garden_day, pond_day, unlock_lvl; u8 vit_day, pad; u32 seed; u32 sum; } Deco;  // vit_day: (day+1) a VITAMIN protects
 // life-cycle data (separate SRAM block so older saves stay valid)
 typedef struct { u32 magic; u16 hatch_day; u16 care_good, care_bad; u8 retired, music_off, warned, pad; u32 sum; } Life;
 // star album: the critters that earned a star since the stars last reset (SRAM 0x0E000200)
@@ -671,7 +675,7 @@ typedef struct {
   char sbuf2[48];
   s32 room_cx, room_cy;
   // decor + cries
-  u16 decor_cd[N_SLOTS]; u8 fx_slot, fx_t, last_happy, last_call, last_asleep, check_special;
+  u16 decor_cd[6]; u8 fx_slot, fx_t, last_happy, last_call, last_asleep, check_special;
   u16 cry_delay, idle_cry, cry_cool;
   u16 cry_buf[2*14];
   s16 sk[6];
@@ -719,13 +723,14 @@ typedef struct {
   u16 so[SPR_MAX][3]; s16 sa[SPR_AFF][4]; u16 sp[SPR_PALS][16];
   u8 spr_n, spr_naff, spr_npal, spr_ready, spr_live, spr_shown, spr_win, spr_pad; u8 win[4];   // win: x0,x1,y0,y1
   u8 jrec, yp_n, spr_bl, spr_bl_ok;   // (spr_bl: Bliplet sprites wanted this frame; spr_bl_ok: their tiles are in OBJ VRAM)   // v8.2c: the RECORDS tab's first row shown; the yard's poops to draw
-  u8 fx_hold, fx_hpad[3];
-  u16 dark_t, dark_pad;
-  u16 yf_key; u8 yf_nk, yf_pad; u16 yf_pal[5][2][7];
-  u8 ex_first, fp_lit, mn_yard, st_baked;   // (st_baked: the jar's stand drawn into the room picture: 0 none, 1+ its spot)
-  u16 jar_t, jar_back;
-  u8 bs_yard, bs_pad[3];   // v8.3: the BAG or the SHOP was opened from the night yard (they go back out there)   // v8.3: the jar's trip at dawn from its stand to the window (jar_t), and back (jar_back)   // (mn_yard: the START menu is open over the night yard)   // (fp_lit: the room picture has the fireplace's shadow, drawn only while the lights are on)   // v8.3: the SELECT menu's first row shown (it scrolls over the night yard, which adds CLEAN UP)
-    // v8.3: the yard fireflies' palettes, for tonight's kinds (yf_key)               // v8.3: ticks awake by day with the lights off (an extra happy heart lost every DARK_TICKS)             // v8.3: frames a fade stays at its start (the runaway's cuts: until both pages hold the new shot)
+  u8 fx_hold, fx_hpad[3];          // v8.3: frames a fade stays at its start (the runaway's cuts: until both pages hold the new shot)
+  u16 dark_t, dark_pad;             // v8.3: ticks awake by day with the lights off (an extra happy heart lost every DARK_TICKS)
+  u16 yf_key; u8 yf_nk, yf_pad; u16 yf_pal[5][2][7];   // v8.3: the yard fireflies' palettes, for tonight's kinds (yf_key)
+  u8 ex_first, fp_lit, mn_yard, st_baked;   // v8.3: the SELECT menu's first row shown; the room picture has its shadows (lights on);
+                                            // the START menu is over the night yard; the jar's stand is drawn (0 none, 1+ its spot)
+  u16 jar_t, jar_back;              // v8.3: the jar's trip at dawn from its stand to the window (jar_t), and back (jar_back)
+  u8 bs_yard, bs_pad[3];            // v8.3: the BAG or the SHOP was opened from the night yard (they go back out there)
+  u16 decor_cd67[2];                // v8.3: the use cooldowns of spots 6 and 7 (the first six are decor_cd, kept where it was)
 } State;
 
 #define G (*(State*)0x0203E000u)
@@ -1014,10 +1019,10 @@ static void deco_load(void){
   memset(&G.deco,0,sizeof(Deco));
   if(m1==DECO1_MAGIC && s1==h){
     G.deco.owned=o[4]|(o[5]<<8)|(o[6]<<16)|((u32)o[7]<<24);
-    for(int i=0;i<N_SLOTS;i++) G.deco.slot[i]=o[8+i];
+    for(int i=0;i<6;i++) G.deco.slot[i]=o[8+i];
     G.deco.plant_day=o[14]; G.deco.garden_day=o[15];
   } else {
-    G.deco.owned=G.ext.decor; for(int i=0;i<N_SLOTS;i++) G.deco.slot[i]= i<3? G.ext.slot[i] : 0xFF;
+    G.deco.owned=G.ext.decor; for(int i=0;i<6;i++) G.deco.slot[i]= i<3? G.ext.slot[i] : 0xFF;
     G.deco.plant_day=G.ext.plant_day; G.deco.garden_day=0xFF;
   }
   G.deco.pond_day=0xFF; G.deco.unlock_lvl=0xFF;     // 0xFF: set from the critter's current age without a message
@@ -1133,18 +1138,31 @@ static void sky_palette(void){
   if(t>440 && t<480){ PAL[C_SUN]=RGB(31,18,8); PAL[C_SUN2]=RGB(29,11,6); }
 }
 // ---- v7 phase 3: pre-drawn decor art (gen/decor.py), one 12-colour palette band per decor slot
+static int deco_get(int s); static void deco_set(int s,int it); static int deco_has(int it);
+#define DCD(s) (*((s)<6? &G.decor_cd[s] : &G.decor_cd67[(s)-6]))
 static int decor_entry(int it){
   if(it==IT_PLANT){ int g=(u8)((u8)G.ext.day - G.deco.plant_day); return g>=2? 31 : g==1? 30 : 2; }
+  if(it==IT_BED && deco_get(SLOT_TOY)!=0xFF) return 32;   // v8.3: the bed with the toy box at its foot
   return it-IT_BED;
 }
 // v8.2b: the pinwheel, the sprinkler and the resting frisbee stand here, in the free strip between the first two
 // moonflower patches (x 80 and 132), clear of every decor piece (by the tree: up to x 88; by the house: from x 168)
 #define TOY_X 108
 static int toy_of(int it){ return it==IT_BALL? TOY_BALL : it==IT_KITE? TOY_KITE : it==IT_FRISBEE? TOY_FRISBEE : it==IT_SPRINKLER? TOY_SPRINKLER : it==IT_PINWHEEL? TOY_PINWHEEL : -1; }
+static int deco_get(int s){
+  if(s<6) return G.deco.slot[s];
+  if(s==6) return G.deco.pad;
+  return (G.more.pad1&8)? IT_TOYBOX : 0xFF; }
+static void deco_set(int s,int it){
+  if(s<6) G.deco.slot[s]=(u8)it;
+  else if(s==6) G.deco.pad=(u8)it;
+  else G.more.pad1= it==0xFF? (u8)(G.more.pad1&~8) : (u8)(G.more.pad1|8); }
+static int deco_has(int it){ return IS_DECOR(it) && deco_get(DECOR_SLOT(it))==it; }
+static const u8 SLOT_BAND[7]={208,220,232,244,208,220,196};   // (6: 196-207, free indoors: the room has 52 colours)
 static void decor_palettes(int night){
-  int yard=G.bgx_yard, s0= yard? 4 : 0, s1= yard? 6 : 4;
-  for(int s=s0;s<s1;s++){ int it=G.deco.slot[s]; if(it==0xFF) continue;
-    const u16 *p=DEC_PAL[decor_entry(it)][night]; volatile u16 *d=PAL+DEC_BAND0+DEC_BANDN*(s-s0);
+  int yard=G.bgx_yard;
+  for(int s=0;s<7;s++){ if(YARD_SLOT(s)!=yard) continue; int it=deco_get(s); if(it==0xFF) continue;
+    const u16 *p=DEC_PAL[decor_entry(it)][night]; volatile u16 *d=PAL+SLOT_BAND[s];
     for(int i=0;i<DEC_BANDN;i++) d[i]=p[i]; }
   if(yard && G.ext.active_toy!=0xFF){ int t=toy_of(G.ext.active_toy);
     if(t>=0){ const u16 *p=TOY_PAL[t][night]; volatile u16 *d=PAL+DEC_BAND0+2*DEC_BANDN; for(int i=0;i<DEC_BANDN;i++) d[i]=p[i]; } }
@@ -1505,6 +1523,18 @@ static void spr_add(int cx,int cy,int size,int tile,int bank,int aff,int dbl,int
 static void keep_from_v9(void);
 static void journal_from_album(void);
 static void garden_reset(void){ memset(G.gdn.p,0,sizeof(G.gdn.p)); G.gdn.seeds=3; G.gdn.vis_day=0xFF; G.gdn.vis_n=0; G.gdn.news=0; G.gdn.ok=1; }
+// v8.3: the spots became themed (and a fifth, the right-hand corner, was added in Deco.pad): a piece left in a spot
+// that isn't its own moves to its own, or goes back in the bag (it stays owned) when that one is taken
+static void deco_migrate(void){
+  int ch=0, p=G.deco.pad;
+  if(p!=0xFF && !(IS_DECOR(p) && DECOR_SLOT(p)==6)){ G.deco.pad=0xFF; ch=1; }   // (old saves kept 0 here)
+  for(int s=0;s<6;s++){ int it=G.deco.slot[s]; if(it==0xFF) continue;
+    int t= IS_DECOR(it)? DECOR_SLOT(it) : 0xFF; if(t==s) continue;
+    G.deco.slot[s]=0xFF; ch=1;
+    if(t!=0xFF && deco_get(t)==0xFF) deco_set(t,it); }
+  if(deco_get(SLOT_TOY)!=0xFF && deco_get(0)!=IT_BED){ deco_set(SLOT_TOY,0xFF); ch=1; }
+  if(ch) save_all();
+}
 static void init_once(void){
   if(G.magic==G_MAGIC) return;
   memset(&G,0,sizeof(State));
@@ -1518,6 +1548,7 @@ static void init_once(void){
     if(ver==12){ G.jr.wonders=0; for(int i=0;i<G.jr.n;i++) if(((G.jr.s[i].info>>2)&3)==1) G.jr.wonders++; }   // v12 kept the longest life here
     if(ver<15){ garden_reset(); save_all(); } }   // (v14: More starts empty; v15: a garden with three seeds)
   if(!G.more.found_ok) found_init();
+  deco_migrate();
   G.last_clock = PET_CLOCK; G.tune=0xFF;
   G.last_happy=PET[P_HAPPY]; G.last_call=PET[P_CALL]; G.last_asleep=PET[P_ASLEEP];
   G.idle_cry=(u16)(3600+rnd(3600));
@@ -1677,7 +1708,7 @@ static void draw_outside_extras(void){
 }
 
 // ================================================================== DECOR (inside)
-static int decor_in(int slot){ return G.deco.slot[slot]!=0xFF; }
+static int decor_in(int slot){ return deco_get(slot)!=0xFF; }
 static void note_icon(int x,int y){ art(ART_NOTE,5,6,x,y,1,5); }
 static void draw_clock_hands(int cx,int cy){
   // map the 600-step day to hours: 0..480 = 6:00..22:00, 480..600 = 22:00..6:00
@@ -1694,13 +1725,20 @@ static void ellipse(int cx,int cy,int rx,int ry,int c){
   for(int dy=-ry; dy<=ry; dy++){ int w=0; int t=dy*dy*a; while((w+1)*(w+1)*b + t <= ab + a) w++; fill(cx-w,cy+dy,2*w+1,1,c); }
 }
 static void rrect(int x,int y,int w,int h,int c){ fill(x+2,y,w-4,1,c); fill(x+1,y+1,w-2,1,c); fill(x,y+2,w,h-4,c); fill(x+1,y+h-2,w-2,1,c); fill(x+2,y+h-1,w-4,1,c); }
+// v8.3: a piece's animation is written in the coordinates its art was first drawn at; DEC_XF maps them to where the
+// piece stands now (moved, and for the floor pieces drawn at 3/4 size)
+static int xfx(int e,int x){ const s16 *f=DEC_XF[e]; return f[2]+(x-f[0])*f[4]/4; }
+static int xfy(int e,int y){ const s16 *f=DEC_XF[e]; return f[3]+(y-f[1])*f[4]/4; }
+static void xfill(int e,int x,int y,int w,int h,int c){ int k=DEC_XF[e][4]; int W=w*k/4, H=h*k/4; fill(xfx(e,x),xfy(e,y),W<1?1:W,H<1?1:H,c); }
+static void xpset(int e,int x,int y,int c){ pset(xfx(e,x),xfy(e,y),c); }
 static void draw_decor(int anim){
-  int s0 = G.outside? 4 : 0, s1 = G.outside? 6 : 4;
-  for(int s=s0;s<s1;s++){
-    int it=G.deco.slot[s]; if(it==0xFF) continue;
+  for(int s=0;s<7;s++){
+    if(YARD_SLOT(s)!=G.outside) continue;
+    int it=deco_get(s); if(it==0xFF) continue;
+    int e=decor_entry(it);
     if(!anim){   // the still part of every piece is pre-drawn art; the switch below only animates
       decor_art(it);
-      if(it==IT_PORTRAIT){ G.cpose=POSE_IDLE+1; sprite(CRITTER_SPR(PET[P_STAGE]),134,42,1,0,99); G.cpose=0; G.pstage=PET[P_STAGE]; }
+      if(it==IT_PORTRAIT){ G.cpose=POSE_IDLE+1; sprite(CRITTER_SPR(PET[P_STAGE]),134+DEC_XF[e][2],42,1,0,99); G.cpose=0; G.pstage=PET[P_STAGE]; }
       continue;
     }
     switch(it){
@@ -1717,8 +1755,8 @@ static void draw_decor(int anim){
           break; }
         u32 q=G.sky_t>>2; int ph=(int)(q%28u); int fl=ph>=14; int fx= fl? 30-(ph-14) : 17+ph;
         int fy=103+(((G.sky_t>>4)&3)==1);
-        fill(fx,fy,5,3,C_ORANGE); pset(fl?fx+5:fx-1,fy,C_ORANGE); pset(fl?fx+5:fx-1,fy+2,C_ORANGE); pset(fl?fx:fx+4,fy,C_OUTLINE);
-        if(((G.sky_t>>4)&7)==0) pset(fx+2,fy-4,C_WHITE);
+        xfill(e,fx,fy,5,3,C_ORANGE); xpset(e,fl?fx+5:fx-1,fy,C_ORANGE); xpset(e,fl?fx+5:fx-1,fy+2,C_ORANGE); xpset(e,fl?fx:fx+4,fy,C_OUTLINE);
+        if(((G.sky_t>>4)&7)==0) xpset(e,fx+2,fy-4,C_WHITE);
         break; }
       case IT_PLANT: {
         if(anim) break;
@@ -1737,13 +1775,13 @@ static void draw_decor(int anim){
           fill(220,108,10,5,C_PALEYEL); disc(225,117,2,C_GOLD);
           for(int k=0;k<10;k++) pset(228+k/3,103-k,C_OUTLINE); fill(203,124,3,3,C_OUTLINE); fill(228,124,3,3,C_OUTLINE);
           break; }
-        pset(222+((G.sky_t>>5)&3),110,C_OUTLINE);
+        xpset(e,222+((G.sky_t>>5)&3),110,C_OUTLINE);
         if(!PET[P_ASLEEP] && !PET[P_LIGHTS]){ int k=(G.sky_t>>2)&31; note_icon(206+(k>>2),96-k); if(k>12) note_icon(222-((k-12)>>2),96-(k-12)); }
         break;
       case IT_CLOCK:
         if(!anim){ disc(146,48,11,C_OUTLINE); disc(146,48,10,C_WOOD3); disc(146,48,8,C_CREAM);
           pset(146,41,C_OUTLINE); pset(153,48,C_OUTLINE); pset(146,55,C_OUTLINE); pset(139,48,C_OUTLINE); break; }
-        draw_clock_hands(146,48); pset(146,48,C_OUTLINE);
+        draw_clock_hands(xfx(e,146),xfy(e,48)); xpset(e,146,48,C_OUTLINE);
         break;
       case IT_BOOKS: {
         if(anim) break;
@@ -1767,10 +1805,10 @@ static void draw_decor(int anim){
           break; }
         if(!PET[P_ASLEEP] && !PET[P_LIGHTS]){
           static const u8 tvc[4]={C_SKY,C_PINK,C_MINT,C_PALEYEL};
-          int ph=(int)(G.sky_t>>5)&3; fill(201,98,24,17,tvc[ph]);
-          int bx=201+(int)((G.sky_t>>1)%20u); fill(bx,108,4,4,C_ORANGE); fill(201,113,24,2,C_GREEN);
-          pset(203+((G.sky_t>>3)&15),101,C_WHITE);
-        } else fill(201,98,24,17,C_OUTLINE);
+          int ph=(int)(G.sky_t>>5)&3; xfill(e,201,98,24,17,tvc[ph]);
+          int bx=201+(int)((G.sky_t>>1)%20u); xfill(e,bx,108,4,4,C_ORANGE); xfill(e,201,113,24,2,C_GREEN);
+          xpset(e,203+((G.sky_t>>3)&15),101,C_WHITE);
+        } else xfill(e,201,98,24,17,C_OUTLINE);
         break;
       case IT_PORTRAIT:
         if(anim) break;
@@ -1847,12 +1885,12 @@ static void draw_decor(int anim){
           fill(214,113,10,9,C_OUTLINE); fill(215,114,8,7,C_SLATE); fill(218,116,2,3,C_GOLD);
           break; }
         if(!PET[P_ASLEEP] && !PET[P_LIGHTS]){
-          fill(209,85,20,16,C_ROYAL);
+          xfill(e,209,85,20,16,C_ROYAL);
           u32 t=G.sky_t; int bx=(int)(t%36u); if(bx>=18) bx=35-bx; int by=(int)((t*2/3)%26u); if(by>=13) by=25-by;
-          fill(209+bx,86+by,2,2,C_WHITE);
-          int px=bx-2; if(px<0) px=0; if(px>14) px=14; fill(209+px,99,6,1,C_MINT);
-          for(int i=0;i<5;i++) fill(211+i*4,87,3,2,(i&1)?C_PINK:C_GOLD);
-        } else fill(209,85,20,16,C_OUTLINE);
+          xfill(e,209+bx,86+by,2,2,C_WHITE);
+          int px=bx-2; if(px<0) px=0; if(px>14) px=14; xfill(e,209+px,99,6,1,C_MINT);
+          for(int i=0;i<5;i++) xfill(e,211+i*4,87,3,2,(i&1)?C_PINK:C_GOLD);
+        } else xfill(e,209,85,20,16,C_OUTLINE);
         break;
       case IT_FIREPLACE:
         if(!anim){
@@ -1865,7 +1903,7 @@ static void draw_decor(int anim){
         { static const s8 FLK[8]={0,2,3,1,4,2,0,3};   // v8.3: three small flames in the firebox on the back wall
           static const u8 FW[12]={0,1,1,1,2,2,2,2,2,2,2,1};   // half-width by depth from the tip: a slim teardrop
           static const u16 RC[9]={0,0,0,0,0,704,563,469,402};   // 11*256/(h-1): no divide per row
-          for(int i=0;i<3;i++){ int fx=192+i*4, h=6+(FLK[((G.sky_t>>2)+i*3)&7]>>1), sway=((G.sky_t>>3)+i)&1;
+          for(int i=0;i<3;i++){ int fx=192+DEC_XF[e][2]+i*4, h=6+(FLK[((G.sky_t>>2)+i*3)&7]>>1), sway=((G.sky_t>>3)+i)&1;
             for(int r=0;r<h;r++){ int k=(r*RC[h])>>8, w=FW[k>11?11:k], y=97-h+r, cx=fx+((r<h/3)? sway : 0);
               fill(cx-w,y,2*w+1,1,C_RED);
               if(w>=2 && r>1) fill(cx-w+1,y,2*w-1,1,C_ORANGE);
@@ -1877,7 +1915,7 @@ static void draw_decor(int anim){
           ellipse(146,47,12,16,C_OUTLINE); ellipse(146,47,11,15,C_GOLD); ellipse(146,47,9,13,C_OUTLINE); ellipse(146,47,8,12,C_GLASS);
           for(int k=0;k<6;k++){ pset(140+k,44-k,C_WHITE); pset(143+k,51-k,C_WHITE); pset(144+k,51-k,C_WHITE); }
           break; }
-        if(((G.sky_t>>4)&7)==0) art(ART_SPARK,5,5,148,37,1,5);
+        if(((G.sky_t>>4)&7)==0) art(ART_SPARK,5,5,xfx(e,148),xfy(e,37),1,5);
         break;
       case IT_GUITAR:
         if(anim) break;
@@ -1962,12 +2000,12 @@ static void draw_decor(int anim){
     }
   }
   if(anim && G.fx_t){
-    static const u8 FXX[N_SLOTS]={20,212,142,101,44,186}, FXY[N_SLOTS]={92,90,66,62,90,88};
-    int k=90-G.fx_t, s=G.fx_slot, x=FXX[s], y=FXY[s];
-    if(G.deco.slot[s]==IT_FIREPLACE){ x=196; y=62; }   // v8.3: it's on the back wall now, under the picture
-    else if(G.deco.slot[s]==IT_BED){ x=44; y=84; }      // v8.3: the bed is under the window now
-    if(YARD_SLOT(s) != G.outside) return;
-    int it=G.deco.slot[s];
+    static const u8 FXX[2]={44,186}, FXY[2]={90,88};   // the yard's two spots
+    int k=90-G.fx_t, s=G.fx_slot, it=deco_get(s), x, y;
+    if(YARD_SLOT(s) != G.outside || it==0xFF) return;
+    if(YARD_SLOT(s)){ x=FXX[s-4]; y=FXY[s-4]; }
+    else if(s==SLOT_TOY){ x=45; y=106; }                // v8.3: the toy box, at the bed's foot
+    else { const u8 *b=DEC_BOX[decor_entry(it)]; x=b[0]+b[2]/2; y=b[1]-2; }   // v8.3: just over the piece, wherever it stands
     if(it==IT_RADIO || it==IT_PIANO || it==IT_GUITAR) { note_icon(x-6+(k>>3),y-k/3); note_icon(x+8-(k>>3),y-8-k/3); }
     else if(it==IT_BED || it==IT_BOOKS || it==IT_PORTRAIT || it==IT_SWING || it==IT_BEANBAG || it==IT_FIREPLACE || it==IT_TRAMPOLINE) art(ART_HEART,7,6,x,y-k/3,1,7);
     else if(it==IT_FISHBOWL){ ring(x+4,y-k/3,2,C_WHITE); ring(x-4,y-6-k/4,1,C_WHITE); }
@@ -1992,17 +2030,19 @@ static void decor_boost(int it){   // v8: what using a piece does for its kind o
 }
 static void decor_tick(void){
   if(G.fx_t) G.fx_t--;
-  for(int s=0;s<N_SLOTS;s++) if(G.decor_cd[s]) G.decor_cd[s]--;
+  for(int s=0;s<N_SLOTS;s++) if(DCD(s)) DCD(s)--;
   if(SCENE!=1 || PET[P_ASLEEP] || PET[P_STAGE]==0 || PET[P_STAGE]==8 || MSG_TIMER || !G.room_cy) return;
   int cx=G.room_cx;
-  int s0 = G.outside? 4 : 0, s1 = G.outside? 6 : 4;
-  for(int s=s0;s<s1;s++){
-    int it=G.deco.slot[s]; if(it==0xFF || it==IT_CLOCK || G.decor_cd[s]) continue;
+  for(int s=0;s<N_SLOTS;s++){
+    if(YARD_SLOT(s)!=G.outside) continue;
+    int it=deco_get(s); if(it==0xFF || it==IT_CLOCK || DCD(s)) continue;
+    if(s==SLOT_TOY && deco_get(0)!=IT_BED) continue;   // (the toy box only shows at the bed's foot)
     if((it==IT_TV || it==IT_ARCADE) && PET[P_LIGHTS]) continue;
-    int near = (s==0||s==4)? cx<=34 : (s==1||s==5)? cx>=96 : s==2? (cx>=56 && cx<=100) : (cx>=24 && cx<=76);
+    // (v8.3: the window spot and the bed's foot on the left, the picture spot and the corner on the right)
+    int near = (s==0||s==4||s==SLOT_TOY)? cx<=34 : (s==1||s==5)? cx>=96 : s==6? cx>=120 : s==2? (cx>=48 && cx<=92) : (cx>=24 && cx<=76);
     if(!near || rnd(200)) continue;
-    G.fx_slot=(u8)s; G.fx_t=90; G.decor_cd[s]=(u16)fastdiv(9000);
-    if(it==IT_BOOKS || it==IT_PORTRAIT || it==IT_PIANO){ if(PET[P_BOND]<4) PET[P_BOND]++; G.decor_cd[s]=(u16)fastdiv(20000); }
+    G.fx_slot=(u8)s; G.fx_t=90; DCD(s)=(u16)fastdiv(9000);
+    if(it==IT_BOOKS || it==IT_PORTRAIT || it==IT_PIANO){ if(PET[P_BOND]<4) PET[P_BOND]++; DCD(s)=(u16)fastdiv(20000); }
     else if(it==IT_GARDEN){
       if(G.deco.garden_day==(u8)G.ext.day) continue;           // one apple a day
       G.deco.garden_day=(u8)G.ext.day; deco_save();
@@ -2025,7 +2065,7 @@ static void decor_tick(void){
 // ================================================================== SECRET FORMS
 // a teen grows up after two days. Good side: OAKHART (lots of time outside), DUNEROSE (plants around it),
 // FLUFFBUD (lots of games), else FRILLO. Less-care side: THORNHOG (sad a lot), SMOGWOOL (lived in a mess), else GUNKBILL.
-static int has_item(int it,int s0,int s1){ for(int s=s0;s<s1;s++) if(G.deco.slot[s]==it) return 1; return 0; }
+static int has_item(int it,int s0,int s1){ (void)s0; (void)s1; return deco_has(it); }   // (v8.3: each piece has one spot)
 // what a teen grows into: good care - the kind of care it got most, measured against a target for each
 // (OUTSIDE: about 7 minutes in the yard; PLANTS: 10 minutes with a plant inside and flowers or a garden outside;
 // PLAY: about 3 minigames or lots of play - v8.3: a third less, as growing up takes a third less time).
@@ -2388,13 +2428,13 @@ static void life_reset(int keep_stars, int bonus){
   G.ext.active_toy=0xFF; G.ext.last_game=0xFF; G.ext.prev_stage=PET[P_STAGE]; G.ext.coins=(u16)(20+bonus); G.ext.seen_tip=tips;
   ext_save();
   memset(&G.deco,0,sizeof(Deco));
-  for(int i=0;i<N_SLOTS;i++) G.deco.slot[i]=0xFF;
+  for(int i=0;i<N_SLOTS;i++) deco_set(i,0xFF);
   G.deco.plant_day=G.deco.garden_day=G.deco.pond_day=0xFF;
   new_unlock_seed();
   memset(&G.life,0,sizeof(Life)); G.life.music_off=mo; G.life.retired= keep_stars? ret : 0; memset(&G.care,0,sizeof(Care)); life_save();
   if(!keep_stars){ memset(&G.album,0,sizeof(Album)); album_save(); }
   G.outside=0; G.bg_state=0; G.sendoff_pending=0; G.shop_news=0; G.check_special=0;
-  for(int i=0;i<N_SLOTS;i++) G.decor_cd[i]=0;
+  for(int i=0;i<N_SLOTS;i++) DCD(i)=0;
   G.last_clock=PET_CLOCK;
 }
 // NEW EGG from the title screen: a clean slate, stars and album included
@@ -2905,11 +2945,11 @@ static const u8 UNLOCK_N[7]={0,4,8,13,18,23,27};   // how many a shop had opened
 // six of the 33 are left out of a critter's shop entirely (at most two of a kind), so no two critters' shops match
 static void left_out(u8 *ex){
   u32 s=(G.deco.seed*2654435761u)^0x5A17C0DEu; if(!s) s=1;
-  u8 grp[7]={0,0,0,0,0,0,0}; int n=0;
+  u8 grp[9]={0,0,0,0,0,0,0,0,0}; int n=0;   // (by spot; 8: the toys)
   for(int i=0;i<33;i++) ex[i]=0;
   while(n<6){
     s^=s<<13; s^=s>>17; s^=s<<5;
-    int i=(int)((s>>8)%33u), it=SHOP_POOL[i], g= IS_TOY(it)? 6 : DECOR_SLOT(it);
+    int i=(int)((s>>8)%33u), it=SHOP_POOL[i], g= IS_TOY(it)? 8 : DECOR_SLOT(it);
     if(ex[i] || grp[g]>=2) continue;
     ex[i]=1; grp[g]++; n++;
   }
@@ -3033,7 +3073,7 @@ static void shop_update(u16 pr, u16 keys){
     else {
       G.ext.coins=(u16)(G.ext.coins-I->price);
       if(IS_TOY(it)){ G.ext.toys|=(u8)(1<<TOYBIT(it)); if(G.ext.active_toy==0xFF) G.ext.active_toy=(u8)it; }
-      else if(IS_DECOR(it)){ G.deco.owned|=1u<<DECOBIT(it); if(it==IT_PLANT) G.deco.plant_day=(u8)G.ext.day; int s=DECOR_SLOT(it); if(G.deco.slot[s]==0xFF) G.deco.slot[s]=(u8)it; deco_save(); }
+      else if(IS_DECOR(it)){ G.deco.owned|=1u<<DECOBIT(it); if(it==IT_PLANT) G.deco.plant_day=(u8)G.ext.day; int s=DECOR_SLOT(it); if(deco_get(s)==0xFF && (s!=SLOT_TOY || deco_get(0)==IT_BED)) deco_set(s,it); deco_save(); }
       else G.ext.inv[it]++;
       found_set(it);
       ext_save(); shop_static(); G.bg_state=0;
@@ -3078,7 +3118,7 @@ static void apply_item(int it){
 }
 static const char *bag_status(int it){
   if(IS_TOY(it)) return G.ext.active_toy==it? "IN USE" : "TOY";
-  if(IS_DECOR(it)) return G.deco.slot[DECOR_SLOT(it)]==it? "PLACED" : "DECOR";
+  if(IS_DECOR(it)) return deco_has(it)? "PLACED" : "DECOR";
   return 0;
 }
 static void bag_update(u16 pr, u16 keys){
@@ -3099,9 +3139,12 @@ static void bag_update(u16 pr, u16 keys){
     }
     if(IS_DECOR(it)){
       int s=DECOR_SLOT(it); char *p;
-      if(G.deco.slot[s]==it){ G.deco.slot[s]=0xFF; p=scpy(G.sbuf2,"PUT AWAY THE "); scpy(p,I->name); }
-      else { G.deco.slot[s]=(u8)it;
-        p=scpy(G.sbuf2,"PLACED THE "); p=scpy(p,I->name); scpy(p, YARD_SLOT(s)&&!G.outside? " IN THE YARD!" : "!"); }
+      if(s==SLOT_TOY && deco_get(s)!=it && deco_get(0)!=IT_BED){ set_msg("IT GOES AT THE FOOT OF THE BED!"); sfx(0,SEQ_DENY); bs_leave(keys); return; }   // v8.3
+      if(deco_get(s)==it){ deco_set(s,0xFF); p=scpy(G.sbuf2,"PUT AWAY THE "); scpy(p,I->name);
+        if(s==0) deco_set(SLOT_TOY,0xFF); }   // (the toy box goes away with the bed)
+      else { if(s==0) deco_set(SLOT_TOY,0xFF);   // (a beanbag in the bed's place: the toy box goes back in the bag)
+        deco_set(s,it);
+        p=scpy(G.sbuf2,"PLACED THE "); p=scpy(p,I->name); scpy(p, YARD_SLOT(s)&&!G.outside? " IN THE YARD!" : s==SLOT_TOY? " BY THE BED!" : "!"); }
       ext_save(); deco_save(); G.bg_state=0; set_msg(G.sbuf2); sfx(0,SEQ_CONFIRM); bs_leave(keys); return;
     }
     const char *deny=0;
@@ -3139,7 +3182,7 @@ static void bag_draw(void){
   if(G.bag_top+5<G.bag_n) text("V",206,96,C_LILAC);
   int it=G.bag_list[G.cur];
   const char *d = IS_TOY(it)? (G.ext.active_toy==it? "A: PUT IT AWAY" : "A: TAKE IT TO THE YARD")
-                : IS_DECOR(it)? (G.deco.slot[DECOR_SLOT(it)]==it? "A: PUT IT AWAY" : YARD_SLOT(DECOR_SLOT(it))? "A: PLACE IT IN THE YARD" : "A: PLACE IT IN THE ROOM")
+                : IS_DECOR(it)? (deco_has(it)? "A: PUT IT AWAY" : YARD_SLOT(DECOR_SLOT(it))? "A: PLACE IT IN THE YARD" : "A: PLACE IT IN THE ROOM")
                 : ITEMS[it].desc;
   if(!IS_TOY(it) && !IS_DECOR(it)){ char *p=scpy(G.sbuf2,KIND_NAME[ITEM_KIND[it]]); p=scpy(p,": "); scpy(p,d); d=G.sbuf2; }   // v8: its kind of care
   textc(d,120,50+rows*12,C_DTEXT);
@@ -3209,7 +3252,7 @@ static const char *const GAME_SCORE[N_GAMES]={"STACK: ","SCORE: ","SCORE: ","SON
 static const u8 GAME_TUNE[N_GAMES]={T_MINI_CATCH,T_MINI_HOP,T_MINI_GUESS,T_MINI_STARS};
 #define GAME_FRAMES 600   // 10 seconds
 static void build_bg(int want);
-static int decor_has_portrait(void){ for(int i=0;i<4;i++) if(G.deco.slot[i]==IT_PORTRAIT) return 1; return 0; }
+static int decor_has_portrait(void){ return deco_has(IT_PORTRAIT); }
 // the PORTRAIT is part of the room background, so redraw it when the critter changes form
 static void portrait_check(void){ if(!G.outside && G.pstage!=PET[P_STAGE] && decor_has_portrait()) G.bg_state=0; }
 // ---- STARGAZER: four stars, one per D-pad direction, under a night sky (whatever the time)
@@ -4349,7 +4392,7 @@ static void build_bg(int want){
     garden_still();   // v8.1: the flowers first, so the decor (nearer the front) is drawn over them
     u8 o=G.outside; G.outside=1; draw_decor(0); G.outside=o; DRAW_TARGET=sv; }
   else { O_DMACOPY(YARD_BG, BGX_ROOM); G.bgx_yard=0; u16 *sv=DRAW_TARGET; DRAW_TARGET=(u16*)YARD_BG;   // same picture day and night: the palette darkens it
-    { int base=C_PIC; const u8 *q=PIC_PIX; for(int y=0;y<PIC_H;y++) for(int x=0;x<PIC_W;x++) pset(181+x,35+y,base+*q++); }   // the wall picture
+    { int base=C_PIC; const u8 *q=PIC_PIX; for(int y=0;y<PIC_H;y++) for(int x=0;x<PIC_W;x++) pset(169+x,35+y,base+*q++); }   // the wall picture (v8.3: 12 px left)
     G.st_baked=(u8)(stand_on()? stand_spot()+1 : 0);
     if(G.st_baked){ int h=STAND_N/2, a=(G.st_baked-1)*h; for(int i=a;i<a+h;i++) pset(STAND_PIX[i][0],STAND_PIX[i][1],STAND_PIX[i][2]); }   // v8.3: the jar's stand
     u8 o=G.outside; G.outside=0; draw_decor(0); G.outside=o;
@@ -4357,9 +4400,9 @@ static void build_bg(int want){
     // colours made darker; only while the lights are on (with them off the original dims the wall almost to black)
     G.fp_lit=(u8)!PET[P_LIGHTS];
     if(G.fp_lit){
-      if(G.deco.slot[DECOR_SLOT(IT_FIREPLACE)]==IT_FIREPLACE) shade_list(0);
-      if(G.deco.slot[DECOR_SLOT(IT_BED)]==IT_BED) shade_list(1);
-      if(G.st_baked) shade_list(1+G.st_baked); }
+      static const u8 FL[3]={0,1,6};   // the floor spots (each piece has its own shadow list, by its art entry)
+      for(int i=0;i<3;i++){ int it=deco_get(FL[i]); if(it!=0xFF) shade_list(decor_entry(it)); }
+      if(G.st_baked) shade_list(DEC_N-1+G.st_baked); }
     DRAW_TARGET=sv; }
   G.bg_state=(u8)want;
 }
@@ -4585,7 +4628,8 @@ static void icon_big(int it,int cx,int cy,int mono){   // an item icon at double
 }
 static const char *item_spot(int it){
   if(it<N_FOODS) return "FOOD - FROM THE BAG"; if(it<N_CONSUMABLE) return "CARE - FROM THE BAG"; if(IS_TOY(it)) return "YARD TOY";
-  switch(DECOR_SLOT(it)){ case 0: case 1: return "ROOM - FLOOR"; case 2: return "ROOM - WALL"; case 3: return "ROOM - CEILING"; } return "YARD DECOR"; }
+  switch(DECOR_SLOT(it)){ case 0: return "ROOM - BY THE WINDOW"; case 1: return "ROOM - BY THE PICTURE"; case 2: return "ROOM - WALL";
+    case 3: return "ROOM - CEILING"; case 6: return "ROOM - THE CORNER"; case 7: return "ROOM - FOOT OF THE BED"; } return "YARD DECOR"; }
 static void jr_items(void){
   char b[40]; char *p=scpy(b,"FOUND "); p=sint(p,found_count()); p=scpy(p,"/"); sint(p,IT_COUNT);
   jr_header(b,"LEFT/RIGHT: TURN   L/R: TAB");
@@ -4962,7 +5006,7 @@ static void fly_morning(void){ if(G.fly_n && G.fly_night==G.ext.day){ G.fly_rel=
 // nothing stands on the left, else just right of what does. At dawn it lifts off, floats over to the sill (LANT_X/Y)
 // for the release, and afterwards floats back, empty, and stays there through the day.
 static int stand_on(void){ return fly_found()!=0 || G.fly_n; }
-static int stand_spot(void){ return G.deco.slot[0]!=0xFF; }
+static int stand_spot(void){ return deco_get(0)!=0xFF; }
 #define JAR_UP 16                          // frames to lift off the stand
 #define JAR_T  64                          // frames for the whole trip (lift, then an arc to the sill)
 static void jar_at(int f,int *x,int *y){   // where it is f frames into its trip (0 = on the stand)
