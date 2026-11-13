@@ -41,7 +41,7 @@ The eight icons sit along the top and bottom of the screen. Move between them wi
 | MEDS | Cure it when it is sick. Sometimes it needs a second dose. Medicine when it isn't sick only makes it pull a yuck face. |
 | CLEAN | Wash away the mess, in the room or in the yard (each keeps its own). A mess soon makes it sick, though a mess out in the yard can't while it sleeps. |
 | STATUS | Open its status card (see below). |
-| PET | Answer it when it calls you. |
+| PET | Answer it when it calls you: it feels loved, and happy +1. Petting it the rest of the time just makes it purr. |
 | ! | Lights up when it needs something, and it cries. Answer it soon. |
 
 ## The status card
@@ -49,7 +49,6 @@ The eight icons sit along the top and bottom of the screen. Move between them wi
 STATUS shows how your critter is doing:
 
 - **Hunger and happiness:** up to four hearts each. Keep both from running empty.
-- **Bond:** how close it feels to you, up to four hearts. Petting it when it calls, gifts, bedtime stories and great minigame rounds all raise it.
 - **Age and weight:** its age in years, and its weight in pounds (never under 5 LB as a baby, 10 as a child, 20 as a teen and 30 as a grown-up). An overweight critter is not well cared for.
 - **The care corner** (bottom right):
   - The **heart line** shows what it gets most of: OUTSIDE, PLANTS, PLAY, or BALANCED when it's a bit of everything. This decides what a well-cared-for critter grows into.
@@ -74,7 +73,7 @@ Everything you buy, and every minigame, helps one of five kinds of care. The sho
 | CLEAN | Baths and a fresh room. Clean decor makes a mess slower to make it sick. |
 | REST | Comfort and quiet. Rest decor heals it a little. |
 | OUTSIDE | Time in the yard and around plants. It counts toward an Oakhart or a Dunerose. |
-| DECOR | Just to look at (the portrait also gives bond). |
+| DECOR | Just to look at. |
 
 ## Growing up
 
@@ -126,7 +125,7 @@ At night, choose **STORY** from the SELECT menu (from the baby stage on). There 
 - **Why the Moon Changes:** the moon, its phases and the moonflowers.
 - **The Faint Stars:** sad goodbyes, and where wishing stars come from.
 
-A or RIGHT turns the page, LEFT goes back, and B closes the book. Stories you have read get a small star in the list. **There is one story a night**, and it gives **+1 bond** when your critter wakes up. After that, STORY is greyed out until the next night.
+A or RIGHT turns the page, LEFT goes back, and B closes the book. Stories you have read get a small star in the list. **There is one story a night**. After that, STORY is greyed out until the next night.
 
 ## The moonflower garden
 
@@ -206,7 +205,7 @@ You can hold up to 9,999 coins.
   - **The ceiling**: the mobile, the lantern, the disco ball or the plane.
   - **The yard** has two spots (by the tree and by the house).
 
-Now and then, as your critter wanders past a piece of decor, it uses it and you see what it's doing ("DANCES TO THE MUSIC!"). Using decor doesn't make it happier; it helps the piece's kind of care instead: play pieces count as play, outside pieces as time with plants, rest pieces heal it a little, clean pieces keep a mess from making it sick so soon, and the pond gives hunger +1. A few special pieces give bond, and some are just to look at (DECOR). The journal's ITEMS tab gets a page for each item the first time you buy it, and keeps it forever.
+Now and then, as your critter wanders past a piece of decor, it uses it and you see what it's doing ("DANCES TO THE MUSIC!"). Using decor doesn't make it happier; it helps the piece's kind of care instead: play pieces count as play, outside pieces as time with plants, rest pieces heal it a little, clean pieces keep a mess from making it sick so soon, and the pond gives hunger +1. Some are just to look at (DECOR). The journal's ITEMS tab gets a page for each item the first time you buy it, and keeps it forever.
 
 ## Shop guide
 
@@ -228,14 +227,14 @@ Now and then, as your critter wanders past a piece of decor, it uses it and you 
 
 | Item | Coins | What it does |
 |---|---|---|
-| Gift | 45 | Happy +1, bond +1. |
+| Gift | 45 | Happy +1, and a surprise inside: a garden seed (half the time), 10–20 coins, a treat for the bag, or now and then a decor piece you don't own yet. |
 | Ball (yard toy) | 60 | It kicks the ball around; every kick counts as play. Every 4 plays: happy +1. |
 | Bubbles (yard toy) | 45 | Bubbles drift up to chase; every pop counts as play. |
 | Frisbee (yard toy) | 75 | A catch counts as double play. |
 | Radio | 110 | Dancing counts as play. |
 | Toybox | 90 | Playing with its toys counts as play. |
 | TV | 160 | Cartoons count as play. Only with the lights on. |
-| Piano | 170 | Playing together: bond +1, counts as play. |
+| Piano | 170 | Music to play: counts as play. |
 | Arcade | 180 | Retro games count as play. Only with the lights on. |
 | Guitar | 120 | Strumming counts as play. |
 | Disco ball (ceiling) | 140 | Dancing counts as play. |
@@ -260,7 +259,7 @@ Now and then, as your critter wanders past a piece of decor, it uses it and you 
 | Vitamin | 40 | Cures sickness, then keeps it from getting sick for the rest of the day. |
 | Bed | 120 | Bouncing heals it a little. It wakes up happy +1 every day. |
 | Fishbowl | 150 | Watching the fish heals it a little. |
-| Bookshelf | 130 | Reading together: bond +1, heals it a little. |
+| Bookshelf | 130 | A shelf of books: reading heals it a little. |
 | Beanbag | 85 | Flopping on it heals it a little. |
 | Fireplace | 160 | A warm fire heals it a little. |
 | Lantern (ceiling) | 70 | A cozy glow heals it a little. |
@@ -279,7 +278,7 @@ Now and then, as your critter wanders past a piece of decor, it uses it and you 
 
 | Item | Coins | What it does |
 |---|---|---|
-| Portrait | 100 | Its own picture: admiring it gives bond +1. |
+| Portrait | 100 | Its own picture, to admire. Just to look at. |
 | Clock | 80 | Shows the time of day. |
 | Mobile (ceiling) | 80 | Stars that spin. |
 | Plane (ceiling) | 95 | A little plane on a string. |
@@ -310,7 +309,7 @@ Choose **PLAY**, pick a game with UP and DOWN, and press A. Every round counts a
 |---|---|---|---|---|
 | BETTER LUCK | 0–3 | 0–2 | 0–1 | Coins only |
 | NICE! | 4–10 | 3–8 | 2–3 | Happy +1, plus the game's boost |
-| AMAZING! | 11–13 | 9–11 | 4 | Happy +2, the game's boost, and bond +1 |
+| AMAZING! | 11–13 | 9–11 | 4 | Happy +2, the game's boost, and 5 bonus coins |
 | PERFECT! | 14 | 12 | 5 | The same as AMAZING!, and a perfect round |
 
 | Game | Its boost (NICE! or better) |
@@ -375,7 +374,7 @@ The journal keeps a record of every critter and is never cleared. Open it from t
 
 **I can't find the last fireflies.** Check the FIREFLIES tab: the rare ones each have a hint. Uncommon ones take turns, so try again on other nights.
 
-**Why doesn't my decor make it happy any more?** Decor helps its kind of care instead: play, plant time, rest, cleanliness, food or bond. Happiness comes from snacks and treats, gifts, yard toys, fresh air, minigames and a bed to wake up in.
+**Why doesn't my decor make it happy any more?** Decor helps its kind of care instead: play, plant time, rest, cleanliness or food. Happiness comes from snacks and treats, gifts, yard toys, fresh air, minigames and a bed to wake up in.
 
 ## Riddle answers
 

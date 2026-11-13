@@ -381,8 +381,8 @@ def t_games():
     sc = BOOT + DAY + start(G_HOP) + [f'peek {g("ext", "e_coins"):08x} 2', 'auto 900', f'peek {g("phase"):08x} 1', f'peek {g("score"):08x} 4',
           f'peek {g("rating"):08x} 1', 'press A', 'wait 10', f'peek {g("ext", "e_coins"):08x} 2']
     v = pk(run(ROM, sc, copy_save('adult'))); c0, c1 = struct.unpack('<H', v[0][1])[0], struct.unpack('<H', v[4][1])[0]
-    check('games: HOP HOP - jumping every hurdle and catching every berry is a perfect 12 (PERFECT!), +15 coins',
-          v[1][1][0] == PH_RESULT and u32(v[2][1]) == 12 and v[3][1][0] == 3 and c1 - c0 == 15, f'{v[1:4]} coins {c0}->{c1}')
+    check('games: HOP HOP - jumping every hurdle and catching every berry is a perfect 12 (PERFECT!), +15 coins and +5 bonus',
+          v[1][1][0] == PH_RESULT and u32(v[2][1]) == 12 and v[3][1][0] == 3 and c1 - c0 == 20, f'{v[1:4]} coins {c0}->{c1}')
     # v8.1: doing nothing in HOP HOP scores 0 (a rock that touches it while it flashes is a miss) and pays nothing
     sc = BOOT + DAY + start(G_HOP) + [f'peek {g("ext", "e_coins"):08x} 2', 'wait 900', f'peek {g("score"):08x} 4', f'peek {g("rating"):08x} 1', 'press A', 'wait 10', f'peek {g("ext", "e_coins"):08x} 2']
     v = pk(run(ROM, sc, copy_save('adult'))); c0, c1 = struct.unpack('<H', v[0][1])[0], struct.unpack('<H', v[3][1])[0]
@@ -436,11 +436,7 @@ def t_fixes():
     im = Image.open(shot).convert('RGB')
     ink = sum(1 for y in range(34, 52) for x in range(14, 110) if sum(im.getpixel((x, y))) < 300)
     check('fixes: v8.3: a new game\'s egg shows no name on its status card', ink == 0, f'ink {ink}')
-    # v8.3: petting's cooldown is set where the original sets it (90 one-second ticks) and counts down every tick
-    sc = BOOT + DAY + [p8(PET + 7, 1), *p16(PET + 0x40, 0)] + ['press RIGHT', 'wait 6'] * 6 + ['press A'] + \
-         [x for _ in range(8) for x in ('wait 15', f'peek {PET + 0x40:08x} 2')] + ['wait 2700', f'peek {PET + 0x40:08x} 2', 'wait 2820', f'peek {PET + 0x40:08x} 2']
-    cd = [int.from_bytes(x[1], 'little') for x in peeks(run(ROM, sc, copy_save('adult')))]
-    check('fixes: v8.3: petting rests 90 s (the cooldown starts at 90, counts a second a tick)', max(cd[:8]) == 90 and 42 <= cd[8] <= 47 and cd[9] == 0, str(cd))
+    # (v8.3: plain petting no longer raises happiness, so it no longer starts its 90 s rest: see the yard section)
     # v8.3: after a SNACK (or a MEAL) the feed menu opens again on the same choice; B closes it
     sc = BOOT + DAY + [p8(PET + 6, 1), p8(PET + 7, 1), 'press A', 'wait 10', 'press DOWN', 'wait 6', 'press A', 'wait 10', 'waitscene 2', 'wait 10', 'scene', 'peek 030002d4 4', 'press B', 'wait 10', 'scene']
     out = run(ROM, sc, copy_save('adult')); v = [x[1] for x in peeks(out)]
@@ -608,7 +604,7 @@ def t_b1():
     check('wish: no wishing stars in the daytime', int.from_bytes(v[0][1], 'little') == 0, '')
 
 def t_stories():
-    """v8.1: bedtime stories from the SELECT menu at night; the first each night gives +1 bond in the morning."""
+    """v8.1: bedtime stories from the SELECT menu at night, one a night (v8.3: they no longer give bond)."""
     SP = g('more', 'm_spare'); ST = g('more', 'm_stories'); MODE = g('mode')
     # (v8.3: the menu is OUTSIDE/GARDEN, BAG, SHOP, STORY, JOURNAL, and STORY is only there at night)
     open_story = ['press SELECT', 'wait 6', 'press UP', 'wait 4', 'press UP', 'wait 4', 'press A', 'wait 20']
@@ -626,7 +622,7 @@ def t_stories():
     sp2 = struct.unpack('<3H', v[6][1])
     check('stories: only one story a night (the second stays shut)', v[5][1][0] == 1 and sp2[2] == 1, str(v[5:7]))
     sp3 = struct.unpack('<3H', v[8][1])
-    check('stories: on waking up, +1 bond (once)', v[7][1][0] == 2 and sp3[2] == 0, str(v[7:9]))
+    check('stories: on waking up, no bond any more (v8.3: bond is gone); the mark is cleared', v[7][1][0] == 1 and sp3[2] == 0, str(v[7:9]))
 
 def t_garden():
     """v8.1 B2: the moonflower garden - plant, water, grow, bloom, fade; visitors; the journal keeps what was found."""
@@ -981,6 +977,23 @@ def t_yard():
          f'peek {M1:08x} 1', f'peek {K:08x} 1'] + bag + ['press A', 'wait 10', f'peek {M1:08x} 1', f'peek {K:08x} 1']
     v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('yard: the toy box only goes at the bed\'s foot, and goes away with the bed', v[0] & 8 == 0 and v[1] & 8 and v[2] == 14 and v[3] & 8 == 0 and v[4] == 0xFF, str(v))
+    # v8.3: bond is gone. Petting only purrs; answering a call gives happy +1 ("IT FEELS LOVED!"), whatever the rest
+    nav = ['press DOWN', 'wait 4', 'press RIGHT', 'wait 4', 'press RIGHT', 'wait 4']
+    def pet(call):
+        sc = BOOT + DAY + [p8(PET + 7, 2), p8(PET + 8, 1), *p16(PET + 0x40, 0), 'wait 2'] + nav + ['wait 90', p8(PET + 14, call), f'peek {PET + 7:08x} 1', 'press A', 'wait 120',
+             f'peek {PET + 7:08x} 2', f'peek {PET + 14:08x} 1', 'peek 030002a4 20']
+        return [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    a_, b_ = pet(0), pet(1)
+    check('yard: petting only purrs; answering a call gives happy +1 (no bond)', a_[1][0] <= a_[0][0] and a_[1][1] == 1 and a_[3].startswith(b'PURR') and
+          b_[1][0] == b_[0][0] + 1 and b_[1][1] == 1 and b_[2][0] == 0 and b_[3].startswith(b'IT FEELS LOVED'), f'{[list(x) for x in a_[:2]]} {a_[3][:16]} {[list(x) for x in b_[:3]]} {b_[3][:16]}')
+    # the gift: happy +1 and a surprise inside (a seed, coins, a treat or a decor piece)
+    INV = g('ext', 'e_inv'); GIFT = 10; SEEDS = g('gdn', 'g_seeds'); CO = g('ext', 'e_coins')
+    sc = BOOT + DAY + [p8(INV + i, 0) for i in range(11)] + [p8(INV + GIFT, 1), p8(PET + 7, 1), p8(SEEDS, 0), *p16(CO, 0), 'wait 2'] + \
+         ['press SELECT', 'wait 6', 'press DOWN', 'wait 4', 'press A', 'wait 10', f'peek {PET + 7:08x} 1', 'press A', 'wait 4', f'peek {PET + 7:08x} 1', 'peek 030002a4 30',
+          f'peek {SEEDS:08x} 1', f'peek {CO:08x} 2', f'peek {INV:08x} 11', f'peek {g("deco", "d_owned"):08x} 4']
+    v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    got = v[3][0] > 0 or struct.unpack('<H', v[4])[0] > 0 or sum(v[5][:10]) > 0
+    check('yard: a gift gives happy +1 and a surprise inside', v[1][0] == min(4, v[0][0] + 1) and b'INSIDE' in v[2] and (got or b' A ' in v[2]), f'{v[0][0]}->{v[1][0]} {v[2].split(bytes(1))[0]}')
     # v8.2c: running away is a six-shot scene: its room at dawn, a look back from the yard, the meadow path, the
     # stream where wild critters take it in, the empty place in the night sky, the end card
     md0 = int(re.search(r'MD_PAL\[MD_N\]=\{(\d+)', open(f'{CK}/meadow.h').read()).group(1))

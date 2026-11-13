@@ -53,6 +53,7 @@ typedef unsigned int u32; typedef int s32;
 #define P_ASLEEP 12
 #define P_LIGHTS 13
 #define P_CALL 14
+#define P_MISTAKES_EARLY 0x0F
 #define P_FAST 0x12
 #define P_SOUNDON 0x13
 #define P_BEST 0x14
@@ -351,7 +352,7 @@ static const Item ITEMS[IT_COUNT] = {
   {"COOKIE",   "HAPPY +1",              6, 0,1,0,0, ART_COOKIE},
   {"VITAMIN",  "CURES + NO SICKNESS TODAY",40, 0,0,0,0, ART_VITAMIN},
   {"SOAP",     "BUBBLE BATH: ALL CLEAN",15, 0,0,0,0, ART_SOAP},
-  {"GIFT",     "HAPPY +1  BOND +1",    45, 0,1,0,1, ART_GIFT},
+  {"GIFT",     "HAPPY +1 AND A SURPRISE",45, 0,1,0,0, ART_GIFT},
   {"BALL",     "YARD TOY: KICK IT AROUND",60, 0,0,0,0, ART_BALL},
   {"KITE",     "YARD TOY: MORE FRESH AIR",90, 0,0,0,0, ART_KITE},
   {"BUBBLES",  "YARD TOY: BUBBLES TO CHASE",45,0,0,0,0, ART_BUBBLES},
@@ -360,10 +361,10 @@ static const Item ITEMS[IT_COUNT] = {
   {"PLANT",    "DECOR: GROWS EVERY DAY",  70,0,0,0,0, ART_PLANT},
   {"RADIO",    "DECOR: MUSIC TO DANCE TO",110,0,0,0,0, ART_RADIO},
   {"CLOCK",    "DECOR: SHOWS THE TIME",   80,0,0,0,0, ART_CLOCK},
-  {"BOOKSHELF","DECOR: READING = BOND",  130,0,0,0,0, ART_BOOKS},
+  {"BOOKSHELF","DECOR: A SHELF OF BOOKS",  130,0,0,0,0, ART_BOOKS},
   {"TOYBOX",   "DECOR: TOYS TO PLAY WITH", 90,0,0,0,0, ART_TOYBOX},
   {"TV",       "DECOR: CARTOONS TO WATCH",160,0,0,0,0, ART_TV},
-  {"PORTRAIT", "DECOR: ITS PICTURE! BOND",100,0,0,0,0, ART_PORTRAIT},
+  {"PORTRAIT", "DECOR: ITS OWN PICTURE!", 100,0,0,0,0, ART_PORTRAIT},
   {"MOBILE",   "CEILING: SPINNING STARS",  80,0,0,0,0, ART_MOBILE},
   {"LANTERN",  "CEILING: A COZY GLOW",     70,0,0,0,0, ART_LANTERN},
   {"SWING",    "YARD: A SWING ON THE TREE",140,0,0,0,0, ART_SWING},
@@ -374,7 +375,7 @@ static const Item ITEMS[IT_COUNT] = {
   {"SPRINKLER","YARD TOY: SPLASH AND PLAY",110,0,0,0,0, ART_SPRINKLER},
   {"PINWHEEL", "YARD TOY: MORE YARD COINS", 65,0,0,0,0, ART_PINWHEEL},
   {"BEANBAG",  "DECOR: A SQUISHY SEAT",     85,0,0,0,0, ART_BEANBAG},
-  {"PIANO",    "DECOR: PLAYING = BOND",    170,0,0,0,0, ART_PIANO},
+  {"PIANO",    "DECOR: MUSIC TO PLAY",     170,0,0,0,0, ART_PIANO},
   {"ARCADE",   "DECOR: RETRO VIDEO GAMES", 180,0,0,0,0, ART_ARCADE},
   {"FIREPLACE","DECOR: A WARM, COZY FIRE", 160,0,0,0,0, ART_FIREPLACE},
   {"MIRROR",   "DECOR: MAKE FUNNY FACES",   90,0,0,0,0, ART_MIRROR},
@@ -429,7 +430,7 @@ static const char *const COL_TEXT[IT_COUNT]={
   "A CRUNCHY TREAT.|HAPPY +1.|NO WEIGHT GAINED.",
   "CURES SICKNESS, THEN|KEEPS IT FROM GETTING|SICK FOR THE REST OF|THE DAY.",
   "A BUBBLE BATH.|CLEANS UP ANY MESS.",
-  "A WRAPPED SURPRISE.|HAPPY +1, BOND +1.",
+  "A WRAPPED SURPRISE.|HAPPY +1, AND INSIDE:|A SEED, COINS, A|TREAT OR SOMETIMES|A DECOR PIECE.",
   "TAKE IT TO THE YARD.|IT KICKS THE BALL|AROUND. EVERY KICK|COUNTS AS PLAY.",
   "TAKE IT TO THE YARD.|FRESH AIR MAKES IT|HAPPY MORE OFTEN|WHILE IT FLIES.",
   "TAKE IT TO THE YARD.|BUBBLES DRIFT UP TO|CHASE. EVERY POP|COUNTS AS PLAY.",
@@ -438,10 +439,10 @@ static const char *const COL_TEXT[IT_COUNT]={
   "A LEAFY POT PLANT.|IT GROWS EACH DAY.|SNIFFING IT COUNTS|AS TIME WITH PLANTS.",
   "MUSIC TO DANCE TO.|DANCING COUNTS AS|PLAY.",
   "SHOWS THE TIME OF|DAY. IT'S JUST TO|LOOK AT.",
-  "READING TOGETHER:|BOND +1, HEALS IT A|LITTLE. IT READS|LESS OFTEN THAN IT|PLAYS.",
+  "A SHELF OF BOOKS.|READING HEALS IT A|LITTLE. IT READS|LESS OFTEN THAN IT|PLAYS.",
   "A BOX OF TOYS.|PLAYING WITH THEM|COUNTS AS PLAY.",
   "CARTOONS TO WATCH.|COUNTS AS PLAY, ONLY|WHILE THE LIGHTS|ARE ON.",
-  "ITS OWN PICTURE!|ADMIRING IT:|BOND +1.",
+  "ITS OWN PICTURE!|IT LIKES TO ADMIRE|IT. JUST TO LOOK AT.",
   "STARS THAT SPIN.|JUST LOVELY TO|WATCH.",
   "A COZY GLOW.|IT HEALS IT A|LITTLE.",
   "A SWING ON THE TREE.|SWINGING COUNTS AS|PLAY.",
@@ -452,7 +453,7 @@ static const char *const COL_TEXT[IT_COUNT]={
   "TAKE IT TO THE YARD.|RUNNING THROUGH THE|SPRAY COUNTS AS PLAY|AND KEEPS IT CLEAN.",
   "TAKE IT TO THE YARD.|COINS TURN UP IN THE|GRASS MORE OFTEN, UP|TO 4 A DAY.",
   "A SQUISHY SEAT.|FLOPPING ON IT HEALS|IT A LITTLE.",
-  "PLAYING TOGETHER:|BOND +1, COUNTS AS|PLAY.",
+  "A PIANO TO PLAY.|PLAYING IT COUNTS|AS PLAY.",
   "RETRO VIDEO GAMES.|COUNTS AS PLAY, ONLY|WHILE THE LIGHTS|ARE ON.",
   "A WARM FIRE.|IT HEALS IT A|LITTLE.",
   "FUNNY FACES! WHILE|IT PLAYS, A MESS|TAKES LONGER TO|MAKE IT SICK.",
@@ -2042,7 +2043,7 @@ static void decor_tick(void){
     int near = (s==0||s==4||s==SLOT_TOY)? cx<=34 : (s==1||s==5)? cx>=96 : s==6? cx>=120 : s==2? (cx>=48 && cx<=92) : (cx>=24 && cx<=76);
     if(!near || rnd(200)) continue;
     G.fx_slot=(u8)s; G.fx_t=90; DCD(s)=(u16)fastdiv(9000);
-    if(it==IT_BOOKS || it==IT_PORTRAIT || it==IT_PIANO){ if(PET[P_BOND]<4) PET[P_BOND]++; DCD(s)=(u16)fastdiv(20000); }
+    if(it==IT_BOOKS || it==IT_PORTRAIT || it==IT_PIANO) DCD(s)=(u16)fastdiv(20000);   // (v8.3: no bond any more; they just take longer to come back to)
     else if(it==IT_GARDEN){
       if(G.deco.garden_day==(u8)G.ext.day) continue;           // one apple a day
       G.deco.garden_day=(u8)G.ext.day; deco_save();
@@ -2127,7 +2128,7 @@ static void check_special(void){
   int f=0;
   if(G.dex.phase==PH_OLD){        // a grown-up from before v7 keeps the old rules
     if(PET[P_WEIGHT]>=45) f=SF_CHONKLE;
-    else if(PET[P_BOND]>=4 && PET[P_HAPPY]>=4 && PET[P_HUNGER]>=3) f=SF_GLIMMER;
+    else if(PET[P_MISTAKES_EARLY]==0 && PET[P_HAPPY]>=4 && PET[P_HUNGER]>=3) f=SF_GLIMMER;   // (v8.3: was bond 4)
     else if(G.ext.stars>=6) f=SF_ZIPPIT;
     else if(G.ext.yard_mins>=15) f=SF_SUNPUFF;
     else if(decor_in(0) && decor_in(1) && decor_in(2) && decor_in(3) && decor_in(6)) f=SF_NESTLE;
@@ -2200,7 +2201,7 @@ static void life_watch(void){
   if(call && !G.last_call && !sl) G.cry_delay=20;
   if(G.last_asleep && !sl && G.deco.slot[0]==IT_BED){ if(PET[P_HAPPY]<4) PET[P_HAPPY]++; set_msg_name(" SLEPT GREAT!"); G.cry_delay=30; }
   if(G.last_asleep && !sl) fly_morning();   // v8.1: last night's fireflies fly home
-  if(G.last_asleep && !sl && G.more.spare[2]){ G.more.spare[2]=0; if(PET[P_BOND]<4) PET[P_BOND]++; save_all();   // v8.1: last night's story
+  if(G.last_asleep && !sl && G.more.spare[2]){ G.more.spare[2]=0; save_all();   // (v8.3: the story's bond is gone)   // v8.1: last night's story
     set_msg_name(" DREAMT OF ITS STORY!"); G.cry_delay=30; }
   G.last_happy=PET[P_HAPPY]; G.last_call=call; G.last_asleep=sl;
   if(G.cry_delay && --G.cry_delay==0 && !PET[P_ASLEEP]) cry();
@@ -2229,7 +2230,7 @@ static void life_watch(void){
 #define GONE_T      (*(volatile u32*)0x030002CC)
 #define SEQ_ALERT   ((const void*)0x0800FBE0u)
 #define SEQ_GONE    ((const void*)0x0800FBF8u)
-#define P_MISTAKES  0x0F
+#define P_MISTAKES  0x0F   // (also defined earlier, for the old-rule secrets)
 #define P_MISTAKES2 0x10
 #define P_MEDS      0x11
 // record layout (u16 unless noted): 0x16 health, 0x18 days, 0x1C ticks (u32), 0x20 ticks in this stage (u32),
@@ -2264,7 +2265,7 @@ static void sim_grow(u8 st){
   else if(st>=3 && st<=7){
     if(G.dex.phase==PH_TEEN) teen_grow_up();                 // teen -> grown-up after two days
     else if(G.dex.phase==PH_OLD && (st==3 || st==4) && (t>>2)>=225){   // pre-v7 grown-ups keep the old rules
-      if(st==3) evolve_to(PET[P_BOND]<=2? 6 : PET[P_MISTAKES]<2? 5 : 6);
+      if(st==3) evolve_to(PET[P_MISTAKES]<2? 5 : 6);   // (v8.3: bond no longer counts)
       else evolve_to(PET[P_MISTAKES]<2? 6 : 7);
     }
   }
@@ -3113,13 +3114,29 @@ static void apply_item(int it){
   const Item *I=&ITEMS[it];
   PET[P_HUNGER]=(u8)clampi(PET[P_HUNGER]+I->hunger,0,4);
   PET[P_HAPPY]=(u8)clampi(PET[P_HAPPY]+I->happy,0,4);
-  PET[P_BOND]=(u8)clampi(PET[P_BOND]+I->bond,0,4);
   PET[P_WEIGHT]=(u8)clampi(PET[P_WEIGHT]+I->weight,min_weight(),99);
 }
 static const char *bag_status(int it){
   if(IS_TOY(it)) return G.ext.active_toy==it? "IN USE" : "TOY";
   if(IS_DECOR(it)) return deco_has(it)? "PLACED" : "DECOR";
   return 0;
+}
+// v8.3: a gift (happy +1) has something inside: a garden seed (1 in 2), 10-20 coins (1 in 4), a treat for the bag
+// (1 in 5) or, 1 in 20, a decor piece not owned yet (coins when every one is owned)
+static void gift_surprise(void){
+  int r=rnd(100); char *p=scpy(G.sbuf2," FOUND ");
+  if(r<50){ if(G.gdn.seeds<9) G.gdn.seeds++; scpy(p,"A SEED INSIDE!"); }
+  else if(r<95 && r>=75){ static const u8 TR[3]={IT_CAKE,IT_CANDY,IT_COOKIE}; int t=TR[rnd(3)];
+    if(G.ext.inv[t]<9) G.ext.inv[t]++; p=scpy(p,"A "); p=scpy(p,ITEMS[t].name); scpy(p," INSIDE!"); }
+  else {
+    int it=-1;
+    if(r>=95){ int n=0; for(int i=6;i<33;i++){ int d=SHOP_POOL[i]; if(!owned(d)) n++; }
+      if(n){ int k=rnd(n); for(int i=6;i<33;i++){ int d=SHOP_POOL[i]; if(!owned(d) && !k--){ it=d; break; } } } }
+    if(it>=0){ G.deco.owned|=1u<<DECOBIT(it); if(it==IT_PLANT) G.deco.plant_day=(u8)G.ext.day; found_set(it);
+      int s=DECOR_SLOT(it); if(deco_get(s)==0xFF && (s!=SLOT_TOY || deco_get(0)==IT_BED)) deco_set(s,it); G.bg_state=0;
+      p=scpy(p,"A "); p=scpy(p,ITEMS[it].name); scpy(p," INSIDE!"); }
+    else { int c=10+rnd(11); G.ext.coins=(u16)(G.ext.coins+c>9999? 9999 : G.ext.coins+c); p=sint(p,c); scpy(p," COINS INSIDE!"); } }
+  ext_save(); deco_save(); set_msg_name(G.sbuf2);
 }
 static void bag_update(u16 pr, u16 keys){
   G.t++;
@@ -3159,7 +3176,7 @@ static void bag_update(u16 pr, u16 keys){
     if(it==IT_VITAMIN){ int was=PET[P_SICK]; PET[P_SICK]=0; G.deco.vit_day=(u8)(G.ext.day+1); deco_save();
       set_msg(was? "ALL BETTER - AND PROTECTED TODAY!" : "PROTECTED FROM SICKNESS TODAY!"); sfx(1,SEQ_HAPPY); }
     else if(it==IT_SOAP){ MESS_HERE=0; G.poop_hold=0; set_msg_name(" LOVES ITS BUBBLE BATH!"); sfx(1,SEQ_HAPPY); }   // (v8.1: just clean)
-    else { apply_item(it); set_msg_name(" LOVES THE GIFT!"); sfx(0,SEQ_FANFARE); }
+    else { apply_item(it); gift_surprise(); sfx(0,SEQ_FANFARE); }
     bs_leave(keys);
   }
 }
@@ -3342,7 +3359,7 @@ static void mini_apply(u16 keys){
   int r=G.rating, g=G.game;
   if(g==G_HOP) PET[P_WEIGHT]=(u8)clampi(PET[P_WEIGHT]-1,min_weight(),99);
   if(r>=1) PET[P_HAPPY]=(u8)clampi(PET[P_HAPPY]+(r>2? 2 : r)+(g==G_GUESS),0,4);
-  if(r>=2){ PET[P_BOND]=(u8)clampi(PET[P_BOND]+1,0,4); if(G.ext.stars<255) G.ext.stars++; }
+  if(r>=2){ G.ext.coins=(u16)(G.ext.coins+5>9999? 9999 : G.ext.coins+5); if(G.ext.stars<255) G.ext.stars++; }   // v8.3: AMAZING: +5 bonus coins (was bond +1)
   if(r>=1){   // what a good round does for its kind of care
     if(g==G_PANCAKE && PET[P_HUNGER]<4) PET[P_HUNGER]++;
     if(g==G_STARS){ u16 h=P16(0x16); P16(0x16)=(u16)(h+20>100? 100 : h+20); }
@@ -3513,7 +3530,7 @@ static void pick_draw(void){
     text(GAME_NAMES[i],40,y,C_DTEXT); text(k,210-slen(k)*6,y,C_LILAC); }
   fill(30,98,180,1,C_HINT);
   textc(GAME_BOOST[G.pick],120,102,C_DTEXT);
-  textc("AMAZING! OR BETTER: +1 BOND",120,112,C_LILAC);
+  textc("AMAZING! OR BETTER: +5 COINS",120,112,C_LILAC);
   { static const u8 TOP_COINS[N_GAMES]={15,15,10,15};
     char b[32]; char *p=scpy(b,"TOP PRIZE: "); p=sint(p,TOP_COINS[G.pick]); scpy(p," COINS");
     int w=slen(b)*6; coin_icon(120-w/2-10,123); text(b,120-w/2+1,123,C_ORANGE); }
@@ -3689,6 +3706,19 @@ static void name_draw(void){
 
 // v8: the status card's corner (where BEST CATCH was) shows the care it is getting most of, and what it is missing
 static const char *const NEED_NAME[N_RMISS]={"HUNGRY","UNHAPPY","MESSY","SICK","LIGHTS ON"};   // v8.1: what went wrong lately
+// v8.3: the original draws HUNGER, HAPPY and BOND at y 71, 87 and 103 (14 rows each, x 16-151); bond is gone, so
+// HUNGER moves down to 76 and HAPPY to 98, and the rest of those rows takes the card's colour
+static void card_rows(void){
+  volatile u16 *d=DRAW_TARGET; int bg=pget(150,120);
+  #define CROW(y) (d+(y)*120+8)
+  for(int r=13;r>=0;r--){ volatile u16 *a=CROW(87+r), *b=CROW(98+r); for(int i=0;i<68;i++) b[i]=a[i]; }   // HAPPY: 87 -> 98
+  for(int r=13;r>=0;r--){ volatile u16 *a=CROW(71+r), *b=CROW(76+r); for(int i=0;i<68;i++) b[i]=a[i]; }   // HUNGER: 71 -> 76
+  u16 w=(u16)(bg|(bg<<8));
+  for(int y=70;y<76;y++){ volatile u16 *b=CROW(y); for(int i=0;i<68;i++) b[i]=w; }
+  for(int y=90;y<98;y++){ volatile u16 *b=CROW(y); for(int i=0;i<68;i++) b[i]=w; }
+  for(int y=112;y<119;y++){ volatile u16 *b=CROW(y); for(int i=0;i<68;i++) b[i]=w; }
+  #undef CROW
+}
 static void card_care(void){
   const CareWin *w=care_win();
   u32 y,g,p; care_lean(w,&y,&g,&p);
@@ -4007,7 +4037,7 @@ static void story_open(void){
 static int story_tonight(void){ return G.more.spare[1]==(u16)(G.ext.day+1); }
 static void story_finish(u16 keys){
   G.more.stories|=(u16)(1u<<G.st_cur);
-  if(!story_tonight()){ G.more.spare[1]=(u16)(G.ext.day+1); G.more.spare[2]=1; set_msg("SWEET DREAMS! +1 BOND IN THE MORNING"); }
+  if(!story_tonight()){ G.more.spare[1]=(u16)(G.ext.day+1); G.more.spare[2]=1; set_msg("SWEET DREAMS!"); }
   else set_msg("SWEET DREAMS!");
   save_all(); sfx(0,SEQ_HAPPY); to_room(keys);
 }
@@ -4105,7 +4135,7 @@ static void story_still(void){   // everything that doesn't move, into SCRATCH_B
     quick_box(20,88,200,52);
     for(int i=0;i<ST_N;i++){ int y=95+i*12; if(G.st_cur==i) text(">",28,y,C_RED);
       text(ST_TITLE[i],38,y,C_DTEXT); if((G.more.stories>>i)&1) text("*",204,y,C_ORANGE); }
-    textc("A STORY TONIGHT: +1 BOND",120,148,C_HINT);
+    textc("ONE STORY A NIGHT",120,148,C_HINT);
   } else {
     char b[8]; char *p=sint(b,G.st_page+1); p=scpy(p,"/"); sint(p,ST_PAGES);
     texts(ST_TITLE[G.st_cur],8,4,C_GOLD); texts(b,232-slen(b)*6,4,C_LTEXT);
@@ -5236,6 +5266,7 @@ void hook_render(void){
   if(G.mode==M_NONE && SCENE==9) runaway_draw(); else { G.gone_t=0; G.gone_bg=0; }
   if(G.mode==M_NONE && SCENE==3 && ANIM_KIND<=1 && PET[P_STAGE]>=1 && PET[P_STAGE]<=7){ DRAW_TARGET=O_BACKBUF(); feed_draw(); }
   if(G.mode==M_NONE && SCENE==4 && PET[P_STAGE]>=1 && PET[P_STAGE]<=7){  // the status card shows boy/girl
+    card_rows();   // v8.3: no BOND row (bond is gone); HUNGER and HAPPY spread over its space
     text(G.dex.gender? "GIRL" : "BOY",G.dex.gender? 128 : 131,41,G.dex.gender? C_RED : C_BLUE);
     // (v8.3: the weight line says pounds, "WEIGHT 70 LB": the original's own drawing in orig_render.c writes it)
     card_care(); }

@@ -14,7 +14,7 @@ for the port tools. The current release is **v8.2**
 - **Don't change balance, prices or stats on your own.** Ask first, even for a small tweak. For example, milk
   stays at 10 coins although it now does the same as the apple (8).
 - **Ship a test ROM after each stage** (`StarfallMeadow_v8.Nx_test.gba`) with in-game screenshots of what changed.
-- **Keep the stat budget:** at most about 8 to 10 things may raise each stat (happiness, hunger, bond, health).
+- **Keep the stat budget:** at most about 8 to 10 things may raise each stat (happiness, hunger, health; bond is gone).
   New features should reward collection or cosmetics rather than add stat boosts.
 - **Every decor piece stays in the game** with its animation and message, even when it has no stat effect.
 
@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 229 checks (188 in the v8.1 sections, 13 `sprites` and 28 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 230 checks (187 in the v8.1 sections, 13 `sprites` and 30 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
@@ -111,7 +111,7 @@ Other details:
 - **Save:** magic `CKS8`, version 15, 11 parts (part 10 is the Garden). `More.spare` is used as follows:
   - `[0]`: the night of the last wish (day+1)
   - `[1]`: the night of the last story
-  - `[2]`: a story's bond, waiting for the morning
+  - `[2]`: a story read tonight, for the morning (v8.3: no bond any more)
   - `[3]`: the firefly kinds found (bits)
   - `[4]`: fireflies caught in all
   - `[5]`: the best night
@@ -309,6 +309,13 @@ Other details:
     (an earlier sprite is drawn on top). Their colours come from `fk_rgb()` (the garden table), never from PAL. The jar's
     glass and cork use UI colours in the room (`fly_jar`), and the garden colours on garden screens. The dots skip the
     critter's box (a sprite would show over it). The Bliplets' tiles moved to `BL_UNIT` 576.
+  - **Bond is gone** (`PET[P_BOND]` is kept in the save but nothing raises or reads it). The status card shows only
+    HUNGER and HAPPY, moved down into BOND's space (`card_rows`, after the original draws the card: rows 71/87 -> 76/98,
+    the rest cleared). Petting (the original's code, `orig_update.c`, marked EDITED): answering a call gives happy +1
+    ("IT FEELS LOVED!"), plain petting only purrs. The gift's surprise is `gift_surprise()`: a seed 1/2, 10-20 coins
+    1/4, a treat (cake, candy or cookie) 1/5, a decor piece not owned yet 1/20 (coins if none). AMAZING gives +5 coins.
+    The bookshelf, portrait and piano keep their messages and other effects. The old pre-v7 rules use mistakes now.
+    The story's morning mark (`More.spare[2]`) is still set and cleared, but gives nothing (its new purpose is open).
   - `udivmod` steps once per quotient bit. The old bit-by-bit divide made the night room with the jar drop to 30 fps
     on mGBA.
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its

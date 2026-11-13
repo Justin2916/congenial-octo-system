@@ -1795,11 +1795,11 @@ L_080019d2: ;  r0=0x03000028u;                                                  
 L_080019da: ;  goto L_08001b28;                                                                                     /* 019da b #0x8001b28 */
 L_080019dc: ;  r1=0u; N=(r1)>>31; Z=(r1)==0;                                                                        /* 019dc movs r1, #0 */
                *(volatile u8*)((r0+14))=(u8)r1;                                                                     /* 019de strb r1, [r0, #0xe] */
-               r2=*(volatile u8*)((r0+8));                                                                          /* 019e0 ldrb r2, [r0, #8] */
+               r2=*(volatile u8*)((r0+7));                                                                          /* EDITED v8.3: answering a call raises happiness (there is no bond) */ /* 019e0 ldrb r2, [r0, #8] */
                { u32 X_=(u32)(r2), Y_=(~(u32)(3u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; } /* 019e2 cmp r2, #3 */
                if((C&&!Z)) goto L_080019ea;                                                                         /* 019e4 bhi #0x80019ea */
 L_080019e6: ;  { u32 X_=(u32)(r2), Y_=(u32)(1u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r2=R_; } /* 019e6 adds r2, r2, #1 */
-               *(volatile u8*)((r0+8))=(u8)r2;                                                                      /* 019e8 strb r2, [r0, #8] */
+               *(volatile u8*)((r0+7))=(u8)r2;                                                                      /* EDITED v8.3: happiness +1, not bond */ /* 019e8 strb r2, [r0, #8] */
 L_080019ea: ;  r0=0x030002A4u;                                                                                      /* 019ea ldr r0, [pc, #0x1b0] */
                *(volatile u8*)((r0+15))=(u8)r1;                                                                     /* 019ec strb r1, [r0, #0xf] */
                r1=33u; N=(r1)>>31; Z=(r1)==0;                                                                       /* 019ee movs r1, #0x21 */
@@ -1961,7 +1961,7 @@ L_08001b22: ;  *(volatile u32*)((r0+72))=(u32)r2;                               
 L_08001b28: ;  r1=64u; N=(r1)>>31; Z=(r1)==0;                                                                       /* 01b28 movs r1, #0x40 */
                r2=*(volatile u16*)((r0+r1));                                                                        /* 01b2a ldrh r2, [r0, r1] */
                { u32 X_=(u32)(r2), Y_=(~(u32)(0u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; } /* 01b2c cmp r2, #0 */
-               if(Z) goto L_08001b54;                                                                               /* 01b2e beq #0x8001b54 */
+               /* (plain petting no longer raises happiness) */                                                                               /* EDITED v8.3: plain petting only purrs */ /* 01b2e beq #0x8001b54 */
 L_08001b30: ;  r0=0x030002A4u;                                                                                      /* 01b30 ldr r0, [pc, #0x68] */
                r1=0u; N=(r1)>>31; Z=(r1)==0;                                                                        /* 01b32 movs r1, #0 */
                *(volatile u8*)((r0+7))=(u8)r1;                                                                      /* 01b34 strb r1, [r0, #7] */
