@@ -318,8 +318,8 @@ Other details:
     The story's morning mark (`More.spare[2]`) gives nothing; since v8.3v the stories are switched off (`STORIES_ON`), so it is never set.
   - `udivmod` steps once per quotient bit. The old bit-by-bit divide made the night room with the jar drop to 30 fps
     on mGBA.
-  - **Minigame rewards (v8.3t):** no bonus coins. NICE! pays coins only; AMAZING! or better gives happy +1 (v8.3u; was +2) and the
-    game's boost (`mini_apply`, `r>=2`; `GAME_BOOST`, shown on the picker by `pick_draw`). Hop Hop's -1 weight stays
+  - **Minigame rewards (v8.3t):** no bonus coins. the only rewards are the coins (by score) and the
+    game's boost at AMAZING! or better (v8.3x: no general happiness; Left or Right?'s boost is happy +1) (`mini_apply`, `r>=2`; `GAME_BOOST`, shown on the picker by `pick_draw`). Hop Hop's -1 weight stays
     every round.
   - **The jar's stand is per critter** (v8.3t): `More.pad1` bit 4 is set by its first catch (`fly_catch`); `stand_on()`
     is that bit or tonight's jar. `night_marks_reset` clears it (and bit 3, the toy box flag) on a new egg.

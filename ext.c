@@ -3268,8 +3268,7 @@ static const char *const GAME_NAMES[N_GAMES]={"PANCAKE TOWER","HOP HOP","LEFT OR
 static const char *const GAME_HINTS[N_GAMES]={"A: DROP!   B: QUIT","A: JUMP!   B: QUIT","LEFT/RIGHT: GUESS!   B: QUIT",
   "D-PAD: THAT STAR!   B: QUIT"};
 static const u8 GAME_KIND[N_GAMES]={KF,KP,KP,KR};
-static const char *const GAME_BOOST[N_GAMES]={"AND +1 HUNGER","EVERY ROUND: -1 WEIGHT","AND +1 MORE HAPPY",
-  "AND IT HEALS"};
+static const char *const GAME_BOOST[N_GAMES]={"HUNGER +1","WEIGHT -1","HAPPY +1","HEALTH +20"};   // v8.3x: the only reward besides the coins
 static const char *const GAME_SCORE[N_GAMES]={"STACK: ","SCORE: ","SCORE: ","SONGS: "};
 static const u8 GAME_TUNE[N_GAMES]={T_MINI_CATCH,T_MINI_HOP,T_MINI_GUESS,T_MINI_STARS};
 #define GAME_FRAMES 600   // 10 seconds
@@ -3363,8 +3362,8 @@ static void mini_finish(void){
 static void mini_apply(u16 keys){
   int r=G.rating, g=G.game;
   if(g==G_HOP) PET[P_WEIGHT]=(u8)clampi(PET[P_WEIGHT]-1,min_weight(),99);
-  // v8.3: a round's rewards come with AMAZING! or better (NICE! now pays coins only; no bonus coins)
-  if(r>=2) PET[P_HAPPY]=(u8)clampi(PET[P_HAPPY]+1+(g==G_GUESS),0,4);
+  // v8.3: the coins go by the score; the game's boost comes with AMAZING! or better (Hop Hop's with every round)
+  if(r>=2 && g==G_GUESS && PET[P_HAPPY]<4) PET[P_HAPPY]++;   // v8.3x: the coins and the game's own boost are the only rewards
   if(r>=2 && G.ext.stars<255) G.ext.stars++;
   if(r>=2){   // what a great round does for its kind of care
     if(g==G_PANCAKE && PET[P_HUNGER]<4) PET[P_HUNGER]++;
@@ -3535,7 +3534,7 @@ static void pick_draw(void){
     if(G.pick==i) text(">",30,y,C_RED);
     text(GAME_NAMES[i],40,y,C_DTEXT); text(k,210-slen(k)*6,y,C_LILAC); }
   fill(30,98,180,1,C_HINT);
-  textc("AMAZING! OR BETTER: HAPPY +1",120,102,C_DTEXT);   // v8.3: the rewards come with AMAZING! or better
+  textc(G.pick==G_HOP? "EVERY ROUND:" : "AMAZING! OR BETTER:",120,102,C_DTEXT);   // v8.3x: the coins, and the game's boost
   textc(GAME_BOOST[G.pick],120,112,C_LILAC);
   { static const u8 TOP_COINS[N_GAMES]={15,15,10,15};
     char b[32]; char *p=scpy(b,"TOP PRIZE: "); p=sint(p,TOP_COINS[G.pick]); scpy(p," COINS");
@@ -3642,7 +3641,7 @@ static void mini_draw(void){
   if(G.phase==PH_RESULT){
     O_BOX(30,30,180,82);
     p=scpy(G.sbuf,GAME_SCORE[G.game]); sint(p,G.score); textbig(G.sbuf,120,40,C_DTEXT,2);
-    textc(G.rating==3? "PERFECT! OVER THE MOON!" : G.rating==2? "AMAZING! VERY HAPPY!" : G.rating==1? "NICE! IT HAD FUN." : "IT TRIED ITS BEST.",120,64,C_DTEXT);
+    textc(G.rating==3? "PERFECT! OVER THE MOON!" : G.rating==2? "AMAZING! WHAT A ROUND!" : G.rating==1? "NICE! IT HAD FUN." : "IT TRIED ITS BEST.",120,64,C_DTEXT);
     { int c=reward_coins(); if(c){ p=scpy(G.sbuf,"+"); p=sint(p,c); scpy(p, c==1? " COIN" : " COINS"); } else scpy(G.sbuf,"NO COINS"); }
     int w=slen(G.sbuf)*6; coin_icon(120-(w+10)/2,80); text(G.sbuf,120-(w+10)/2+10,80,C_ORANGE);
     for(int i=0;i<4;i++) mini_art(MA_STAR3, 120-35+i*18-7, 92, i<=G.rating? COL_STAR : COL_DIM, 0);   // 1-4 stars for the result
