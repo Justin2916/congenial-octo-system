@@ -135,7 +135,7 @@ Other details:
 - **Yard:** the three moonflower patches sit at the "B5c" spots: `PATCH_X = {80,132,152}`,
   `PATCH_Y = {110,104,127}`. They are drawn before (behind) the decor, and the critter stands in front of them.
   The garden opens in look mode: A tends (the cursor shows), B puts the cursor away, and B again goes inside.
-  SELECT over the night yard opens a menu with only GO INSIDE and JOURNAL.
+  SELECT over the night yard opens a menu with only GO INSIDE and JOURNAL (v8.3: plus CLEAN UP when needed).
 - **Fireflies:**
   - R in the night yard starts a 30 s round, with 3 rounds a night.
   - There are 12 kinds: 3 common, 2 of 5 uncommon each night, and 4 rare. Moonglow needs a full moon, Rose Heart
@@ -261,8 +261,9 @@ Other details:
     the rug, two middle, a small one at the back of the floor, which starts at y 101), all inside x 52-190, clear of
     every indoor floor piece (x 3-50 and 192-240, mapped by placing each). Both share `poops_at()`. The original's poop
     drawing reads `ext_poops_drawn()` (always 0); its call-icon check still reads `ext_mess_drawn()`.
-  - Over the night yard, while the yard has a mess, the SELECT menu has a sixth row, CLEAN UP (cleans `More.pad0`;
-    hidden again once it's clean: `extras_rows()`), and scrolls 5 rows at a time (`G.ex_first`, `EX_SHOW`). While it sleeps, the yard's mess doesn't count toward sickness (`sim_tick`).
+  - The SELECT menu shows only what works (`extras_list()`; `G.cur` is a row of that list, the box fits it): in the
+    room OUTSIDE/GARDEN, BAG, SHOP, STORY (night only) and JOURNAL; over the night yard GO INSIDE, CLEAN UP (only while
+    `More.pad0`, which it clears) and JOURNAL. It can scroll 5 rows at a time (`G.ex_first`, `EX_SHOW`) if it grows. While it sleeps, the yard's mess doesn't count toward sickness (`sim_tick`).
   - **Fireplace** (slot 1) stands on the back wall under the picture, at 3/4 size, facing straight out
     (`gen/decor.py` `FIREPLACE`: front x 181-210, y 72-101, mantel y 64-70, hearth slab y 101-106, green stockings).
     Its soft shadow on the wall is `FP_SHADOW`/`FP_SHADE` (decorgen; `FP_SHADE` maps the wall's colours 3/4 and the

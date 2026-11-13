@@ -569,7 +569,7 @@ def t_b1():
     """v8.1 chunk B1: the collection and the wishing stars."""
     F0 = g('more', 'm_found0'); INV = g('ext', 'e_inv'); COINS = g('ext', 'e_coins')
     # buying something opens its collection page for good (and it is still there after a reload)
-    sc = BOOT + [*p16(COINS, 900), 'press SELECT', 'wait 6', 'press DOWN', 'wait 4', 'press A', 'wait 20', f'peek {g("stock"):08x} 1', 'press A', 'wait 10',
+    sc = BOOT + [*p16(COINS, 900), 'press SELECT', 'wait 6', 'press DOWN', 'wait 4', 'press DOWN', 'wait 4', 'press A', 'wait 20', f'peek {g("stock"):08x} 1', 'press A', 'wait 10',
                  f'peek {F0:08x} 8', f'savesram {TMP}/b1.sav']
     v = peeks(run(ROM, sc, copy_save('adult'))); it = v[0][1][0]; bits = int.from_bytes(v[1][1], 'little')
     check(f'collection: buying item {it} opens its page', (bits >> it) & 1 == 1 and bin(bits).count('1') == 1, hex(bits))
@@ -605,9 +605,10 @@ def t_b1():
 def t_stories():
     """v8.1: bedtime stories from the SELECT menu at night; the first each night gives +1 bond in the morning."""
     SP = g('more', 'm_spare'); ST = g('more', 'm_stories'); MODE = g('mode')
-    open_story = ['press SELECT', 'wait 6', 'press UP', 'wait 4', 'press A', 'wait 20']
-    v = peeks(run(ROM, BOOT + ['poke32 0300004c 64', 'wait 5'] + open_story + [f'peek {MODE:08x} 1'], copy_save('adult')))
-    check('stories: not in the daytime', v[0][1][0] == 0, str(v))
+    # (v8.3: the menu is OUTSIDE/GARDEN, BAG, SHOP, STORY, JOURNAL, and STORY is only there at night)
+    open_story = ['press SELECT', 'wait 6', 'press UP', 'wait 4', 'press UP', 'wait 4', 'press A', 'wait 20']
+    v = peeks(run(ROM, BOOT + ['poke32 0300004c 64', 'wait 5', 'press SELECT', 'wait 6', 'press UP', 'wait 4', f'peek {g("cur"):08x} 1', 'press A', 'wait 20', f'peek {MODE:08x} 1'], copy_save('adult')))
+    check('stories: not in the daytime (no STORY row: up from the top is the JOURNAL)', v[0][1][0] == 3 and v[1][1][0] == 10, str(v))
     read = ['press A', 'wait 6'] * 7
     sc = BOOT + ['poke32 0300004c 1f4', 'wait 5', p8(PET + 8, 1)] + open_story + [f'peek {MODE:08x} 1'] + read + \
          [f'peek {MODE:08x} 1', f'peek {ST:08x} 2', f'peek {SP:08x} 6', f'peek {g("ext", "e_day"):08x} 2'] + \
@@ -897,15 +898,16 @@ def t_yard():
     check('yard: a faintly glowing firefly can be scooped', v[-1][1][0] >= 1, str(v[-1]))
     # v8.3: SELECT over the night yard scrolls down to CLEAN UP, which cleans the yard while it sleeps inside
     night = ['poke32 0300004c 1f4', p8(PET + 12, 1), 'wait 4']
-    sc = BOOT + night + [p8(MORE0, 3), 'press SELECT', 'wait 6', 'press A', 'wait 30', 'press SELECT', 'wait 8', 'press DOWN', 'wait 4', 'press DOWN', 'wait 6',
-                         f'peek {g("ex_first"):08x} 1', 'press A', 'wait 10', f'peek {MORE0:08x} 1', f'peek {g("mode"):08x} 1']
+    # (v8.3: that menu shows only what works there: GO INSIDE, CLEAN UP while there's a mess, JOURNAL)
+    sc = BOOT + night + [p8(MORE0, 3), 'press SELECT', 'wait 6', 'press A', 'wait 30', 'press SELECT', 'wait 8', 'press UP', 'wait 6',
+                         f'peek {g("cur"):08x} 1', 'press A', 'wait 10', f'peek {MORE0:08x} 1', f'peek {g("mode"):08x} 1']
     v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
-    check('yard: the night-yard menu scrolls to CLEAN UP, which cleans the yard', v == [1, 0, 13], str(v))
+    check('yard: the night-yard menu has CLEAN UP while the yard has a mess; it cleans the yard', v == [1, 0, 13], str(v))
     # ...and with the yard clean, there's no CLEAN UP row: the menu has its five rows and doesn't scroll
-    sc = BOOT + night + [p8(MORE0, 0), 'press SELECT', 'wait 6', 'press A', 'wait 30', 'press SELECT', 'wait 8', 'press DOWN', 'wait 4', 'press DOWN', 'wait 6',
-                         f'peek {g("ex_first"):08x} 1', f'peek {g("cur"):08x} 1']
+    sc = BOOT + night + [p8(MORE0, 0), 'press SELECT', 'wait 6', 'press A', 'wait 30', 'press SELECT', 'wait 8', f'peek {g("cur"):08x} 1', 'press DOWN', 'wait 4', 'press DOWN', 'wait 6',
+                         f'peek {g("cur"):08x} 1']
     v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
-    check('yard: with the yard clean, the night-yard menu has no CLEAN UP (wraps after STORY)', v == [0, 0], str(v))
+    check('yard: with the yard clean, the night-yard menu is just GO INSIDE and JOURNAL', v == [1, 1], str(v))
     # v8.3: while it sleeps, the yard's mess can't make it sick (the room's still can)
     sc = BOOT + night + [p8(MORE0, 4), p8(POOP, 0), p8(PET + 10, 0), 'wait 5400', f'peek {PET + 10:08x} 1', f'peek {PET + 0x3A:08x} 2', f'peek {MORE0:08x} 1']
     v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
@@ -929,7 +931,7 @@ def t_yard():
         sc = BOOT + DAY + ['press A', 'wait 6', 'press A', 'wait 20'] + (['press A', 'wait 6', 'peek 03000020 1'] if skip else []) + ['wait 150', f'peek {PET + 9:08x} 1']
         res.append([x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))])
     INV = g('ext', 'e_inv')
-    sc = BOOT + DAY + [p8(INV, 3), 'wait 2', 'press SELECT', 'wait 6', 'press DOWN', 'wait 4', 'press DOWN', 'wait 4', 'press A', 'wait 10', 'press A', 'wait 15', 'press A', 'wait 3', f'peek {M:08x} 1', f'peek {INV:08x} 1']
+    sc = BOOT + DAY + [p8(INV, 3), 'wait 2', 'press SELECT', 'wait 6', 'press DOWN', 'wait 4', 'press A', 'wait 10', 'press A', 'wait 15', 'press A', 'wait 3', f'peek {M:08x} 1', f'peek {INV:08x} 1']
     b = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('yard: A skips the rest of a meal (it still counts) and of food from the bag', res[1][0] != 3 and res[1][1] == res[0][0] and b == [0, 2], f'{res} {b}')
     # v8.2c: running away is a six-shot scene: its room at dawn, a look back from the yard, the meadow path, the
@@ -966,7 +968,7 @@ def t_yard():
 
 def t_budget():
     out = run(ROM, ['wait 30', 'cyc 120 title', 'press A', 'waitscene 1', 'wait 30', 'cyc 300 room', 'poke32 0300004c 1f4', 'wait 5',
-                    'press SELECT', 'wait 6', 'press UP', 'wait 4', 'press A', 'wait 20', 'cyc 120 stories', 'press A', 'wait 10', 'cyc 120 story'], copy_save('adult'))
+                    'press SELECT', 'wait 6', 'press UP', 'wait 4', 'press UP', 'wait 4', 'press A', 'wait 20', 'cyc 120 stories', 'press A', 'wait 10', 'cyc 120 story'], copy_save('adult'))
     for label, limit in (('title', 240000), ('room', 200000), ('stories', 120000), ('story', 120000)):
         m = re.search(rf'{label} avg busy cycles/frame: (\d+)', out)
         v = int(m.group(1)) if m else -1

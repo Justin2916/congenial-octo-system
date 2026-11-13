@@ -2818,61 +2818,72 @@ static int garden_ok(void);
 static void garden_open(void);
 static void garden_close(u16 keys);
 static void garden_screen_draw(void);
-static int extras_off(int i){   // greyed out
-  if(G.ex_yard) return i==1 || i==2 || i==4;   // over the night yard: just GO INSIDE and JOURNAL
-  return (i==0 && !G.outside && !can_go_outside() && !garden_ok()) || (i==4 && !story_ok());
+// v8.3: the SELECT menu shows only what works here. In the room: OUTSIDE (GARDEN at night), BAG, SHOP, STORY (only at
+// night) and JOURNAL. Over the night yard: GO INSIDE, CLEAN UP (only while the yard has a mess) and JOURNAL.
+// G.cur is a row of this list; the box grows or shrinks with it.
+enum { EX_OUT, EX_SHOP, EX_BAG, EX_JOURNAL, EX_STORY, EX_CLEAN };
+static int extras_list(u8 *id){
+  int n=0;
+  if(G.ex_yard){ id[n++]=EX_OUT; if(G.more.pad0) id[n++]=EX_CLEAN; id[n++]=EX_JOURNAL; return n; }
+  id[n++]=EX_OUT; id[n++]=EX_BAG; id[n++]=EX_SHOP; if(is_night()) id[n++]=EX_STORY; id[n++]=EX_JOURNAL; return n;
+}
+static int extras_row_of(int want){ u8 id[6]; int n=extras_list(id); for(int i=0;i<n;i++) if(id[i]==want) return i; return 0; }
+static int extras_off(int id){   // greyed out: it's here but can't be used right now
+  if(G.ex_yard) return 0;
+  return (id==EX_OUT && !G.outside && !can_go_outside() && !garden_ok()) || (id==EX_STORY && !story_ok());
 }
 static void extras_close(u16 keys){ G.suppress=keys; G.ex_first=0; if(G.ex_yard){ G.ex_yard=0; G.mode=M_GARDEN; G.gui_key=0; } else G.mode=M_NONE; }
 #define EX_SHOW 5
-static int extras_rows(void){ return G.ex_yard && G.more.pad0? 6 : 5; }   // v8.3: over the night yard with a mess there, a sixth row: CLEAN UP
 static void extras_update(u16 pr, u16 keys){
-  int nr=extras_rows();
-  if(G.cur>=nr) G.cur=0;
+  u8 ids[6]; int nr=extras_list(ids);
+  if(G.cur>=nr) G.cur=(u8)(nr-1);
   if(pr&K_UP){ G.cur=(u8)(G.cur?G.cur-1:nr-1); sfx(0,SEQ_BLIP); }
   if(pr&K_DOWN){ G.cur=(u8)(G.cur>=nr-1?0:G.cur+1); sfx(0,SEQ_BLIP); }
-  if(G.ex_first>nr-EX_SHOW) G.ex_first=(u8)(nr-EX_SHOW);
-  if(G.cur<G.ex_first) G.ex_first=G.cur; else if(G.cur>=G.ex_first+EX_SHOW) G.ex_first=(u8)(G.cur-EX_SHOW+1);
+  int sh= nr<EX_SHOW? nr : EX_SHOW;
+  if(G.ex_first>nr-sh) G.ex_first=(u8)(nr-sh);
+  if(G.cur<G.ex_first) G.ex_first=G.cur; else if(G.cur>=G.ex_first+sh) G.ex_first=(u8)(G.cur-sh+1);
   if(pr&(K_B|K_SELECT)){ sfx(0,SEQ_BLIP); extras_close(keys); return; }
-  if(pr&K_A){
-    G.suppress=keys;
-    if(G.ex_yard){   // v8.1: the menu over the night yard
-      if(G.cur==0){ G.ex_yard=0; G.mode=M_GARDEN; garden_close(keys); }
-      else if(G.cur==3){ G.ex_yard=0; sfx(0,SEQ_JOURNAL); dex_open(2); }
-      else if(G.cur==5 && extras_rows()==6){   // v8.3: clean the yard at night, while it sleeps inside (shown only when there's a mess)
-        G.ex_yard=0; G.mode=M_GARDEN; G.gui_key=0; G.ex_first=0;
-        if(G.more.pad0){ G.more.pad0=0; G.yp_n=0; garden_msg("ALL CLEAN OUT HERE!"); sfx(1,SEQ_HAPPY); }
-        else { garden_msg("THE YARD IS ALREADY CLEAN!"); sfx(0,SEQ_DENY); } }
-      else sfx(0,SEQ_DENY);
-      return; }
-    if(G.cur==3){ sfx(0,SEQ_JOURNAL); dex_open(3); return; }   // v8.1: the journal lives here now
-    if(G.cur==0){
-      u8 st=PET[P_STAGE];
-      G.mode=M_NONE;
-      if(G.outside){ go_inside(0); set_msg("BACK INSIDE!"); }
-      else if(garden_ok()) garden_open();
-      else if(st==0){ set_msg("IT'S STILL AN EGG!"); sfx(0,SEQ_DENY); }
-      else if(st<2){ set_msg("TOO LITTLE TO GO OUTSIDE!"); sfx(0,SEQ_DENY); }
-      else if(PET[P_ASLEEP]){ set_msg("SHH... IT'S ASLEEP."); sfx(0,SEQ_DENY); }
-      else if(PET[P_SICK]){ set_msg("TOO SICK TO GO OUTSIDE..."); sfx(0,SEQ_DENY); }
-      else if(PET[P_LIGHTS]){ set_msg("TURN THE LIGHTS ON FIRST!"); sfx(0,SEQ_DENY); }
-      else go_outside();
-    } else if(G.cur==1) enter_shop();
-    else if(G.cur==2) enter_bag();
-    else story_open();
-  }
+  if(!(pr&K_A)) return;
+  G.suppress=keys;
+  int id=ids[G.cur];
+  if(G.ex_yard){   // v8.1: the menu over the night yard
+    if(id==EX_OUT){ G.ex_yard=0; G.mode=M_GARDEN; garden_close(keys); }
+    else if(id==EX_JOURNAL){ G.ex_yard=0; sfx(0,SEQ_JOURNAL); dex_open(2); }
+    else if(id==EX_CLEAN){   // v8.3: clean the yard at night, while it sleeps inside
+      G.ex_yard=0; G.mode=M_GARDEN; G.gui_key=0; G.ex_first=0;
+      G.more.pad0=0; G.yp_n=0; garden_msg("ALL CLEAN OUT HERE!"); sfx(1,SEQ_HAPPY); }
+    return; }
+  if(id==EX_JOURNAL){ sfx(0,SEQ_JOURNAL); dex_open(3); return; }   // v8.1: the journal lives here now
+  if(id==EX_OUT){
+    u8 st=PET[P_STAGE];
+    G.mode=M_NONE;
+    if(G.outside){ go_inside(0); set_msg("BACK INSIDE!"); }
+    else if(garden_ok()) garden_open();
+    else if(st==0){ set_msg("IT'S STILL AN EGG!"); sfx(0,SEQ_DENY); }
+    else if(st<2){ set_msg("TOO LITTLE TO GO OUTSIDE!"); sfx(0,SEQ_DENY); }
+    else if(PET[P_ASLEEP]){ set_msg("SHH... IT'S ASLEEP."); sfx(0,SEQ_DENY); }
+    else if(PET[P_SICK]){ set_msg("TOO SICK TO GO OUTSIDE..."); sfx(0,SEQ_DENY); }
+    else if(PET[P_LIGHTS]){ set_msg("TURN THE LIGHTS ON FIRST!"); sfx(0,SEQ_DENY); }
+    else go_outside();
+  } else if(id==EX_SHOP) enter_shop();
+  else if(id==EX_BAG) enter_bag();
+  else story_open();
 }
+static int extras_h(void){ u8 ids[6]; int n=extras_list(ids); if(n>EX_SHOW) n=EX_SHOW; return 30+n*14; }   // the box's height
 static void extras_draw(void){
-  O_BOX(136,30,96,100);
+  u8 ids[6]; int nr=extras_list(ids), sh= nr<EX_SHOW? nr : EX_SHOW;
+  O_BOX(136,30,96,extras_h());
   const char *n0 = G.outside? "GO INSIDE" : garden_ok()? "GARDEN" : "OUTSIDE";
-  const char *n[6]={n0,"SHOP","BAG","JOURNAL","STORY","CLEAN UP"};
-  int nr=extras_rows(), top=G.ex_first; if(top>nr-EX_SHOW) top=nr-EX_SHOW;
-  for(int k=0;k<EX_SHOW;k++){ int i=top+k, y=38+k*14;
+  static const char *const NM[6]={0,"SHOP","BAG","JOURNAL","STORY","CLEAN UP"};
+  int top=G.ex_first; if(top>nr-sh) top=nr-sh;
+  for(int k=0;k<sh;k++){ int i=top+k, y=38+k*14, id=ids[i];
     if(G.cur==i) text(">",144,y,C_RED);
-    text(n[i],154,y,extras_off(i)? (G.ex_yard? C_HINT : C_GRAY) : C_DTEXT);   // (C_GRAY is a garden colour at night)
+    text(id==EX_OUT? n0 : NM[id],154,y,extras_off(id)? C_GRAY : C_DTEXT);
   }
+  int cy=40+sh*14;
   if(top>0) for(int r=0;r<4;r++) fill(222-r,34+r,1+2*r,1,C_HINT);                    // more above
-  if(top+EX_SHOW<nr) for(int r=0;r<4;r++) fill(222-r,106-r,1+2*r,1,C_HINT);          // more below
-  coin_icon(146,110); sint(G.sbuf,G.ext.coins); text(G.sbuf,157,110,C_DTEXT);
+  if(top+sh<nr) for(int r=0;r<4;r++) fill(222-r,cy-4-r,1+2*r,1,C_HINT);             // more below
+  coin_icon(146,cy); sint(G.sbuf,G.ext.coins); text(G.sbuf,157,cy,C_DTEXT);
 }
 
 // ================================================================== SHOP
@@ -3842,7 +3853,7 @@ static void garden_update(u16 pr,u16 keys){
   wish_tick();
   if(wish_try(pr)) return;
   if(!is_night()){ garden_close(keys); return; }
-  if(pr&K_SELECT){ sfx(0,SEQ_BLIP); G.ex_yard=1; G.mode=M_EXTRAS; G.cur=3; G.ex_first=0; G.suppress=keys; return; }   // v8.1: the menu, over the yard
+  if(pr&K_SELECT){ sfx(0,SEQ_BLIP); G.ex_yard=1; G.mode=M_EXTRAS; G.cur=(u8)extras_row_of(EX_JOURNAL); G.ex_first=0; G.suppress=keys; return; }   // v8.1: the menu, over the yard
   if(pr&K_START){ sfx(0,SEQ_BLIP); G.mn_yard=1; enter_menu(); G.suppress=keys; return; }   // v8.3: START works out here too
   // v8.1: the yard opens just for looking; A shows the cursor to tend the moonflowers (G.gpad2), B puts it away
   if(pr&K_R){ if(fly_rounds_left()>0) fly_start(); else { garden_msg("NO MORE FIREFLIES TONIGHT."); sfx(0,SEQ_DENY); } G.suppress=keys; return; }   // v8.1
@@ -4348,7 +4359,7 @@ void hook_bg_copy(void *dst, const void *src){
 static const char *const HELP_TITLE[HELP_PAGES]={"HOW TO PLAY","THE ICONS","GROWING UP","OUTSIDE AND THE SHOP","SAYING GOODBYE"};
 static const char *const HELP_TEXT[HELP_PAGES][8]={
   {"RAISE A CRITTER FROM A STAR-SEED!","","LEFT/RIGHT/UP/DOWN: PICK AN ICON","A: USE IT     B: CLOSE / BACK",
-   "START: MENU (SPEED, SOUND, SAVE)","SELECT: OUTSIDE, SHOP, BAG, JOURNAL","WHEN THE ! ICON LIGHTS UP,","YOUR CRITTER NEEDS SOMETHING."},
+   "START: MENU (SPEED, SOUND, SAVE)","SELECT: OUTSIDE, BAG, SHOP, JOURNAL","WHEN THE ! ICON LIGHTS UP,","YOUR CRITTER NEEDS SOMETHING."},
   {"FEED  - MEALS FILL HUNGER, SNACKS","        CHEER IT UP (NOT TOO MANY!)","LIGHTS- TURN THEM OFF AT BEDTIME","PLAY  - PICK 1 OF 4 GAMES, WIN COINS",
    "MEDS  - CURE IT WHEN IT'S SICK","CLEAN - WASH AWAY THE POOP","STATUS- SEE HOW IT'S FEELING","PET   - ANSWER WHEN IT CALLS YOU"},
   {"HOW WELL IT IS CARED FOR PICKS","ITS TEEN. THE CARE IT GETS MOST","(OR MISSES MOST) PICKS WHAT IT","GROWS INTO - SEE THE STATUS CARD.",
@@ -4442,7 +4453,7 @@ static void dex_update(u16 pr,u16 keys){
       do i=(i+d)%IT_COUNT; while(!found_has(COL_ORDER[i])); G.jitem=(u8)i; sfx(0,SEQ_BLIP); } }
   if(pr&(K_B|K_SELECT|K_START)){ sfx(0,SEQ_BLIP);
     if(G.dex_from==2){ G.mode=M_GARDEN; G.gui_key=0; G.bg_state=0; }   // v8.1: back out to the yard
-    else if(G.dex_from==3){ G.mode=M_EXTRAS; G.cur=3; }               // v8.1: back to the SELECT menu
+    else if(G.dex_from==3){ G.mode=M_EXTRAS; G.cur=(u8)extras_row_of(EX_JOURNAL); }   // v8.1: back to the SELECT menu
     else if(G.dex_from){ G.mode=M_MENU; G.cur=5; } else G.mode=M_NONE;
     G.suppress=keys; }
 }
@@ -4969,7 +4980,7 @@ static void fly_rel_sprites(int r){
 static int menu_box(int *r){
   switch(G.mode){
     case M_MENU:   if(G.mn_yard) return 0; r[0]=52; r[1]=34; r[2]=136; r[3]=92; return 1;
-    case M_EXTRAS: if(G.ex_yard) return 0; r[0]=136; r[1]=30; r[2]=96; r[3]=100; return 1;
+    case M_EXTRAS: if(G.ex_yard) return 0; r[0]=136; r[1]=30; r[2]=96; r[3]=extras_h(); return 1;
     case M_BAG:  { int rows=G.bag_n>5? 5 : G.bag_n; if(rows<2) rows=2; r[0]=24; r[1]=29; r[2]=192; r[3]=36+rows*12; return 1; }
     case M_SURE:   r[0]=14; r[1]=44; r[2]=212; r[3]=74; return 1;
     default: return 0;

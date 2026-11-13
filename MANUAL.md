@@ -24,7 +24,7 @@ This booklet covers everything in the game. The secret forms, rare moonflowers a
 | A | Use or choose. At night, A also makes a wish when a shooting star crosses the sky |
 | B | Back, or close a box |
 | START | The menu: RESUME, SPEED, SOUND, MUSIC, HOW TO PLAY, SAVE AND QUIT |
-| SELECT | OUTSIDE (or GARDEN at night), SHOP, BAG, JOURNAL and STORY. Out in the yard at night: GO INSIDE or JOURNAL, plus CLEAN UP (scroll down) when the yard needs it |
+| SELECT | OUTSIDE (or GARDEN at night), BAG, SHOP, STORY (at night only) and JOURNAL. Out in the yard at night: GO INSIDE, CLEAN UP (when the yard needs it) and JOURNAL |
 | L / R | Turn the journal's tabs. In the yard at night, R starts a firefly round |
 
 The SELECT menu also shows how many coins you have. Each minigame shows its own buttons at the bottom of the screen.
@@ -130,7 +130,7 @@ A or RIGHT turns the page, LEFT goes back, and B closes the book. Stories you ha
 
 ## The moonflower garden
 
-While your critter is asleep at night, the SELECT menu's first choice becomes **GARDEN**. It takes you out to the yard, where three soil patches sit at different spots in the grass, behind any yard decor. At first you're just looking. Press **A** to tend the moonflowers: a cursor appears, LEFT and RIGHT pick a patch, and A plants, waters or takes a closer look. **B** puts the cursor away, and B again goes back inside. SELECT opens a small menu (GO INSIDE or JOURNAL; when the yard has a mess, CLEAN UP appears further down), START the usual menu, and **R** starts a firefly round. The clock keeps running out here, so dawn sends you back inside.
+While your critter is asleep at night, the SELECT menu's first choice becomes **GARDEN**. It takes you out to the yard, where three soil patches sit at different spots in the grass, behind any yard decor. At first you're just looking. Press **A** to tend the moonflowers: a cursor appears, LEFT and RIGHT pick a patch, and A plants, waters or takes a closer look. **B** puts the cursor away, and B again goes back inside. SELECT opens a small menu (GO INSIDE, CLEAN UP when the yard has a mess, and JOURNAL), START the usual menu, and **R** starts a firefly round. The clock keeps running out here, so dawn sends you back inside.
 
 Each new star-seed comes with **3 moonflower seeds**.
 
