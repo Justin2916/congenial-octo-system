@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 218 checks (187 in the v8.1 sections, 13 `sprites` and 18 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 219 checks (187 in the v8.1 sections, 13 `sprites` and 19 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
@@ -261,8 +261,8 @@ Other details:
     the rug, two middle, a small one at the back of the floor, which starts at y 101), all inside x 52-190, clear of
     every indoor floor piece (x 3-50 and 192-240, mapped by placing each). Both share `poops_at()`. The original's poop
     drawing reads `ext_poops_drawn()` (always 0); its call-icon check still reads `ext_mess_drawn()`.
-  - Over the night yard the SELECT menu has a sixth row, CLEAN UP (cleans `More.pad0`), and scrolls 5 rows at a
-    time (`G.ex_first`, `EX_SHOW`). While it sleeps, the yard's mess doesn't count toward sickness (`sim_tick`).
+  - Over the night yard, while the yard has a mess, the SELECT menu has a sixth row, CLEAN UP (cleans `More.pad0`;
+    hidden again once it's clean: `extras_rows()`), and scrolls 5 rows at a time (`G.ex_first`, `EX_SHOW`). While it sleeps, the yard's mess doesn't count toward sickness (`sim_tick`).
   - `udivmod` steps once per quotient bit. The old bit-by-bit divide made the night room with the jar drop to 30 fps
     on mGBA.
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its

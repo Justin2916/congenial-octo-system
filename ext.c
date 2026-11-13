@@ -2818,7 +2818,7 @@ static int extras_off(int i){   // greyed out
 }
 static void extras_close(u16 keys){ G.suppress=keys; G.ex_first=0; if(G.ex_yard){ G.ex_yard=0; G.mode=M_GARDEN; G.gui_key=0; } else G.mode=M_NONE; }
 #define EX_SHOW 5
-static int extras_rows(void){ return G.ex_yard? 6 : 5; }   // v8.3: over the night yard, a sixth row: CLEAN UP
+static int extras_rows(void){ return G.ex_yard && G.more.pad0? 6 : 5; }   // v8.3: over the night yard with a mess there, a sixth row: CLEAN UP
 static void extras_update(u16 pr, u16 keys){
   int nr=extras_rows();
   if(G.cur>=nr) G.cur=0;
@@ -2832,7 +2832,7 @@ static void extras_update(u16 pr, u16 keys){
     if(G.ex_yard){   // v8.1: the menu over the night yard
       if(G.cur==0){ G.ex_yard=0; G.mode=M_GARDEN; garden_close(keys); }
       else if(G.cur==3){ G.ex_yard=0; sfx(0,SEQ_JOURNAL); dex_open(2); }
-      else if(G.cur==5){   // v8.3: clean the yard at night, while it sleeps inside
+      else if(G.cur==5 && extras_rows()==6){   // v8.3: clean the yard at night, while it sleeps inside (shown only when there's a mess)
         G.ex_yard=0; G.mode=M_GARDEN; G.gui_key=0; G.ex_first=0;
         if(G.more.pad0){ G.more.pad0=0; G.yp_n=0; garden_msg("ALL CLEAN OUT HERE!"); sfx(1,SEQ_HAPPY); }
         else { garden_msg("THE YARD IS ALREADY CLEAN!"); sfx(0,SEQ_DENY); } }
