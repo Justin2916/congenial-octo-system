@@ -69,20 +69,43 @@ def item(name, ramps):
 WOOD = ramp((196, 136, 84)); DKWOOD = ramp((140, 92, 60))
 
 # ================================================================== slot 0: floor, left
+# v8.3: the bed stands with its head against the back wall, under the window (3/4 size, its foot toward you): the
+# headboard stays below the sill. (Before, it stood by the door, at the left edge of the room.)
+def _floor_trap(c, y0, y1, xa0, xa1, xb0, xb1, m, tone_at):
+    """a shape lying flat, seen from above: x range a at y0 widening to range b at y1"""
+    c.part += 1
+    for y in range(y0, y1+1):
+        f = (y-y0)/max(1, y1-y0); x0 = round(xa0+(xb0-xa0)*f); x1 = round(xa1+(xb1-xa1)*f)
+        for x in range(x0, x1+1): tp(c, x, y, m, tone_at(x, y))
 @item('BED', {'wood': WOOD, 'mat': ramp((246, 238, 222)), 'quilt': ramp((236, 120, 140)), 'q2': ramp((250, 196, 120)), 'pil': ramp((250, 250, 250))})
 def BED(c):
-    bevel(c, 4, 90, 7, 34, 'wood', 2, r=3)              # headboard
-    rect(c, 6, 92, 3, 1, 'wood', 1)
-    bevel(c, 42, 104, 6, 20, 'wood', 2, r=2)            # footboard
-    bevel(c, 9, 104, 34, 9, 'mat', 2)                   # mattress
-    bevel(c, 13, 100, 30, 11, 'quilt', 2, r=2)          # quilt
-    for i, x in enumerate(range(14, 42, 7)):
-        rect(c, x, 103, 5, 5, 'q2' if i % 2 == 0 else 'quilt', 2 if i % 2 == 0 else 3)
-    hline(c, 13, 42, 108, mix((236, 120, 140), OUTLINE, 0.45))
-    c.ellipse(15, 100, 6, 3.6, 'pil')                   # pillow
-    bevel(c, 9, 113, 34, 6, 'wood', 2)                  # frame rail
-    rect(c, 6, 124, 3, 3, 'wood', 3); rect(c, 43, 124, 3, 3, 'wood', 3)
-    grain(c, 4, 90, 44, 34, 'wood', 1)
+    bevel(c, 22, 88, 46, 14, 'wood', 2, r=4)                    # headboard, below the sill (the jar's window stays clear)
+    rect(c, 26, 91, 38, 1, 'wood', 1)
+    _floor_trap(c, 101, 109, 24, 65, 21, 68, 'quilt', lambda x, y: 2 if ((x//6)+(y > 104)) % 2 else 1)   # the quilt
+    _floor_trap(c, 99, 101, 26, 63, 25, 64, 'mat', lambda x, y: 1)                                   # the turned-down sheet
+    c.ellipse(36, 99, 7, 2.6, 'pil'); c.ellipse(54, 99, 7, 2.6, 'pil')                                # two pillows
+    bevel(c, 20, 110, 50, 4, 'mat', 2)                          # the mattress's front
+    bevel(c, 19, 113, 52, 3, 'wood', 2)                         # the frame
+    rect(c, 20, 116, 3, 2, 'wood', 3); rect(c, 67, 116, 3, 2, 'wood', 3)
+    grain(c, 19, 88, 52, 30, 'wood', 1)
+
+# v8.3: the firefly jar's stand (it comes with the first firefly caught): in the middle under the window when nothing
+# stands on the left, or just right of what does (the bed or another left piece). Not a decor piece: ext.c draws it
+# in the room's own colours (STAND_PIX), so it needs no palette band.
+STAND_X = (37, 73)                                   # its left edge: under the window / right of the left piece
+STAND_RAMPS = {'wood': WOOD, 'mat': ramp((246, 238, 222))}
+def stand(X):
+    def f(c):
+        for x in range(X, X+16): tp(c, x, 92, 'wood', 0)       # the top: lit, 2 px deep (the jar stands on y 91)
+        for x in range(X, X+16): tp(c, x, 93, 'wood', 1)
+        bevel(c, X+1, 94, 14, 13, 'wood', 2, r=1)              # the body
+        bevel(c, X+3, 97, 10, 5, 'wood', 3, r=1)               # a drawer
+        tp(c, X+7, 99, 'mat', 0); tp(c, X+8, 99, 'mat', 0)     # its knob
+        rect(c, X+1, 107, 2, 3, 'wood', 3); rect(c, X+13, 107, 2, 3, 'wood', 3)
+        grain(c, X, 92, 16, 18, 'wood', 7)
+    return f
+def render_fn(fn, ramps):
+    c = SC(); fn(c); return c.rgb(ramps)
 
 @item('FISHBOWL', {'wood': WOOD, 'glass': ramp((196, 232, 250)), 'water': ramp((110, 186, 236)), 'sand': ramp((240, 214, 150)), 'weed': ramp((90, 180, 110)), 'peb': ramp((170, 160, 200))})
 def FISHBOWL(c):
@@ -268,17 +291,21 @@ def FIREPLACE(c):
     for xx in range(189, 204): tp(c, xx, 101, 'glow', 1); tp(c, xx, 102, 'glow', 2)
     for yy in (105, 106):
         for xx in range(175, 217): tp(c, xx, yy, 'stone', 3 if yy == 105 else 4)
-def fireplace_shadow(img):
-    """(x, y, level 0-2) for the wall round the fireplace: a soft, even shadow, a little deeper under the mantel"""
+def object_shadow(img, floor=False):
+    """(x, y, level 0-2): a soft, even shadow on the wall round an object standing against it (both sides alike, a
+    little deeper under it), and with floor=True one on the floor just under its front"""
     m = [[img[y][x] is not None for x in range(240)] for y in range(160)]
-    def near(x, y, dx, dy): return 0 <= y-dy < 160 and 0 <= x-dx < 240 and m[y-dy][x-dx] and (y-dy) < 101
+    ys = [y for y in range(160) for x in range(240) if m[y][x]]; xs = [x for y in range(160) for x in range(240) if m[y][x]]
+    def ok(x, y): return 0 <= y < 160 and 0 <= x < 240 and m[y][x]
     out = []
-    for y in range(60, 101):
-        for x in range(168, 226):
+    for y in range(max(28, min(ys)-4), min(134, max(ys)+5)):
+        for x in range(max(0, min(xs)-4), min(240, max(xs)+5)):
             if m[y][x]: continue
             for lv, d in enumerate((1, 2, 3)):
-                if near(x, y, d, 0) or near(x, y, -d, 0) or near(x, y, 0, d+1): out.append((x, y, lv)); break
+                if y < 101 and ((ok(x-d, y) and y-0 < 101) or ok(x+d, y) or (ok(x, y-d-1) and y-d-1 < 101)): out.append((x, y, lv)); break
+                if floor and y >= 101 and ok(x, y-d) and not (y-d < 101): out.append((x, y, lv)); break
     return out
+def fireplace_shadow(img): return object_shadow(img)
 
 # ================================================================== slot 2: wall, centre
 @item('CLOCK', {'frame': WOOD, 'face': ramp((250, 244, 226)), 'bell': ramp((240, 196, 90))})

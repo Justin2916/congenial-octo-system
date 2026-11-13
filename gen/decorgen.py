@@ -68,7 +68,7 @@ def build():
     import struct
     po = lambda n: [unp(v) for v in struct.unpack('<256H', open(_ROOT + '/gen/bg/' + n, 'rb').read())]
     od, on = po('pal_day.bin'), po('pal_night.bin')        # the original's colours (the wall is its 3 and 4)
-    src = {i: (od[i], on[i]) for i in (3, 4)}; src.update({144+i: (dpal[i], npal[i]) for i in range(len(dpal))})
+    src = {i: (od[i], on[i]) for i in (3, 4, 5, 6, 35, 29, 30, 34)}   # the wall, the floor and the rug (the original's); src.update({144+i: (dpal[i], npal[i]) for i in range(len(dpal))})
     shade = []
     for k in (0.60, 0.72, 0.86):
         row = list(range(256))
@@ -76,8 +76,27 @@ def build():
             td = tuple(int(v*k) for v in cd); tn = tuple(int(v*k) for v in cn)
             row[i2] = 144 + min(range(len(dpal)), key=lambda j: d2(dpal[j], td) + d2(npal[j], tn))
         shade.append(row)
-    sh = decor.fireplace_shadow(decor.render('FIREPLACE'))
-    o.insert(len(o)-2, '#define FP_SHADOW_N %d\nstatic const u8 FP_SHADOW[FP_SHADOW_N][3]={%s};\n' % (len(sh), ','.join('{%d,%d,%d}' % t for t in sh)))
+    # shadows: 0 the fireplace, 1 the bed (on the wall and the floor), 2-3 the jar's stand at its two spots
+    stands = [decor.render_fn(decor.stand(X), decor.STAND_RAMPS) for X in decor.STAND_X]
+    shs = [decor.object_shadow(decor.render('FIREPLACE')), decor.object_shadow(decor.render('BED'), floor=True)] + \
+          [decor.object_shadow(im, floor=True) for im in stands]
+    flat = []; off = []
+    for sh in shs: off.append(len(flat)); flat += sh
+    off.append(len(flat))
+    o.insert(len(o)-2, '#define SHADOW_N %d\nstatic const u8 SHADOW[SHADOW_N][3]={%s};\nstatic const u16 SHADOW_OFF[%d]={%s};   // 0 fireplace, 1 bed, 2-3 the stand\n' %
+             (len(flat), ','.join('{%d,%d,%d}' % t for t in flat), len(off), ','.join(map(str, off))))
+    # the stand, in the room's own colours (144-207: the closest by day and by night)
+    sp = []
+    for im in stands:
+        cols = {}
+        for y in range(160):
+            for x in range(240):
+                c = im[y][x]
+                if c is None: continue
+                if c not in cols: cols[c] = 144 + min(range(len(dpal)), key=lambda j: d2(dpal[j], c) + d2(npal[j], room_night(c)))
+                sp.append((x, y, cols[c]))
+    o.insert(len(o)-2, '#define STAND_N %d\nstatic const u8 STAND_PIX[STAND_N][3]={%s};   // both spots, one after the other (STAND_N/2 each)\nstatic const u8 STAND_X[2]={%d,%d};\n' %
+             (len(sp), ','.join('{%d,%d,%d}' % t for t in sp), *decor.STAND_X))
     o.insert(len(o)-2, 'static const u8 FP_SHADE[3][%d]={%s};\n' % (256, ','.join('{%s}' % ','.join(map(str, r)) for r in shade)))
     # yard toys: frames share one palette in band 2 (only one toy is out at a time)
     TOYS = ['BALL', 'KITE', 'FRISBEE', 'SPRINKLER', 'PINWHEEL']; tband = BAND0+2*BANDN

@@ -722,7 +722,8 @@ typedef struct {
   u8 fx_hold, fx_hpad[3];
   u16 dark_t, dark_pad;
   u16 yf_key; u8 yf_nk, yf_pad; u16 yf_pal[5][2][7];
-  u8 ex_first, fp_lit, mn_yard, ex_pad;   // (mn_yard: the START menu is open over the night yard)   // (fp_lit: the room picture has the fireplace's shadow, drawn only while the lights are on)   // v8.3: the SELECT menu's first row shown (it scrolls over the night yard, which adds CLEAN UP)
+  u8 ex_first, fp_lit, mn_yard, st_baked;   // (st_baked: the jar's stand drawn into the room picture: 0 none, 1+ its spot)
+  u16 jar_t, jar_back;   // v8.3: the jar's trip at dawn from its stand to the window (jar_t), and back (jar_back)   // (mn_yard: the START menu is open over the night yard)   // (fp_lit: the room picture has the fireplace's shadow, drawn only while the lights are on)   // v8.3: the SELECT menu's first row shown (it scrolls over the night yard, which adds CLEAN UP)
     // v8.3: the yard fireflies' palettes, for tonight's kinds (yf_key)               // v8.3: ticks awake by day with the lights off (an extra happy heart lost every DARK_TICKS)             // v8.3: frames a fade stays at its start (the runaway's cuts: until both pages hold the new shot)
 } State;
 
@@ -1637,8 +1638,8 @@ static void yard_poops(void){   // back (y 104), middle right (116), middle left
 }
 // v8.3: the room's poops are ours too, in 2.5D like the yard's: front by the rug's edge, two in the middle, a small
 // one at the back of the floor (it starts at y 101). Every indoor floor piece covers x 3-50 or x 192-240 (mapped by
-// placing each one), so these spots never overlap decor. Drawn into the background: the critter stands in front.
-static const u8 RP_X[4]={116,160,60,136}, RP_Y[4]={131,117,113,108}, RP_SZ[4]={0,1,1,2};
+// placing each one), the bed x 19-71 and the jar's stand at most x 88, so these spots never overlap them. Drawn into the background: the critter stands in front.
+static const u8 RP_X[4]={116,160,92,136}, RP_Y[4]={131,117,113,108}, RP_SZ[4]={0,1,1,2};
 static void room_poops(void){ poops_at(PET[P_POOP], RP_X, RP_Y, RP_SZ); }
 static void garden_draw(int glow);
 static void draw_outside_extras(void){
@@ -1963,6 +1964,7 @@ static void draw_decor(int anim){
     static const u8 FXX[N_SLOTS]={20,212,142,101,44,186}, FXY[N_SLOTS]={92,90,66,62,90,88};
     int k=90-G.fx_t, s=G.fx_slot, x=FXX[s], y=FXY[s];
     if(G.deco.slot[s]==IT_FIREPLACE){ x=196; y=62; }   // v8.3: it's on the back wall now, under the picture
+    else if(G.deco.slot[s]==IT_BED){ x=44; y=84; }      // v8.3: the bed is under the window now
     if(YARD_SLOT(s) != G.outside) return;
     int it=G.deco.slot[s];
     if(it==IT_RADIO || it==IT_PIANO || it==IT_GUITAR) { note_icon(x-6+(k>>3),y-k/3); note_icon(x+8-(k>>3),y-8-k/3); }
@@ -4332,23 +4334,33 @@ void hook_room_critter(const void *spr,int x,int y,int sc,int flip,int a5){
 }
 // the room renderer's background copy is routed here: yard outside, sky in the window, decor inside
 static void garden_still(void);
+static int stand_on(void);
+static int stand_spot(void);
+static void shade_list(int k){ for(int i=SHADOW_OFF[k];i<SHADOW_OFF[k+1];i++){ int x=SHADOW[i][0], y=SHADOW[i][1], c=pget(x,y), d=FP_SHADE[SHADOW[i][2]][c]; if(d!=c) pset(x,y,d); } }
 static void build_bg(int want){
   if(want>=3){ prerender_yard(want==4); u16 *sv=DRAW_TARGET; DRAW_TARGET=(u16*)YARD_BG;
     garden_still();   // v8.1: the flowers first, so the decor (nearer the front) is drawn over them
     u8 o=G.outside; G.outside=1; draw_decor(0); G.outside=o; DRAW_TARGET=sv; }
   else { O_DMACOPY(YARD_BG, BGX_ROOM); G.bgx_yard=0; u16 *sv=DRAW_TARGET; DRAW_TARGET=(u16*)YARD_BG;   // same picture day and night: the palette darkens it
     { int base=C_PIC; const u8 *q=PIC_PIX; for(int y=0;y<PIC_H;y++) for(int x=0;x<PIC_W;x++) pset(181+x,35+y,base+*q++); }   // the wall picture
+    G.st_baked=(u8)(stand_on()? stand_spot()+1 : 0);
+    if(G.st_baked){ int h=STAND_N/2, a=(G.st_baked-1)*h; for(int i=a;i<a+h;i++) pset(STAND_PIX[i][0],STAND_PIX[i][1],STAND_PIX[i][2]); }   // v8.3: the jar's stand
     u8 o=G.outside; G.outside=0; draw_decor(0); G.outside=o;
-    G.fp_lit=(u8)!PET[P_LIGHTS];   // (with the lights off the original dims the wall almost to black: no shadow then)
-    if(G.fp_lit && G.deco.slot[DECOR_SLOT(IT_FIREPLACE)]==IT_FIREPLACE)   // v8.3: its soft shadow on the wall (the wall's own colours, darker)
-      for(int i=0;i<FP_SHADOW_N;i++){ int x=FP_SHADOW[i][0], y=FP_SHADOW[i][1], c=pget(x,y), d=FP_SHADE[FP_SHADOW[i][2]][c]; if(d!=c) pset(x,y,d); }
+    // v8.3: soft shadows on the wall (and the floor) round the fireplace, the bed and the stand, in the room's own
+    // colours made darker; only while the lights are on (with them off the original dims the wall almost to black)
+    G.fp_lit=(u8)!PET[P_LIGHTS];
+    if(G.fp_lit){
+      if(G.deco.slot[DECOR_SLOT(IT_FIREPLACE)]==IT_FIREPLACE) shade_list(0);
+      if(G.deco.slot[DECOR_SLOT(IT_BED)]==IT_BED) shade_list(1);
+      if(G.st_baked) shade_list(1+G.st_baked); }
     DRAW_TARGET=sv; }
   G.bg_state=(u8)want;
 }
 void hook_bg_copy(void *dst, const void *src){
   int want = G.outside? 3+is_night() : (src==(const void*)BG_ROOM_NIGHT? 2 : 1);
   portrait_check();
-  if(!G.outside && G.fp_lit!=(u8)!PET[P_LIGHTS] && G.deco.slot[DECOR_SLOT(IT_FIREPLACE)]==IT_FIREPLACE) G.bg_state=0;   // the lights changed: redo the shadow
+  if(!G.outside && G.fp_lit!=(u8)!PET[P_LIGHTS]) G.bg_state=0;   // the lights changed: redo the shadows
+  if(!G.outside && G.st_baked!=(u8)(stand_on()? stand_spot()+1 : 0)) G.bg_state=0;   // the stand came, or moved
   if(G.bg_state!=want) build_bg(want);
   O_DMACOPY(dst, YARD_BG);
   if(G.outside){ draw_sky(0); if(SCENE!=3) garden_draw(G.yard_night); draw_decor(1); draw_outside_extras(); yard_poops(); }
@@ -4927,7 +4939,21 @@ static void fly_screen_draw(void){
 // ---- in the room: the lantern on the windowsill all night, the release in the morning, the dance once all are found
 #define LANT_X 40
 #define LANT_Y 64
-static void fly_morning(void){ if(G.fly_n && G.fly_night==G.ext.day){ G.fly_rel=1; } else { G.fly_n=0; G.fly_kinds=0; } }
+static void fly_morning(void){ if(G.fly_n && G.fly_night==G.ext.day){ G.fly_rel=1; G.jar_t=0; G.jar_back=0; } else { G.fly_n=0; G.fly_kinds=0; } }
+// v8.3: the jar lives on its stand (it comes with the first firefly ever caught): in the middle under the window when
+// nothing stands on the left, else just right of what does. At dawn it lifts off, floats over to the sill (LANT_X/Y)
+// for the release, and afterwards floats back, empty, and stays there through the day.
+static int stand_on(void){ return fly_found()!=0 || G.fly_n; }
+static int stand_spot(void){ return G.deco.slot[0]!=0xFF; }
+#define JAR_UP 16                          // frames to lift off the stand
+#define JAR_T  64                          // frames for the whole trip (lift, then an arc to the sill)
+static void jar_at(int f,int *x,int *y){   // where it is f frames into its trip (0 = on the stand)
+  int sx=STAND_X[stand_spot()]+2, sy=77;
+  if(f<=0){ *x=sx; *y=sy; return; }
+  if(f<JAR_UP){ *x=sx; *y=sy-8*f/JAR_UP; return; }
+  int t=f-JAR_UP, n=JAR_T-JAR_UP; if(t>n) t=n;
+  int dx=LANT_X-sx, amp=(dx<0? -dx : dx)/4;
+  *x=sx+dx*t/n; *y=(sy-8)+(LANT_Y-(sy-8))*t/n-amp*SIN64[t*32/n]/256; }
 // v8.2: in the morning the window swings open, the cork pops and the fireflies float out as glowing hardware
 // sprites, shrinking and fading into the distance (window 0 keeps them inside the open window); then it shuts.
 #define FLY_GONE 112                       // frames from leaving the jar to gone
@@ -4935,7 +4961,7 @@ static void fly_morning(void){ if(G.fly_n && G.fly_night==G.ext.day){ G.fly_rel=
 static int fly_rel_n(void){ return G.fly_n<10? G.fly_n : 10; }
 static int fly_rel_last(void){ int n=fly_rel_n(); return 40+(n>0? n-1 : 0)*12+FLY_GONE; }   // the last one is gone
 static int win_open_amt(void){   // 0 shut .. WIN_SWING wide open
-  if(!G.fly_rel || G.outside) return 0;
+  if(!G.fly_rel || G.outside || G.jar_t<JAR_T) return 0;   // (v8.3: not until the jar is at the window)
   int r=G.fly_rel, rl=fly_rel_last();
   return r<=WIN_SWING? r : r<rl? WIN_SWING : r<rl+WIN_SWING? rl+WIN_SWING-r : 0; }
 static void win_pane_geom(int o,int *w,int *k){   // how wide a pane looks, and how much its far edge shrinks
@@ -4986,7 +5012,7 @@ static int menu_box(int *r){
     default: return 0;
   }
 }
-static void jar_glow(int t){
+static void jar_glow(int t,int jx,int jy){
   // v8.3: it keeps glowing behind the menus too (in the room, outside the menu's box)
   int box[4], boxed=0;
   if(G.mode==M_NONE || G.mode==M_EAT){ if(SCENE!=1 && SCENE!=3) return; }
@@ -5000,24 +5026,27 @@ static void jar_glow(int t){
   int bk=spr_pal(); if(bk<0) return;
   static const u8 JG[7]={0,18,40,66,100,145,200};
   for(int L=1;L<=6;L++) G.sp[bk][L]=rgb_scale(col,JG[L]*br>>8);
-  spr_add(LANT_X+6,LANT_Y+9,2,SPT_SGLOW,bk,spr_aff(sc,0),1,0);
+  spr_add(jx+6,jy+9,2,SPT_SGLOW,bk,spr_aff(sc,0),1,0);
   if(boxed && !G.spr_win){   // window 0 = the menu's box, with no sprites inside it (spr_sync: spr_win 2)
     G.spr_win=2; G.win[0]=(u8)box[0]; G.win[1]=(u8)(box[0]+box[2]); G.win[2]=(u8)box[1]; G.win[3]=(u8)(box[1]+box[3]); }
 }
 static void lantern_draw(void){
   if(G.outside) return;
-  int t=(int)G.sky_t;
-  if(G.fly_rel){   // morning: the window opens, the cork pops and they drift out, home
+  int t=(int)G.sky_t, x, y;
+  if(G.fly_rel){   // morning: it floats over to the window, which opens, the cork pops and they drift out, home
+    if(G.jar_t<JAR_T){ jar_at(G.jar_t,&x,&y); G.jar_t++; jar_glow(t,x,y); fly_jar(x,y,G.fly_n,G.fly_kinds,0); return; }
     int r=G.fly_rel++;
     if(r==40){ set_msg("BYE, FIREFLIES! THEY FLEW HOME."); sfx(0,SEQ_POP); }
-    if(r<40){ jar_glow(t); fly_jar(LANT_X,LANT_Y,G.fly_n,G.fly_kinds,0); return; }
+    if(r<40){ jar_glow(t,LANT_X,LANT_Y); fly_jar(LANT_X,LANT_Y,G.fly_n,G.fly_kinds,0); return; }
     fly_jar(LANT_X,LANT_Y,0,0,1); fill(LANT_X-6,LANT_Y+12,6,2,250);   // the cork, set down beside it
     fly_rel_sprites(r);
-    if(r>=fly_rel_last()+WIN_SWING || r>400){ G.fly_rel=0; G.fly_n=0; G.fly_kinds=0; }
+    if(r>=fly_rel_last()+WIN_SWING || r>400){ G.fly_rel=0; G.fly_n=0; G.fly_kinds=0; G.jar_back=1; }
     return; }
-  if(!is_night() || !G.fly_n || G.fly_night!=(u16)(G.ext.day+1)) return;
-  jar_glow(t);
-  fly_jar(LANT_X,LANT_Y,G.fly_n,G.fly_kinds,0);
+  if(G.jar_back){ jar_at(JAR_T-G.jar_back,&x,&y); fly_jar(x,y,0,0,0); if(++G.jar_back>JAR_T) G.jar_back=0; return; }   // back to its stand
+  if(!stand_on()) return;
+  jar_at(0,&x,&y);
+  if(is_night() && G.fly_n && G.fly_night==(u16)(G.ext.day+1)){ jar_glow(t,x,y); fly_jar(x,y,G.fly_n,G.fly_kinds,0); }
+  else fly_jar(x,y,0,0,0);   // empty, through the day
 }
 static void fly_dance(void){   // all twelve found: they dance outside the window every night (sky coordinates)
   if(fly_found()!=FLY_ALL) return;

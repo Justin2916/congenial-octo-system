@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 222 checks (187 in the v8.1 sections, 13 `sprites` and 22 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 224 checks (187 in the v8.1 sections, 13 `sprites` and 24 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
@@ -142,7 +142,7 @@ Other details:
     a rose in bloom, Wish Spark a wish made that night, and Starfly about 1 night in 10 with 2+ blooms.
   - Rare kinds are decided at nightfall, so extra rounds can't farm them.
   - Catching gives no coins and no stats.
-  - The night's catch shows as a lantern on the windowsill, and it is released at dawn.
+  - The night's catch shows as a lantern (v8.3: on its stand by the bed), and it is released at dawn.
   - Once all 12 are found, they dance at the window every night.
 - **Shooting stars:** about 1 night in 3, one star at a random step of the night. The message reads
   "A SHOOTING STAR! A: MAKE A WISH", and A still works for about 3 s after the star has crossed.
@@ -258,8 +258,8 @@ Other details:
     shows in the room's colours (`fx_watch`, and the check at the top of `hook_render`).
   - The sick-while-asleep symbol follows the critter: drawn at `room_cx+38`, `room_cy-20` (beside the Zs).
   - Room poops are ours too (2.5D, like the yard's): `room_poops()` draws `PET[P_POOP]` at `RP_X/RP_Y` (front by
-    the rug, two middle, a small one at the back of the floor, which starts at y 101), all inside x 52-190, clear of
-    every indoor floor piece (x 3-50 and 192-240, mapped by placing each). Both share `poops_at()`. The original's poop
+    the rug, two middle, a small one at the back of the floor, which starts at y 101), all inside x 88-190, clear of
+    every indoor floor piece, the bed and the stand (the middle-left spot moved to x 92 with the bed). Both share `poops_at()`. The original's poop
     drawing reads `ext_poops_drawn()` (always 0); its call-icon check still reads `ext_mess_drawn()`.
   - The SELECT menu shows only what works (`extras_list()`; `G.cur` is a row of that list, the box fits it): in the
     room OUTSIDE/GARDEN, BAG, SHOP, STORY (night only) and JOURNAL; over the night yard GO INSIDE, CLEAN UP (only while
@@ -270,6 +270,17 @@ Other details:
     room's 144-207 to darker room colours), drawn in `build_bg` only while the lights are on (`G.fp_lit`; with them off
     the original dims 3/4 almost to black and our colours would glow). The picture hangs 8 px higher (`PIC_UP` in
     `bgfx.py`; ext.c draws it at y 35). Flames at x 192/196/200, base y 97; its use spot (hearts) is (196,62).
+  - **Bed** (slot 0) stands with its head against the back wall under the window (`gen/decor.py` `BED`: x 19-71,
+    y 88-118, headboard below the sill); its hearts show at (44,84). Its shadow (wall and floor) is `SHADOW` list 1.
+  - **The jar's stand** comes with the first firefly ever found (`stand_on()`: `fly_found()` or tonight's jar) and stays
+    for good. It stands in the middle under the window when slot 0 is empty, else right of the slot-0 piece
+    (`stand_spot()`, `STAND_X` = {37, 73}). It isn't decor: `STAND_PIX` is in the room's own colours (144-207, closest
+    by day and night), drawn into the room picture (`G.st_baked` = spot+1; a change rebuilds it). The jar lives on it:
+    full and glowing at night, empty by day. At dawn (`fly_morning`) it lifts off and arcs to the sill (`jar_at`,
+    `G.jar_t` up to `JAR_T`; the window stays shut till then), the release runs as before at `LANT_X/LANT_Y`, then it
+    floats back (`G.jar_back`).
+  - Shadows: `SHADOW`/`SHADOW_OFF` (0 fireplace, 1 bed, 2-3 the stand at each spot) darken the wall, floor and rug via
+    `FP_SHADE`; `shade_list()` in `build_bg`, only while the lights are on.
   - A new critter clears the "tonight" marks (`night_marks_reset`: `More.spare[0]`, `[1]`, `[6]`, `[7]`, the lantern):
     they're day+1 and its days restart at 0, so its first night could read as used ("NO MORE FIREFLIES TONIGHT.").
   - START opens the menu over the night yard too (`G.mn_yard`; `menu_close()` goes back to `M_GARDEN`).

@@ -169,7 +169,7 @@ There are **twelve kinds** to find, each with its own colour and way of blinking
 - **Uncommon (5):** two of them are out each night, a different pair most nights. They glow for shorter.
 - **Rare (4):** each needs something special that night. Which ones are out is decided at nightfall, so playing more rounds won't bring them.
 
-A new kind shows its card and goes into the journal's **FIREFLIES** tab, a field guide with hints for the rare ones. The night's catch glows in a lantern on the windowsill until morning, and when your critter wakes the fireflies drift out of the window and fly home. Find all twelve and they come to dance outside the window every night after.
+A new kind shows its card and goes into the journal's **FIREFLIES** tab, a field guide with hints for the rare ones. Your first firefly brings a little stand for the jar, by the window (beside the bed, if you have one). The night's catch glows in the jar until morning; when your critter wakes, the jar floats over to the window and the fireflies drift out and fly home. Then the empty jar goes back on its stand. Find all twelve and they come to dance outside the window every night after.
 
 ## Outside and coins
 
