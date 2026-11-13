@@ -309,7 +309,7 @@ Choose **PLAY**, pick a game with UP and DOWN, and press A. Every round counts a
 |---|---|---|---|---|
 | BETTER LUCK | 0–3 | 0–2 | 0–1 | Coins only |
 | NICE! | 4–10 | 3–8 | 2–3 | Coins only |
-| AMAZING! | 11–13 | 9–11 | 4 | Happy +2, plus the game's boost |
+| AMAZING! | 11–13 | 9–11 | 4 | Happy +1, plus the game's boost |
 | PERFECT! | 14 | 12 | 5 | The same as AMAZING!, and a perfect round |
 
 | Game | Its boost (AMAZING! or better) |

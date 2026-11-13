@@ -3362,7 +3362,7 @@ static void mini_apply(u16 keys){
   int r=G.rating, g=G.game;
   if(g==G_HOP) PET[P_WEIGHT]=(u8)clampi(PET[P_WEIGHT]-1,min_weight(),99);
   // v8.3: a round's rewards come with AMAZING! or better (NICE! now pays coins only; no bonus coins)
-  if(r>=2) PET[P_HAPPY]=(u8)clampi(PET[P_HAPPY]+2+(g==G_GUESS),0,4);
+  if(r>=2) PET[P_HAPPY]=(u8)clampi(PET[P_HAPPY]+1+(g==G_GUESS),0,4);
   if(r>=2 && G.ext.stars<255) G.ext.stars++;
   if(r>=2){   // what a great round does for its kind of care
     if(g==G_PANCAKE && PET[P_HUNGER]<4) PET[P_HUNGER]++;
@@ -3533,7 +3533,7 @@ static void pick_draw(void){
     if(G.pick==i) text(">",30,y,C_RED);
     text(GAME_NAMES[i],40,y,C_DTEXT); text(k,210-slen(k)*6,y,C_LILAC); }
   fill(30,98,180,1,C_HINT);
-  textc("AMAZING! OR BETTER: HAPPY +2",120,102,C_DTEXT);   // v8.3: the rewards come with AMAZING! or better
+  textc("AMAZING! OR BETTER: HAPPY +1",120,102,C_DTEXT);   // v8.3: the rewards come with AMAZING! or better
   textc(GAME_BOOST[G.pick],120,112,C_LILAC);
   { static const u8 TOP_COINS[N_GAMES]={15,15,10,15};
     char b[32]; char *p=scpy(b,"TOP PRIZE: "); p=sint(p,TOP_COINS[G.pick]); scpy(p," COINS");
