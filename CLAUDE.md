@@ -318,11 +318,27 @@ Other details:
     The story's morning mark (`More.spare[2]`) is still set and cleared, but gives nothing (its new purpose is open).
   - `udivmod` steps once per quotient bit. The old bit-by-bit divide made the night room with the jar drop to 30 fps
     on mGBA.
+  - **Minigame rewards (v8.3t):** no bonus coins. NICE! pays coins only; AMAZING! or better gives happy +2 and the
+    game's boost (`mini_apply`, `r>=2`; `GAME_BOOST`, shown on the picker by `pick_draw`). Hop Hop's -1 weight stays
+    every round.
+  - **The jar's stand is per critter** (v8.3t): `More.pad1` bit 4 is set by its first catch (`fly_catch`); `stand_on()`
+    is that bit or tonight's jar. `night_marks_reset` clears it (and bit 3, the toy box flag) on a new egg.
+  - **Minigame frame time (v8.3t):** the top bar (`mini_top`, keyed by `G.mini_key`) and the game's label
+    (`mini_label_bake`, `G.mini_lbl`; a change restores only its strip, y 33-45: a full `prerender_mini` was a slow
+    frame that swallowed quick key presses in Stargazer) are baked into SCRATCH_BG instead of drawn every frame. mGBA
+    renders per 600 frames, yard: Hop Hop 314 -> 595, Left or Right? 300 -> 516, Stargazer 272 -> 487. `o_draw_text` (orig.c) also writes two pixels at a time and draws whole runs at bigger
+    sizes (port_check: ALL IDENTICAL).
+  - **Profiling:** the emulator's `prof` table is `(pc>>1)&0x1FFFF`, so code above 0x08040000 (e.g. `blit_rows`)
+    aliases onto low addresses (it looked like `irq`). For a true profile, build a scratch copy of `test_emulator.c`
+    with a bigger table.
+  - **Journal:** the tabs wrap (L/R), so both arrows always show (`jr_header`; `jtab_last` keeps room for them).
+    Icons come from `gen/icons.py`; pieces on a stand (`STANDS`: TV, radio, fishbowl) use their placed drawing, so
+    rerun `icongen.py` after changing decor art. The mirror and guitar hang 12 px lower than their source art.
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its
   grown-up days start): Sunpuff = an Oakhart in the yard with `PET_CLOCK` < 150 on 3 days (`Dex.yard`, the day marker
   in `Life.pad`; "BASKS IN THE MORNING SUN!"); Glimmer = a Dunerose with 8 fireflies in the lantern in one night
   (`More.pad1` bit 2); Zippit = a Fluffbud that wished on 2 shooting stars (`Dex.games`). `Dex.yard/games` were only
-  read when a pre-v9 save converts. Nestle needs all five room spots (v8.3: the corner too). Starwing and the less-care secrets are unchanged; the `PH_OLD` rules too.
+  read when a pre-v9 save converts. Nestle needs all five room spots (v8.3: the corner too; its journal hint says 5). Starwing and the less-care secrets are unchanged; the `PH_OLD` rules too.
 
 ## Porting the original (started Nov 12 2026)
 

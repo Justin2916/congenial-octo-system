@@ -184,14 +184,22 @@ ITEM_ORDER = ['APPLE', 'FISH', 'CAKE', 'CANDY', 'SALAD', 'PIZZA', 'MILK', 'COOKI
               'BED', 'FISHBOWL', 'PLANT1', 'RADIO', 'CLOCK', 'BOOKSHELF', 'TOYBOX', 'TV', 'PORTRAIT', 'MOBILE', 'LANTERN',
               'SWING', 'SANDBOX', 'BIRDBATH', 'GARDEN', 'FRISBEE', 'SPRINKLER', 'PINWHEEL',
               'BEANBAG', 'PIANO', 'ARCADE', 'FIREPLACE', 'MIRROR', 'GUITAR', 'DISCO', 'PLANE', 'TRAMPOLINE', 'SLIDE', 'POND', 'FLOWERS']
+STANDS = ('TV', 'RADIO', 'FISHBOWL')
 def icon(name, MAX=32):
     if name in F: return crop(render_food(name, 32))
     if name in TOYMAP:
         t, k, s = TOYMAP[name]; return upscale(crop(decor.render_toy(t, k)), s)
     if name == 'MOBILE': return crop(mobile_icon())
     if name == 'PLANE': return crop(plane_icon())
-    fn, ramps = decor.D[name]; c = decor.SC(); fn(c); extra = dict(ramps); EXTRA.get(name, lambda c, r: None)(c, extra)
-    img = crop(c.rgb(extra)); h = len(img); w = len(img[0])
+    fn, ramps = decor.D[name]; extra = dict(ramps); ex = EXTRA.get(name, lambda c, r: None)
+    if name in STANDS:   # v8.3: a piece that stands on a cabinet or table in the room shows it here too
+        decor.D[name] = (lambda c: (fn(c), ex(c, extra)), extra)
+        try: c, rr = decor.placed_canvas(name)
+        finally: decor.D[name] = (fn, ramps)
+        img = crop(c.rgb(rr))
+    else:
+        c = decor.SC(); fn(c); ex(c, extra); img = crop(c.rgb(extra))
+    h = len(img); w = len(img[0])
     if max(w, h) > MAX: img = downscale(img, MAX/max(w, h))
     return img
 def _swing(c, r):
@@ -206,10 +214,10 @@ def _arcade(c, r):
     for x in (211, 218, 225):
         for (dx, dy) in ((0, 0), (2, 0), (1, 1), (0, 2), (1, 2), (2, 2)): decor.tp(c, x+dx, 88+dy, 'inv', 1)
     decor.rect(c, 217, 98, 4, 2, 'inv', 2)
-def _fire(c, r):
+def _fire(c, r):   # (v8.3: three small flames on the logs of the fireplace on the back wall)
     r['fl'] = ramp((255, 150, 60)); r['fl2'] = ramp((255, 220, 90))
-    for (x, h) in ((211, 12), (216, 15), (221, 11)):
-        c.ellipse(x+1, 119-h/2, 2.8, h/2, 'fl', shade=False); c.ellipse(x+1, 119-h/3, 1.4, h/3, 'fl2', shade=False)
+    for (x, h) in ((193, 6), (197, 8), (201, 5)):
+        c.ellipse(x, 95-h/2, 1.8, h/2, 'fl', shade=False); c.ellipse(x, 95-h/3, 0.9, h/3, 'fl2', shade=False)
 def _portrait(c, r):
     r['ht'] = ramp((236, 90, 120))
     c.ellipse(139, 47, 4, 4, 'ht'); c.ellipse(145, 47, 4, 4, 'ht'); c.poly([(135.2, 48.5), (148.8, 48.5), (142, 56)], 'ht', tone=2)

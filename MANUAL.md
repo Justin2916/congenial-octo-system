@@ -168,7 +168,7 @@ There are **twelve kinds** to find, each with its own colour and way of blinking
 - **Uncommon (5):** two of them are out each night, a different pair most nights. They glow for shorter.
 - **Rare (4):** each needs something special that night. Which ones are out is decided at nightfall, so playing more rounds won't bring them.
 
-A new kind shows its card and goes into the journal's **FIREFLIES** tab, a field guide with hints for the rare ones. Your first firefly brings a little stand for the jar, by the window (beside the bed, if you have one). The night's catch glows in the jar until morning; when your critter wakes, the jar floats over to the window and the fireflies drift out and fly home. Then the empty jar goes back on its stand. Find all twelve and they come to dance outside the window every night after.
+A new kind shows its card and goes into the journal's **FIREFLIES** tab, a field guide with hints for the rare ones. Your critter's first firefly brings a little stand for the jar, by the window (beside the bed, if you have one). The night's catch glows in the jar until morning; when your critter wakes, the jar floats over to the window and the fireflies drift out and fly home. Then the empty jar goes back on its stand. (Each critter earns its own stand: a new egg starts without one.) Find all twelve and they come to dance outside the window every night after.
 
 ## Outside and coins
 
@@ -308,11 +308,11 @@ Choose **PLAY**, pick a game with UP and DOWN, and press A. Every round counts a
 | Rating | Pancake Tower | Hop Hop | Left or Right? / Stargazer | Gives |
 |---|---|---|---|---|
 | BETTER LUCK | 0–3 | 0–2 | 0–1 | Coins only |
-| NICE! | 4–10 | 3–8 | 2–3 | Happy +1, plus the game's boost |
-| AMAZING! | 11–13 | 9–11 | 4 | Happy +2, the game's boost, and 5 bonus coins |
+| NICE! | 4–10 | 3–8 | 2–3 | Coins only |
+| AMAZING! | 11–13 | 9–11 | 4 | Happy +2, plus the game's boost |
 | PERFECT! | 14 | 12 | 5 | The same as AMAZING!, and a perfect round |
 
-| Game | Its boost (NICE! or better) |
+| Game | Its boost (AMAZING! or better) |
 |---|---|
 | Pancake Tower | Hunger +1 |
 | Hop Hop | Weight −1 (every round, whatever the score) |
@@ -333,7 +333,7 @@ A critter whose health runs out leaves instead: at dawn it packs its little bind
 
 ## The journal
 
-The journal keeps a record of every critter and is never cleared. Open it from the title screen or the SELECT menu (out in the night yard too), and turn its tabs with L and R. When the tabs don't all fit, the strip scrolls, with arrows at its ends:
+The journal keeps a record of every critter and is never cleared. Open it from the title screen or the SELECT menu (out in the night yard too), and turn its tabs with L and R. They go round and round (from RECORDS, R goes back to SKY), so the strip always shows an arrow at each end, and it scrolls when the tabs don't all fit:
 
 - **SKY:** a star for every critter you've raised, in its own colour. Pick one to read its story: its name, form, age and what it loved.
 - **GUIDE:** a page for each of the 20 forms. A met form shows its picture, lore and whether you've raised it as a boy or a girl. Press A to see how it grows. Secret forms show a riddle until you find them.

@@ -362,7 +362,7 @@ static const Item ITEMS[IT_COUNT] = {
   {"RADIO",    "DECOR: MUSIC TO DANCE TO",110,0,0,0,0, ART_RADIO},
   {"CLOCK",    "DECOR: SHOWS THE TIME",   80,0,0,0,0, ART_CLOCK},
   {"BOOKSHELF","DECOR: A SHELF OF BOOKS",  130,0,0,0,0, ART_BOOKS},
-  {"TOYBOX",   "DECOR: TOYS TO PLAY WITH", 90,0,0,0,0, ART_TOYBOX},
+  {"TOYBOX",   "DECOR: TOYS AT THE BED'S FOOT", 90,0,0,0,0, ART_TOYBOX},
   {"TV",       "DECOR: CARTOONS TO WATCH",160,0,0,0,0, ART_TV},
   {"PORTRAIT", "DECOR: ITS OWN PICTURE!", 100,0,0,0,0, ART_PORTRAIT},
   {"MOBILE",   "CEILING: SPINNING STARS",  80,0,0,0,0, ART_MOBILE},
@@ -440,7 +440,7 @@ static const char *const COL_TEXT[IT_COUNT]={
   "MUSIC TO DANCE TO.|DANCING COUNTS AS|PLAY.",
   "SHOWS THE TIME OF|DAY. IT'S JUST TO|LOOK AT.",
   "A SHELF OF BOOKS.|READING HEALS IT A|LITTLE. IT READS|LESS OFTEN THAN IT|PLAYS.",
-  "A BOX OF TOYS.|PLAYING WITH THEM|COUNTS AS PLAY.",
+  "A BOX OF TOYS AT|THE FOOT OF THE BED|(IT NEEDS THE BED).|PLAYING WITH THEM|COUNTS AS PLAY.",
   "CARTOONS TO WATCH.|COUNTS AS PLAY, ONLY|WHILE THE LIGHTS|ARE ON.",
   "ITS OWN PICTURE!|IT LIKES TO ADMIRE|IT. JUST TO LOOK AT.",
   "STARS THAT SPIN.|JUST LOVELY TO|WATCH.",
@@ -547,7 +547,7 @@ static const Form FORMS[N_FORMS] = {
  /*11*/ {"GLIMMER",1,ST_SECRET,0,0,990,
         "ITS CACTUS FLOWERS|OPEN AT NIGHT AND GLOW|LIKE LANTERNS. FIRE-|FLIES FOLLOW IT HOME.", "A DUNEROSE WITH 8|FIREFLIES IN ITS|LANTERN IN ONE NIGHT."},
  /*12*/ {"NESTLE",1,ST_SECRET,1,0,520,
-        "IT WOVE ITS FRONDS|INTO A NEST AND GUARDS|THE EGG INSIDE. IT|LOVES A COZY HOME.", "A FRILLO IN A ROOM|WITH ALL 4 DECOR|SPOTS FILLED."},
+        "IT WOVE ITS FRONDS|INTO A NEST AND GUARDS|THE EGG INSIDE. IT|LOVES A COZY HOME.", "A FRILLO WITH ALL 5|ROOM SPOTS FILLED."},
  /*13*/ {"BLOOMLE",1,ST_TEEN,0,0,680,
         "ITS BUD HAS OPENED|INTO A FLOWER. IT|STANDS TALL, WAVES AT|EVERYONE, AND HUMS.", "A SPROUTLE THAT WAS|CARED FOR WELL."},
  /*14*/ {"THORNLE",2,ST_TEEN,2,0,560,
@@ -732,6 +732,8 @@ typedef struct {
   u16 jar_t, jar_back;              // v8.3: the jar's trip at dawn from its stand to the window (jar_t), and back (jar_back)
   u8 bs_yard, bs_pad[3];            // v8.3: the BAG or the SHOP was opened from the night yard (they go back out there)
   u16 decor_cd67[2];                // v8.3: the use cooldowns of spots 6 and 7 (the first six are decor_cd, kept where it was)
+  u32 mini_key;                     // v8.3: what the minigame's top bar shows in SCRATCH_BG (0 = redraw)
+  u32 mini_lbl;                     // v8.3: the game's label baked into SCRATCH_BG (its address, 0 = none)
 } State;
 
 #define G (*(State*)0x0203E000u)
@@ -2154,7 +2156,8 @@ static void new_unlock_seed(void);
 static void life_reset(int keep_stars,int bonus);
 // v8.3: the "tonight" marks (a wish, a story, the firefly rounds) are day+1, and a new critter's days start again at 0:
 // clear them, or its first night can look already used (e.g. "NO MORE FIREFLIES TONIGHT." before any round)
-static void night_marks_reset(void){ G.more.spare[0]=G.more.spare[1]=G.more.spare[6]=G.more.spare[7]=0; G.fly_night=0; G.fly_n=0; G.fly_kinds=0; }
+static void night_marks_reset(void){ G.more.spare[0]=G.more.spare[1]=G.more.spare[6]=G.more.spare[7]=0; G.fly_night=0; G.fly_n=0; G.fly_kinds=0;
+  G.more.pad1&=(u8)~(16|8); G.jar_t=G.jar_back=0; G.fly_rel=0; G.bg_state=0; }   // (v8.3: and the jar's stand goes, with everything else)
 static void journal_end(int ending);
 static void track_stage(void){
   u8 st=PET[P_STAGE];
@@ -3263,8 +3266,8 @@ static const char *const GAME_NAMES[N_GAMES]={"PANCAKE TOWER","HOP HOP","LEFT OR
 static const char *const GAME_HINTS[N_GAMES]={"A: DROP!   B: QUIT","A: JUMP!   B: QUIT","LEFT/RIGHT: GUESS!   B: QUIT",
   "D-PAD: THAT STAR!   B: QUIT"};
 static const u8 GAME_KIND[N_GAMES]={KF,KP,KP,KR};
-static const char *const GAME_BOOST[N_GAMES]={"NICE OR BETTER: +1 HUNGER","EVERY ROUND: -1 WEIGHT","NICE OR BETTER: +1 MORE HAPPY",
-  "NICE OR BETTER: HEALS IT"};
+static const char *const GAME_BOOST[N_GAMES]={"AND +1 HUNGER","EVERY ROUND: -1 WEIGHT","AND +1 MORE HAPPY",
+  "AND IT HEALS"};
 static const char *const GAME_SCORE[N_GAMES]={"STACK: ","SCORE: ","SCORE: ","SONGS: "};
 static const u8 GAME_TUNE[N_GAMES]={T_MINI_CATCH,T_MINI_HOP,T_MINI_GUESS,T_MINI_STARS};
 #define GAME_FRAMES 600   // 10 seconds
@@ -3310,7 +3313,7 @@ static void prerender_mini(void){
       for(int x=0;x<120;x++) row[x]=(u16)((row[x]&~m)|d); }
   if(G.phase!=PH_PICK && G.game==G_STARS) stars_sky();
   if(G.phase!=PH_PICK && G.game==G_PANCAKE) pk_table();
-  bars();
+  bars(); G.mini_key=0; G.mini_lbl=0;
   textc(G.phase==PH_PICK? PICK_HINT : GAME_HINTS[G.game],120,143,C_HINT);
   DRAW_TARGET=save;
 }
@@ -3358,14 +3361,15 @@ static void mini_finish(void){
 static void mini_apply(u16 keys){
   int r=G.rating, g=G.game;
   if(g==G_HOP) PET[P_WEIGHT]=(u8)clampi(PET[P_WEIGHT]-1,min_weight(),99);
-  if(r>=1) PET[P_HAPPY]=(u8)clampi(PET[P_HAPPY]+(r>2? 2 : r)+(g==G_GUESS),0,4);
-  if(r>=2){ G.ext.coins=(u16)(G.ext.coins+5>9999? 9999 : G.ext.coins+5); if(G.ext.stars<255) G.ext.stars++; }   // v8.3: AMAZING: +5 bonus coins (was bond +1)
-  if(r>=1){   // what a good round does for its kind of care
+  // v8.3: a round's rewards come with AMAZING! or better (NICE! now pays coins only; no bonus coins)
+  if(r>=2) PET[P_HAPPY]=(u8)clampi(PET[P_HAPPY]+2+(g==G_GUESS),0,4);
+  if(r>=2 && G.ext.stars<255) G.ext.stars++;
+  if(r>=2){   // what a great round does for its kind of care
     if(g==G_PANCAKE && PET[P_HUNGER]<4) PET[P_HUNGER]++;
     if(g==G_STARS){ u16 h=P16(0x16); P16(0x16)=(u16)(h+20>100? 100 : h+20); }
   }
   if(g==G_PANCAKE && G.score>G.keep.best) G.keep.best=(u8)G.score;
-  if(r>=1 && care_win()==&G.care.adult) cw_add(&G.care.adult.good,2);
+  if(r>=2 && care_win()==&G.care.adult) cw_add(&G.care.adult.good,2);
   add_coins(reward_coins());   // (saves)
   set_msg(r==3? "PERFECT! WHAT A STAR!" : r==2? "WHAT A STAR!" : r==0? "BETTER LUCK NEXT TIME" : g==G_PANCAKE? "YUM! THAT HIT THE SPOT!" :
           g==G_STARS? "WHAT A RESTFUL TUNE!" : "THAT WAS FUN!");
@@ -3529,28 +3533,73 @@ static void pick_draw(void){
     if(G.pick==i) text(">",30,y,C_RED);
     text(GAME_NAMES[i],40,y,C_DTEXT); text(k,210-slen(k)*6,y,C_LILAC); }
   fill(30,98,180,1,C_HINT);
-  textc(GAME_BOOST[G.pick],120,102,C_DTEXT);
-  textc("AMAZING! OR BETTER: +5 COINS",120,112,C_LILAC);
+  textc("AMAZING! OR BETTER: HAPPY +2",120,102,C_DTEXT);   // v8.3: the rewards come with AMAZING! or better
+  textc(GAME_BOOST[G.pick],120,112,C_LILAC);
   { static const u8 TOP_COINS[N_GAMES]={15,15,10,15};
     char b[32]; char *p=scpy(b,"TOP PRIZE: "); p=sint(p,TOP_COINS[G.pick]); scpy(p," COINS");
     int w=slen(b)*6; coin_icon(120-w/2-10,123); text(b,120-w/2+1,123,C_ORANGE); }
 }
+static void dma_fill(int x,int y,int w,int h,int c);
+// v8.3: the top bar's words (score and counter, or PLAY and the coins) are drawn into SCRATCH_BG only when they
+// change; drawing them every frame cost about a third of HOP HOP's frame in the yard
+static void mini_top(void){
+  char *p; u32 key;
+  int right;
+  if(G.phase==PH_PICK){ right=G.ext.coins; key=0x80000000u|(u32)right; }
+  else { if(G.game==G_GUESS || G.game==G_STARS) right=G.round<5?G.round+1:5;
+    else if(G.game==G_PANCAKE) right=0;
+    else if(G.game==G_HOP){ right=HOP_N-G.guess; for(int i=0;i<10;i++){ const Obj *q=&G.obj[i];
+        if(q->active && (q->type==0? !(q->flip || q->pad) : (q->x>>8) > G.px-10)) right++; } }
+    else right=(G.timer+59)/60;
+    key=0x40000000u|((u32)G.game<<24)|((u32)(G.score&0xFFF)<<12)|(u32)(right&0xFFF); }
+  if(key==G.mini_key) return;
+  G.mini_key=key;
+  u16 *sv=DRAW_TARGET; DRAW_TARGET=(u16*)SCRATCH_BG;
+  dma_fill(0,6,240,12,C_BAR);
+  if(G.phase==PH_PICK){ texts("PLAY",10,8,C_ORANGE);
+    sint(G.sbuf,G.ext.coins); { int w=slen(G.sbuf)*6; coin_icon(222-w-10,8); texts(G.sbuf,230-w,8,C_LTEXT); } }
+  else {
+    p=scpy(G.sbuf, G.game==G_PANCAKE? "STACK " : "SCORE "); sint(p,G.score); texts(G.sbuf,10,8,C_ORANGE);
+    if(G.game==G_GUESS || G.game==G_STARS){ p=scpy(G.sbuf,"ROUND "); p=sint(p,right); scpy(p,"/5"); }
+    else if(G.game==G_PANCAKE) G.sbuf[0]=0;          // no BEST counter: a full tower is 14, so it would just sit there
+    else if(G.game==G_HOP){ p=scpy(G.sbuf,"LEFT "); sint(p,right); }
+    else { p=scpy(G.sbuf,"TIME "); sint(p,right); }
+    if(G.sbuf[0]) texts(G.sbuf,230-slen(G.sbuf)*6,8,C_LTEXT); }
+  DRAW_TARGET=sv;
+}
+// v8.3: the game's own label (WHICH WAY WILL IT LOOK?, YOUR TURN!...) is baked into SCRATCH_BG too: when it
+// changes, the background is drawn again (one slow frame) with the new label on it
+static const char *mini_label_now(void){
+  if(G.phase!=PH_PLAY) return 0;
+  if(G.game==G_PANCAKE) return G.spawn==3? (G.pk_land? "OOPS! IT SLID OFF!" : "WHAT A TOWER!") : 0;
+  if(G.game==G_GUESS) return G.reveal? 0 : "WHICH WAY WILL IT LOOK?";
+  if(G.game==G_STARS) return G.spawn==0? "WATCH THE STARS..." : G.spawn==1? "YOUR TURN!" : G.spawn==2? (G.round>=5? "FAST ASLEEP!" : "LOVELY!") : G.lastx? "TOO SLOW!" : "OOPS!";
+  return 0;
+}
+static void mini_label_bake(void){
+  const char *s=mini_label_now(); u32 k=(u32)s;
+  if(k==G.mini_lbl) return;
+  // put back the strip the label covers (y 33-45), cheaply: a full redraw is a slow frame that can miss a key press
+  { u16 *sv=DRAW_TARGET; DRAW_TARGET=(u16*)SCRATCH_BG;
+    if(G.game==G_STARS){   // Stargazer's own sky there: the dark sky, its stars in that strip and the moon
+      fill(0,33,240,13,C_BORDER);
+      u32 sd=4242; for(int i=0;i<46;i++){ sd=sd*1103515245u+12345u; int x=(int)((sd>>16)%236u)+2, y=30+(int)((sd>>8)%70u); if(y>=33 && y<=45) pset(x,y,(i%5)? C_HINT : C_LTEXT); }
+      disc(210,44,8,C_MOON); disc(214,41,7,C_BORDER); }
+    else for(int y=33;y<=45;y++){ volatile u16 *row=(volatile u16*)SCRATCH_BG+y*120; const volatile u16 *src=(const volatile u16*)YARD_BG+y*120;
+      u16 m=(y&1)? 0xFF00 : 0x00FF, d=(u16)((y&1)? (C_OUTLINE<<8) : C_OUTLINE);   // the room or yard, faded as in prerender_mini
+      for(int x=0;x<120;x++) row[x]=(u16)((src[x]&~m)|d); }
+    DRAW_TARGET=sv; }
+  if(s){ u16 *sv=DRAW_TARGET; DRAW_TARGET=(u16*)SCRATCH_BG; label(s); DRAW_TARGET=sv; }
+  G.mini_lbl=k;
+}
 static void mini_draw(void){
   DRAW_TARGET=O_BACKBUF();
-  O_DMACOPY(DRAW_TARGET, SCRATCH_BG);
   char *p;
-  if(G.phase==PH_PICK){ draw_sky(!G.outside); texts("PLAY",10,8,C_ORANGE);
-    p=sint(G.sbuf,G.ext.coins); { int w=slen(G.sbuf)*6; coin_icon(222-w-10,8); texts(G.sbuf,230-w,8,C_LTEXT); }
+  if(G.phase!=PH_PICK) mini_label_bake();
+  if(G.phase==PH_PICK){ mini_top(); O_DMACOPY(DRAW_TARGET, SCRATCH_BG); draw_sky(!G.outside);
     pick_draw(); if(MSG_TIMER) label((const char*)MSG_BUF); return; }
+  mini_top(); O_DMACOPY(DRAW_TARGET, SCRATCH_BG);
   if(G.game!=G_STARS) draw_sky(!G.outside);
-  p=scpy(G.sbuf, G.game==G_PANCAKE? "STACK " : "SCORE "); sint(p,G.score); texts(G.sbuf,10,8,C_ORANGE);
-  if(G.game==G_GUESS || G.game==G_STARS){ p=scpy(G.sbuf,"ROUND "); p=sint(p,G.round<5?G.round+1:5); scpy(p,"/5"); }
-  else if(G.game==G_PANCAKE) G.sbuf[0]=0;          // no BEST counter: a full tower is 14, so it would just sit there
-  else if(G.game==G_HOP){ int left=HOP_N-G.guess; for(int i=0;i<10;i++){ const Obj *q=&G.obj[i];
-      if(q->active && (q->type==0? !(q->flip || q->pad) : (q->x>>8) > G.px-10)) left++; }
-    p=scpy(G.sbuf,"LEFT "); sint(p,left); }
-  else { p=scpy(G.sbuf,"TIME "); sint(p,(G.timer+59)/60); }
-  if(G.sbuf[0]) texts(G.sbuf,230-slen(G.sbuf)*6,8,C_LTEXT);
   const void *spr=CRITTER_SPR(PET[P_STAGE]);
   int flash = G.stun && ((G.stun>>2)&1);
   if(G.game==G_PANCAKE){
@@ -3562,7 +3611,6 @@ static void mini_draw(void){
     G.cpose=(s8)(G.pk_eat? POSE_EAT+1 : G.pk_land && G.spawn==3? POSE_SAD+1 : G.look? POSE_HAPPY+1 : 0);
     sprite(spr,10,98,2,1,99); G.cpose=0;
     if(G.look) textbig_o("PERFECT!",204,76,C_ORANGE,1);
-    if(G.spawn==3 && G.phase==PH_PLAY) label(G.pk_land? "OOPS! IT SLID OFF!" : "WHAT A TOWER!");
   } else if(G.game==G_HOP){
     G.cpose=(s8)(G.stun? POSE_SAD+1 : G.py<0? POSE_HAPPY+1 : G.phase==PH_PLAY? (((G.t>>2)&1)? POSE_WALK1 : POSE_WALK2)+1 : 0); if(!flash) sprite(spr, G.px, 98+(G.py>>8), 2, 0, 99); G.cpose=0;
     for(int i=0;i<10;i++){ Obj *o=&G.obj[i]; if(!o->active) continue;
@@ -3572,7 +3620,7 @@ static void mini_draw(void){
     int dx = G.look*28, fl = G.look>0;   /* critters face left unless mirrored: tail trails behind */
     G.cpose=(s8)(G.reveal && G.guess==G.look? POSE_HAPPY+1 : 0); sprite(spr, 96+dx, 84, 3, fl, 99); G.cpose=0;
     if(G.phase==PH_PLAY && !G.reveal){ int nudge=SINE16[(G.t>>2)&15]>>2;
-      mini_art(MA_ARROW,46-nudge,92,COL_ARROW,0); mini_art(MA_ARROW,180+nudge,92,COL_ARROW,1); label("WHICH WAY WILL IT LOOK?"); }
+      mini_art(MA_ARROW,46-nudge,92,COL_ARROW,0); mini_art(MA_ARROW,180+nudge,92,COL_ARROW,1); }
     if(G.reveal){ textbig_o(G.guess==G.look? "YES!" : G.guess==2? "TOO SLOW!" : "NOPE!",120,44,G.guess==G.look?C_ORANGE:C_LTEXT,2);
       mini_art(MA_ARROW, G.look<0? 96+dx-16 : 96+dx+50, 94, COL_ARROWR, G.look>0);
       if(G.guess==G.look && G.reveal>20) art(ART_HEART,7,6,96+dx+18,76-(60-G.reveal)/4,2,7); }
@@ -3584,7 +3632,6 @@ static void mini_draw(void){
       int lit = (G.px==d && G.stun) || (G.spawn==3 && G.phase==PH_PLAY && G.look==d && ((G.t>>3)&1));
       if(lit){ ring(x,y,15,C_SUN); ring(x,y,12,C_SUN2); mini_art(MA_STAR4,x-10,y-10,COL_LIT,0); }
       else mini_art(MA_STAR3,x-7,y-7,COL_UNLIT,0); }
-    if(G.phase==PH_PLAY) label(G.spawn==0? "WATCH THE STARS..." : G.spawn==1? "YOUR TURN!" : G.spawn==2? (G.round>=5? "FAST ASLEEP!" : "LOVELY!") : G.lastx? "TOO SLOW!" : "OOPS!");
   }
   if(G.phase==PH_READY){
     textbig(GAME_NAMES[G.game],120,36,C_ORANGE,1);
@@ -4506,11 +4553,12 @@ static const u8 FORM_STAR[23]={C_GOLD,C_GOLD,C_GREEN,C_PINK,C_TEAL,C_GOLD,C_GREE
   C_PINK,C_LILAC,C_GREEN,30,C_LILAC,12,70,C_PINK,C_PALEBLUE,C_RED};
 // ================================================================== JOURNAL (v8 phase 6): NIGHT SKY, FIELD GUIDE, RECORDS
 static const char *const JTAB[N_JTAB]={"SKY","GUIDE","ITEMS","GARDEN","FIREFLIES","RECORDS"};
-// v8.1: the tab strip scrolls when the tabs don't all fit; G.jt_first is the first one shown, with arrows at the ends
+// v8.1: the tab strip scrolls when the tabs don't all fit; G.jt_first is the first one shown. v8.3: LEFT/RIGHT wrap
+// round, so both arrows always show (and the strip always leaves room for them)
 #define JTAB_GAP 14
 static int jtab_last(void){   // the last tab that fits after jt_first
-  int x= G.jt_first? 16 : 8, last=G.jt_first;
-  for(int i=G.jt_first;i<N_JTAB;i++){ int w=slen(JTAB[i])*6; if(x+w > (i<N_JTAB-1? 226 : 232)) break; last=i; x+=w+JTAB_GAP; }
+  int x=16, last=G.jt_first;
+  for(int i=G.jt_first;i<N_JTAB;i++){ int w=slen(JTAB[i])*6; if(x+w > 226) break; last=i; x+=w+JTAB_GAP; }
   return last;
 }
 static void jtab_view(void){
@@ -4555,12 +4603,11 @@ static void jr_header(const char *right,const char *hint){
   u32 sd=909; for(int i=0;i<34;i++){ sd=sd*1103515245u+12345u; pset((int)((sd>>16)%236u)+2, 30+(int)((sd>>8)%104u), (i%5)? C_HINT : C_LTEXT); }
   texts("JOURNAL",8,3,C_ORANGE); if(right) texts(right,232-slen(right)*6,3,C_LTEXT);
   jtab_view();
-  { int last=jtab_last(), x= G.jt_first? 16 : 8;
+  { int last=jtab_last(), x=16;
     for(int i=G.jt_first;i<=last;i++){ int w=slen(JTAB[i])*6;
       if(i==G.jtab){ fill(x-4,13,w+7,13,C_OUTLINE); fill(x-3,14,w+5,11,C_CREAM); }
       text(JTAB[i],x,16,i==G.jtab? C_RED : C_LTEXT); x+=w+JTAB_GAP; }
-    if(G.jt_first) text("<",2,16,C_ORANGE);
-    if(last<N_JTAB-1) text(">",233,16,C_ORANGE); }
+    text("<",4,16,C_ORANGE); text(">",231,16,C_ORANGE); }
   textc(hint,120,147,C_HINT);
 }
 static int story_kind(const Story *s){ return (s->info>>2)&3; }
@@ -4917,7 +4964,7 @@ static void fly_catch(void){
     if(dx<=8 && dy<=9 && dx+dy<bd){ bd=dx+dy; best=i; } }
   if(best<0){ sfx(0,SEQ_TICK); return; }
   Fly *f=&G.fly[best]; int k=f->k; f->live=0; f->wait=(u8)(30+rnd(60));
-  if(G.fly_n<255) G.fly_n++; G.fly_rn++; secret_lantern(); G.fly_kinds|=(u16)(1u<<k); if(G.more.spare[4]<65535) G.more.spare[4]++;
+  if(G.fly_n<255) G.fly_n++; G.fly_rn++; G.more.pad1|=16; secret_lantern(); G.fly_kinds|=(u16)(1u<<k); if(G.more.spare[4]<65535) G.more.spare[4]++;   // (v8.3t: pad1 bit 4: this critter has caught one, so it has the jar's stand)
   G.fly_pop=30; G.fly_popk=(u8)k;
   if(!((fly_found()>>k)&1)){ G.more.spare[3]|=(u16)(1u<<k); G.fly_state=1; G.fly_card=(u8)k; G.fly_key=0; sfx(0,SEQ_NEWSTAR); save_all(); }
   else sfx(0,SEQ_CATCH);
@@ -5032,10 +5079,10 @@ static void fly_screen_draw(void){
 #define LANT_X 40
 #define LANT_Y 64
 static void fly_morning(void){ if(G.fly_n && G.fly_night==G.ext.day){ G.fly_rel=1; G.jar_t=0; G.jar_back=0; } else { G.fly_n=0; G.fly_kinds=0; } }
-// v8.3: the jar lives on its stand (it comes with the first firefly ever caught): in the middle under the window when
+// v8.3: the jar lives on its stand (it comes with this critter's first firefly; More.pad1 bit 4): in the middle under the window when
 // nothing stands on the left, else just right of what does. At dawn it lifts off, floats over to the sill (LANT_X/Y)
 // for the release, and afterwards floats back, empty, and stays there through the day.
-static int stand_on(void){ return fly_found()!=0 || G.fly_n; }
+static int stand_on(void){ return (G.more.pad1&16) || G.fly_n; }   // (v8.3: this critter's first catch brings it; a new egg starts without)
 static int stand_spot(void){ return deco_get(0)!=0xFF; }
 #define JAR_UP 16                          // frames to lift off the stand
 #define JAR_T  64                          // frames for the whole trip (lift, then an arc to the sill)

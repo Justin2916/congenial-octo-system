@@ -381,8 +381,8 @@ def t_games():
     sc = BOOT + DAY + start(G_HOP) + [f'peek {g("ext", "e_coins"):08x} 2', 'auto 900', f'peek {g("phase"):08x} 1', f'peek {g("score"):08x} 4',
           f'peek {g("rating"):08x} 1', 'press A', 'wait 10', f'peek {g("ext", "e_coins"):08x} 2']
     v = pk(run(ROM, sc, copy_save('adult'))); c0, c1 = struct.unpack('<H', v[0][1])[0], struct.unpack('<H', v[4][1])[0]
-    check('games: HOP HOP - jumping every hurdle and catching every berry is a perfect 12 (PERFECT!), +15 coins and +5 bonus',
-          v[1][1][0] == PH_RESULT and u32(v[2][1]) == 12 and v[3][1][0] == 3 and c1 - c0 == 20, f'{v[1:4]} coins {c0}->{c1}')
+    check('games: HOP HOP - jumping every hurdle and catching every berry is a perfect 12 (PERFECT!), +15 coins (no bonus coins since v8.3t)',
+          v[1][1][0] == PH_RESULT and u32(v[2][1]) == 12 and v[3][1][0] == 3 and c1 - c0 == 15, f'{v[1:4]} coins {c0}->{c1}')
     # v8.1: doing nothing in HOP HOP scores 0 (a rock that touches it while it flashes is a miss) and pays nothing
     sc = BOOT + DAY + start(G_HOP) + [f'peek {g("ext", "e_coins"):08x} 2', 'wait 900', f'peek {g("score"):08x} 4', f'peek {g("rating"):08x} 1', 'press A', 'wait 10', f'peek {g("ext", "e_coins"):08x} 2']
     v = pk(run(ROM, sc, copy_save('adult'))); c0, c1 = struct.unpack('<H', v[0][1])[0], struct.unpack('<H', v[3][1])[0]
@@ -940,13 +940,18 @@ def t_yard():
     # v8.3: the firefly jar's stand comes with the first firefly ever found: in the middle under the window when the
     # left spot is empty, right of the bed (or any left piece) when it isn't. At dawn the jar floats to the window first
     # (the window stays shut until it's there), then back to its stand.
-    K = g('deco', 'k_slot'); SB = g('st_baked'); SPF = g('more', 'm_spare') + 6
+    # (v8.3t: the stand is this critter's: More.pad1 bit 4 is set by its first catch, and a new egg clears it)
+    K = g('deco', 'k_slot'); SB = g('st_baked'); P1 = g('more', 'm_pad1')
     res = []
     for found, left in ((0, 0xFF), (1, 0xFF), (1, 14)):
-        sc = BOOT + DAY + [p8(K, left), *p16(SPF, found), p8(g('fly_n'), 0), p8(g('bg_state'), 0), 'wait 10', f'peek {SB:08x} 1']
+        sc = BOOT + DAY + [p8(K, left), p8(P1, 16 * found), p8(g('fly_n'), 0), p8(g('bg_state'), 0), 'wait 10', f'peek {SB:08x} 1']
         res.append(peeks(run(ROM, sc, copy_save('adult')))[0][1][0])
-    check('yard: the jar\'s stand comes with the first firefly: under the window, or right of the bed', res == [0, 1, 2], str(res))
-    sc = BOOT + DAY + [p8(K, 14), *p16(SPF, 1), p8(g('fly_n'), 5), *p16(g('fly_kinds'), 7), *p16(g('jar_t'), 0), *p16(g('jar_back'), 0), *p16(g('fly_rel'), 1), 'wait 20',
+    check('yard: the jar\'s stand comes with its first firefly: under the window, or right of the bed', res == [0, 1, 2], str(res))
+    sc = BOOT + DAY + [p8(K, 0xFF), p8(P1, 16), p8(g('fly_n'), 0), p8(g('bg_state'), 0), 'wait 10', f'peek {SB:08x} 1', f'peek {P1:08x} 1',
+                       p8(PET + 4, 8), 'wait 5', p8(PET + 4, 0), 'wait 10', f'peek {P1:08x} 1', f'peek {SB:08x} 1']
+    v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('yard: a new egg has no stand (and no jar) until it catches its own first firefly', v[0] == 1 and v[1] & 16 and not v[2] & 16 and v[3] == 0, str(v))
+    sc = BOOT + DAY + [p8(K, 14), p8(P1, 16), p8(g('fly_n'), 5), *p16(g('fly_kinds'), 7), *p16(g('jar_t'), 0), *p16(g('jar_back'), 0), *p16(g('fly_rel'), 1), 'wait 20',
                        f'peek {g("jar_t"):08x} 2', f'peek {g("fly_rel"):08x} 2', 'wait 1400', f'peek {g("fly_rel"):08x} 2', f'peek {g("jar_back"):08x} 2', f'peek {g("fly_n"):08x} 1']
     v = [struct.unpack('<H', x[1])[0] if len(x[1]) == 2 else x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('yard: at dawn the jar floats to the window before it opens, and comes back after', 0 < v[0] < 64 and v[1] == 1 and v[2] == 0 and v[3] == 0 and v[4] == 0, str(v))
@@ -959,7 +964,7 @@ def t_yard():
     hdr = open(f'{CK}/decor.h').read()
     ents = re.findall(r'\{\{([^}]*)\},\{([^}]*)\}\}', re.search(r'DEC_PAL\[DEC_N\]\[2\]\[DEC_BANDN\]=\{(.*?)\};', hdr, re.S).group(1))
     want = [int(x) for x in ents[24 - 14][1].split(',')]   # the lantern (24), its night colours
-    sc = BOOT + ['poke32 0300004c 1f4', 'wait 4', p8(K + 3, 24), *p16(SPF, 1), p8(g('fly_n'), 5), *p16(g('fly_kinds'), 7), p8(g('bg_state'), 0), 'wait 30', 'peek 050001e8 24']
+    sc = BOOT + ['poke32 0300004c 1f4', 'wait 4', p8(K + 3, 24), p8(P1, 16), p8(g('fly_n'), 5), *p16(g('fly_kinds'), 7), p8(g('bg_state'), 0), 'wait 30', 'peek 050001e8 24']
     got = list(struct.unpack('<12H', peeks(run(ROM, sc, copy_save('adult')))[0][1]))
     check('yard: the ceiling piece keeps its colours at night (no firefly colours over them)', got == want, f'{got} want {want}')
     # v8.3: themed spots. An old save's pieces move to their own spots (the fishbowl to the new corner; the plant, whose

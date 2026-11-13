@@ -545,7 +545,7 @@ PLACE = {
     'PLANT0':    (0.75, NCX, 106, None, None), 'PLANT1': (0.75, NCX, 106, None, None), 'PLANT2': (0.75, NCX, 106, None, None),
     'FISHBOWL':  (0.75, NCX, 93, side_table(NCX-10, 21, 93, 106), 116),    # (its own wooden base is dropped: it has a table)
     'CLOCK': ('shift', WALL_DX, 0), 'BOOKSHELF': ('shift', WALL_DX, 0), 'PORTRAIT': ('shift', WALL_DX, 0),
-    'MIRROR': ('shift', WALL_DX, 7), 'GUITAR': ('shift', WALL_DX, 7),      # (they hung higher than the others)
+    'MIRROR': ('shift', WALL_DX, 12), 'GUITAR': ('shift', WALL_DX, 12),    # (they hung higher than the others)
 }
 XF = {}                                               # name -> (source x0, y0, new x0, y0, scale x4): for ext.c's animations
 def _bbox(c):

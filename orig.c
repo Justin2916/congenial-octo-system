@@ -99,19 +99,29 @@ void o_draw_text(const char *s, int x, int y, u32 c, int scale){
     if(ch-0x61 < 26) ch-=0x20;
     if(!(ch-0x60 > 0xFFFFFFBFu)){ x+=6*scale; continue; }    // (not ' '..'_')
     const u8 *g=O_FONT+7*(ch-32); int ry=y;
+    // (v8.3: rewritten for speed, same pixels: two pixels per VRAM write at size 1, and one line per run of lit
+    // columns at bigger sizes, where it used to draw every pixel's lines one by one)
+    u8 *base=(u8*)O_DRAW_TARGET;
     for(int row=0; row<7; row++, ry+=scale){
-      u32 bits=g[row]; if(!bits) continue;
-      u32 py=(u32)(y+row);
-      for(int col=0; col<5; col++){
-        if(!((bits<<col)&0x10)) continue;
-        if(scale==1){
-          u32 px=(u32)(x+col);
-          if(py>159 || px>239) continue;
-          volatile u16 *p=(volatile u16*)((u8*)O_DRAW_TARGET + py*240 + (px&~1));
-          u16 v=*p; *p= (px&1)? (u16)((v&0xFF)|(c<<8)) : (u16)((v&~0xFF)|c);
-        } else if(scale>=1){
-          int bx=x+col*scale;
-          for(int k=0;k<scale;k++) o_hline(bx, bx+scale-1, (u32)(ry+k), c);
+      u32 bits=g[row]&0x1F; if(!bits) continue;
+      if(scale==1){
+        u32 py=(u32)(y+row); if(py>159) continue;
+        u8 *rp=base+py*240;
+        for(int col=0; col<5; ){
+          if(!((bits<<col)&0x10)){ col++; continue; }
+          u32 px=(u32)(x+col); if(px>239){ col++; continue; }
+          volatile u16 *p=(volatile u16*)(rp+(px&~1u));
+          if(px&1){ *p=(u16)((*p&0xFF)|(c<<8)); col++; }
+          else if(col<4 && ((bits<<(col+1))&0x10)){ *p=(u16)(c|(c<<8)); col+=2; }
+          else { *p=(u16)((*p&~0xFF)|c); col++; }
+        }
+      } else if(scale>=1){
+        for(int col=0; col<5; ){
+          if(!((bits<<col)&0x10)){ col++; continue; }
+          int e=col; while(e<4 && ((bits<<(e+1))&0x10)) e++;
+          int bx=x+col*scale, ex=x+e*scale+scale-1;
+          for(int k=0;k<scale;k++) o_hline(bx, ex, (u32)(ry+k), c);
+          col=e+1;
         }
       }
     }
