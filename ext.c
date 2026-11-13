@@ -738,7 +738,7 @@ u32 ext_mess_drawn(void){ return G.outside? 0 : PET[P_POOP]; }   // the room's m
 u32 ext_poops_drawn(void){ return 0; }   // v8.3: the original draws no poops (room_poops and yard_poops draw them)
 #define MESS_HERE (*ext_mess_here())
 static void fly_update(u16 pr,u16 keys); static void fly_screen_draw(void); static void fly_start(void); static int fly_rounds_left(void);
-static void lantern_draw(void); static void win_open_pre(void); static void win_open_post(void); static void fly_dance(void); static void fly_morning(void); static void fly_palette(void); static void jr_fly_keys(u16 pr);
+static void lantern_draw(void); static void win_open_pre(void); static void win_open_post(void); static void fly_dance(void); static void fly_morning(void); static void jr_fly_keys(u16 pr);
 #define HELP_PAGES 5
 
 // ------------------------------------------------------------------ small utils
@@ -1213,7 +1213,7 @@ static void set_extra_palette(void){
     else if(title_showing() || (G.mode==M_SENDOFF && G.tbg) || ra_shot()==4){   // painted title / star world: their own colours, twinkling stars
       for(int i=0;i<TBG_TWINKLE;i++) PAL[TBG_FIRST+i]=TBG_PAL[i];
       for(int k=0;k<4;k++) PAL[TBG_FIRST+TBG_TWINKLE+k]=TBG_TW[(k+(G.sky_t>>4))&3]; }
-    else { for(int i=0;i<BGX_N;i++) PAL[BGX_FIRST+i]=q[i]; decor_palettes(night); if(!garden_palette_on()) fly_palette(); } }
+    else { for(int i=0;i<BGX_N;i++) PAL[BGX_FIRST+i]=q[i]; decor_palettes(night); } }
   sky_palette();
   farewell_palette();
   if(G.mode==M_STORY) story_palette();
@@ -1462,7 +1462,7 @@ static void spr_sync(void){
 static void spr_begin(void){ G.spr_n=0; G.spr_naff=0; G.spr_npal=0; G.spr_win=0; G.spr_bl=0; G.spr_ready=1; }
 // v8.2c: Bliplets as 256-colour sprites (their art straight from critters.h, 32 px, a few poses), so they can stand
 // beside a critter of another form: the bitmap has one set of critter colours, the OBJ palette has its own.
-#define BL_UNIT 560                    // first tile (32-byte units) of the Bliplet poses in OBJ VRAM; 32 units a pose
+#define BL_UNIT 576                    // first tile (32-byte units) of the Bliplet poses in OBJ VRAM; 32 units a pose
 static const u8 BL_POSES[6]={POSE_IDLE,POSE_BLINK,POSE_HAPPY,POSE_WALK1,POSE_WALK2,POSE_LOVE};
 static void bl_tiles_load(void){
   for(int j=0;j<6;j++){
@@ -4734,7 +4734,10 @@ static const FKind FK[FK_N]={
 };
 #define FLY_DARK 244
 #define FLY_EMBER RGB(31,15,5)
-static void fly_palette(void){ for(int i=24;i<GP_N;i++) PAL[GP_IDX[i]]=GP_PAL[i]; PAL[255]=FLY_EMBER; }   // (the room: 244-255 are free)
+// v8.3: a kind's colour straight from the garden palette's table (not from PAL: in the room, 244-255 belong to the
+// ceiling decor piece, so the fireflies there are sprites with their own colours)
+static u16 fk_rgb(int k){ int c=FK[k].col; if(c==255) return FLY_EMBER; for(int i=0;i<GP_N;i++) if(GP_IDX[i]==c) return GP_PAL[i]; return RGB(31,31,31); }
+static int dot_bank(void){ int b=spr_pal(); if(b>=0) for(int k=0;k<FK_N && k<15;k++) G.sp[b][k+1]=fk_rgb(k); return b; }   // all twelve kinds' colours: SPT_DOT+k
 static u16 fly_found(void){ return (u16)(G.more.spare[3]&FLY_ALL); }
 static int fly_count(void){ int n=0; for(u16 b=fly_found(); b; b&=(u16)(b-1)) n++; return n; }
 static int rose_blooming(void){ for(int i=0;i<3;i++) if(G.gdn.p[i].stage==4 && G.gdn.p[i].kind==GK_ROSE) return 1; return 0; }
@@ -4766,7 +4769,7 @@ static void yard_fireflies(void){
   if(m!=G.yf_key){                                            // tonight's colours: a bright and a dim palette each (kept)
     G.yf_key=m; G.yf_nk=0;
     static const u8 GL[5]={0,18,50,100,170};
-    for(int k=0;k<8 && G.yf_nk<5;k++) if((m>>k)&1){ u16 kc=PAL[FK[k].col];
+    for(int k=0;k<8 && G.yf_nk<5;k++) if((m>>k)&1){ u16 kc=fk_rgb(k);
       for(int d=0;d<2;d++){ int f= d? 110 : 256; u16 *q=G.yf_pal[G.yf_nk][d]; q[0]=0;
         for(int L=1;L<=4;L++) q[L]=rgb_scale(kc,GL[L]*f>>8);
         q[5]=rgb_scale(kc,f); q[6]=rgb_scale(rgb_mix(kc,0x7FFF,180),f); }
@@ -4887,12 +4890,21 @@ static void fly_big(int cx,int cy,int k,int t){   // twice the size: the field g
   fill(cx-2,cy-6+(k==11? -2 : 0),1,2,246); fill(cx+1,cy-6+(k==11? -2 : 0),1,2,246);   // little wings
 }
 static void fly_jar(int x,int y,int n,u16 kinds,int open){   // a glass jar 12x15 (x,y: top left), with what's in it
-  if(!open){ fill(x+3,y,6,1,FLY_DARK); fill(x+2,y+1,8,2,250); fill(x+3,y+1,6,1,249); }
-  for(int j=3;j<15;j++){ int w=(j>4 && j<14)? 12 : 10, x0=x+(12-w)/2; pset(x0,y+j,246); pset(x0+w-1,y+j,246); }
-  fill(x+2,y+14,8,1,246); fill(x+2,y+3,8,1,246); pset(x+2,y+6,245); pset(x+2,y+7,245); pset(x+2,y+8,246);
+  // v8.3: in the room the garden colours (244-254) aren't loaded: the glass and cork use UI colours that stay readable
+  // with the lights off, and the fireflies inside are one-pixel sprites (in the garden screens they're drawn as before)
+  int gp=garden_palette_on(), cDK= gp? FLY_DARK : C_OUTLINE, cLID= gp? 250 : C_ORANGE, cLID2= gp? 249 : C_PALEYEL, cGL= gp? 246 : C_LILAC, cHI= gp? 245 : C_LTEXT;
+  if(!open){ fill(x+3,y,6,1,cDK); fill(x+2,y+1,8,2,cLID); fill(x+3,y+1,6,1,cLID2); }
+  for(int j=3;j<15;j++){ int w=(j>4 && j<14)? 12 : 10, x0=x+(12-w)/2; pset(x0,y+j,cGL); pset(x0+w-1,y+j,cGL); }
+  fill(x+2,y+14,8,1,cGL); fill(x+2,y+3,8,1,cGL); pset(x+2,y+6,cHI); pset(x+2,y+7,cHI); pset(x+2,y+8,cGL);
   static const u8 SPOT[9][2]={{5,9},{8,7},{4,12},{7,11},{9,10},{3,8},{6,6},{8,12},{5,7}};
   int ks[FK_N], m=0; for(int k=0;k<FK_N;k++) if((kinds>>k)&1) ks[m++]=k;
-  for(int i=0;i<n && i<9;i++){ int k= m? ks[i%m] : 0; int on=((G.sky_t>>3)+i*3)%5; if(on) pset(x+SPOT[i][0],y+SPOT[i][1],FK[k].col); }
+  int bank=-1, cx0=G.room_cx+8, cx1=G.room_cx+54, cy0=G.room_cy-2, cy1=G.room_cy+58, crit= !gp && G.room_cy && !G.outside;
+  for(int i=0;i<n && i<9;i++){ int k= m? ks[i%m] : 0; int on=((G.sky_t>>3)+i*3)%5; if(!on) continue;
+    int px=x+SPOT[i][0], py=y+SPOT[i][1];
+    if(gp){ pset(px,py,FK[k].col); continue; }
+    if(crit && px>=cx0 && px<=cx1 && py>=cy0 && py<=cy1) continue;   // the critter is in front of it (sprites would show on top)
+    if(bank<0 && (bank=dot_bank())<0) return;
+    spr_add(px,py,0,SPT_DOT+k,bank,-1,0,1); }
 }
 static void lantern_glow(int cx,int cy,int n,u16 kinds,int t){   // soft dots of light round the lantern
   int r= n>=12? 12 : n>=6? 10 : 8, ks[FK_N], m=0; for(int k=0;k<FK_N;k++) if((kinds>>k)&1) ks[m++]=k; if(!m) return;
@@ -4997,7 +5009,7 @@ static void fly_rel_sprites(int r){
     int pulse=192+(SINE16[((t>>2)+i*5)&15]*8);    // a gentle flicker, 128..256
     fade=fade*pulse>>8;
     int b=spr_pal(); if(b<0) break;
-    u16 kc=PAL[FK[m? ks[i%m] : 0].col];
+    u16 kc=fk_rgb(m? ks[i%m] : 0);
     static const u8 GL[5]={0,18,50,100,170};   // the glow's falloff: faint at the rim, so it has no hard edge
     for(int L=1;L<=4;L++) G.sp[b][L]=rgb_scale(kc,GL[L]*fade>>8);
     G.sp[b][5]=rgb_scale(kc,fade); G.sp[b][6]=rgb_scale(rgb_mix(kc,0x7FFF,180),fade);
@@ -5026,7 +5038,7 @@ static void jar_glow(int t,int jx,int jy){
   if(!G.fly_n) return;
   int ks[FK_N], m=0; for(int k=0;k<FK_N;k++) if((G.fly_kinds>>k)&1) ks[m++]=k; if(!m) return;
   int ph=t>>2, a=(ph>>6)%m, b=(a+1)%m, f=(ph&63)*4;                     // the colour drifts from one kind to the next
-  u16 col=rgb_mix(PAL[FK[ks[a]].col],PAL[FK[ks[b]].col],f);
+  u16 col=rgb_mix(fk_rgb(ks[a]),fk_rgb(ks[b]),f);
   int n=G.fly_n>9? 9 : G.fly_n, br=190+n*8, sc=170+n*12;               // more fireflies, a bigger, brighter glow
   int s=SIN64[(t>>1)&63]; br+=br*s/2048; sc+=sc*s/3072;                   // it breathes
   int bk=spr_pal(); if(bk<0) return;
@@ -5040,10 +5052,10 @@ static void lantern_draw(void){
   if(G.outside) return;
   int t=(int)G.sky_t, x, y;
   if(G.fly_rel){   // morning: it floats over to the window, which opens, the cork pops and they drift out, home
-    if(G.jar_t<JAR_T){ jar_at(G.jar_t,&x,&y); G.jar_t++; jar_glow(t,x,y); fly_jar(x,y,G.fly_n,G.fly_kinds,0); return; }
+    if(G.jar_t<JAR_T){ jar_at(G.jar_t,&x,&y); G.jar_t++; fly_jar(x,y,G.fly_n,G.fly_kinds,0); jar_glow(t,x,y); return; }
     int r=G.fly_rel++;
     if(r==40){ set_msg("BYE, FIREFLIES! THEY FLEW HOME."); sfx(0,SEQ_POP); }
-    if(r<40){ jar_glow(t,LANT_X,LANT_Y); fly_jar(LANT_X,LANT_Y,G.fly_n,G.fly_kinds,0); return; }
+    if(r<40){ fly_jar(LANT_X,LANT_Y,G.fly_n,G.fly_kinds,0); jar_glow(t,LANT_X,LANT_Y); return; }
     fly_jar(LANT_X,LANT_Y,0,0,1); fill(LANT_X-6,LANT_Y+12,6,2,250);   // the cork, set down beside it
     fly_rel_sprites(r);
     if(r>=fly_rel_last()+WIN_SWING || r>400){ G.fly_rel=0; G.fly_n=0; G.fly_kinds=0; G.jar_back=1; }
@@ -5051,16 +5063,21 @@ static void lantern_draw(void){
   if(G.jar_back){ jar_at(JAR_T-G.jar_back,&x,&y); fly_jar(x,y,0,0,0); if(++G.jar_back>JAR_T) G.jar_back=0; return; }   // back to its stand
   if(!stand_on()) return;
   jar_at(0,&x,&y);
-  if(is_night() && G.fly_n && G.fly_night==(u16)(G.ext.day+1)){ jar_glow(t,x,y); fly_jar(x,y,G.fly_n,G.fly_kinds,0); }
+  if(is_night() && G.fly_n && G.fly_night==(u16)(G.ext.day+1)){ fly_jar(x,y,G.fly_n,G.fly_kinds,0); jar_glow(t,x,y); }   // (the dots first: an earlier sprite is drawn on top)
   else fly_jar(x,y,0,0,0);   // empty, through the day
 }
 static void fly_dance(void){   // all twelve found: they dance outside the window every night (sky coordinates)
   if(fly_found()!=FLY_ALL) return;
   u32 t=PET_CLOCK; if(t<482 || t>596) return;
-  int s=(int)G.sky_t;
+  int s=(int)G.sky_t, bank=-1;
   for(int i=0;i<6;i++){ int k=(i*2+((s>>9)&1))%FK_N, a=(s>>2)+i*11;
     int x=84+SINE16[(a>>1)&15]*(10+i*2)/8, y=48+SINE16[((a>>2)+i*3)&15]*(6+i)/8;
-    if(((s>>3)+i)%4) sky_pset(x,y,FK[k].col); }
+    if(!(((s>>3)+i)%4)) continue;
+    // v8.3: a one-pixel sprite (its own colours), only where the window shows sky (as sky_pset did)
+    int X=x+sk_dx, Y=y+sk_dy; if(X<sk_x0||X>sk_x1||Y<sk_y0||Y>sk_y1) continue;
+    int old=pget(X,Y); if(old<C_SKY0 || old>C_STAR) continue;
+    if(bank<0 && (bank=dot_bank())<0) return;
+    spr_add(X,Y,0,SPT_DOT+k,bank,-1,0,1); }
 }
 // ---- the journal's field guide
 static void jr_fly_page(void){

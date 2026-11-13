@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 225 checks (187 in the v8.1 sections, 13 `sprites` and 25 `yard`).
+`python3 tests/run_tests.py <sections...>`. There are 226 checks (187 in the v8.1 sections, 13 `sprites` and 26 `yard`).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
@@ -105,7 +105,8 @@ Other details:
   - `144–207`: room and yard colours (`BGX`).
   - `208–243`: the decor bands.
   - `244–254`: the garden. `garden_palette_on()` decides when it's loaded.
-  - `255`: the ember firefly. In the room, `244–255` carry the firefly colours (`fly_palette`).
+  - `255`: the ember firefly. In the room, `244–255` are the ceiling decor piece's band (v8.3: they used to be
+    overwritten with the firefly colours, so ceiling pieces showed in the wrong colours; `fly_palette` is gone).
 - **Save:** magic `CKS8`, version 15, 11 parts (part 10 is the Garden). `More.spare` is used as follows:
   - `[0]`: the night of the last wish (day+1)
   - `[1]`: the night of the last story
@@ -117,7 +118,7 @@ Other details:
   - `[7]`: rounds used tonight (bits 0–1), plus tonight's kinds shifted left by 4
   - v8.2b: `More.pad0` is the other place's mess (see the yard mess below), and `More.pad1` bit 0 = saved and quit
     in the yard, bit 1 = the mess counts are swapped (outside). Saves always store them unswapped.
-- **Generators → headers:**
+- **Generators → headers:** (also `sprfx.py` → `sprfx.h`, the sprite tiles)
   - `bgfx.py` → `bgfx.h` (the room and yard pictures, including the tree trunk)
   - `garden_art.py` + `gardengen.py` → `garden.h`
   - `critters.py`, `newforms.py`, `limbs.py` and `critgen.py` → `critters.h`
@@ -289,6 +290,11 @@ Other details:
   - START opens the menu over the night yard too (`G.mn_yard`; `menu_close()` goes back to `M_GARDEN`).
   - A skips the rest of a MEAL or SNACK (`ANIM_T` jumps to `FEED_END`-1, so the original finishes it as usual) and of
     food from the bag (`eat_update`: `G.t` jumps to 84).
+  - Fireflies in the room are sprites: the jar's catch and the dance at the window are one-pixel sprites
+    (`SPT_DOT`+kind, 12 tiles in `sprfx.h`; one bank holds all twelve colours: `dot_bank()`), added before the jar's glow
+    (an earlier sprite is drawn on top). Their colours come from `fk_rgb()` (the garden table), never from PAL. The jar's
+    glass and cork use UI colours in the room (`fly_jar`), and the garden colours on garden screens. The dots skip the
+    critter's box (a sprite would show over it). The Bliplets' tiles moved to `BL_UNIT` 576.
   - `udivmod` steps once per quotient bit. The old bit-by-bit divide made the night room with the jar drop to 30 fps
     on mGBA.
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its

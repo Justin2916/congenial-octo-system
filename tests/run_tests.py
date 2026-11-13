@@ -803,13 +803,14 @@ def t_sprites():
     disp = ['wait 1', 'peek 04000000 2'] * 3
     v = peeks(run(ROM, BOOT + [f'peek {DAY:08x} 2'], copy_save('adult'))); d = struct.unpack('<H', v[0][1])[0]
     morning = [p8(g('fly_n'), 6), *p16(g('fly_kinds'), 0x13), *p16(g('fly_night'), d + 1), 'wait 30', 'poke32 0300004c 257']
-    sc = BOOT + night + [p8(g('fly_n'), 6), *p16(g('fly_kinds'), 0x13), *p16(g('fly_night'), d + 1), 'wait 30', f'peek {LIVE:08x} 1', 'peek 07000000 8'] + \
+    sc = BOOT + night + [p8(g('fly_n'), 6), *p16(g('fly_kinds'), 0x13), *p16(g('fly_night'), d + 1), 'wait 30', f'peek {LIVE:08x} 1', 'peek 07000000 80'] + \
          ['poke32 0300004c 257', f'waitb {g("fly_rel"):08x} 20', f'peek {LIVE:08x} 1'] + \
          [f'waitb {g("fly_rel"):08x} 100', f'peek {LIVE:08x} 1', f'peek {g("spr_n"):08x} 1', f'peek {g("spr_win"):08x} 1', f'peek {g("win"):08x} 4', 'peek 07000000 96', 'peek 04000050 2'] + disp + \
          [x for _ in range(3) for x in ('wait 1', f'peek {g("spr_win"):08x} 1')] + \
          ['cyc 60 release', 'wait 300', f'peek {LIVE:08x} 1', f'peek {g("fly_rel"):08x} 2'] + disp
     out = run(ROM, sc, copy_save('adult')); w = [x[1] for x in peeks(out)]; jar = w[:2]; v = w[2:]
-    a = struct.unpack('<4H', jar[1])
+    oam = [struct.unpack('<4H', jar[1][i:i + 8]) for i in range(0, 80, 8)]   # (v8.3: the fireflies inside are sprites too, before it)
+    a = next((o for o in oam if o[2] & 0x3FF == SPT['SGLOW']), oam[0])
     check('sprites: at night the jar glows (a soft halo sprite, not specks)', jar[0][0] == 1 and a[2] & 0x3FF == SPT['SGLOW'] and a[0] & 0x0C00 == 0x0400, f'{jar[0]} {a}')
     check('sprites: the glow stays while the jar is still shut in the morning', v[0][0] == 1, str(v[0]))
     oam = struct.unpack('<48H', v[5]); tiles = {oam[i * 4 + 2] & 0x3FF for i in range(v[2][0])}
@@ -953,6 +954,13 @@ def t_yard():
                                     'press SELECT', 'wait 8', 'press UP', 'wait 4', 'press A', 'wait 10', f'peek {M:08x} 1', 'press B', 'wait 10', f'peek {M:08x} 1', 'peek 03000020 1']
     v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
     check('yard: BAG and SHOP open over the night yard and go back to it', v == [5, 13, 4, 13, 1], str(v))
+    # v8.3: the ceiling piece keeps its own colours (244-255) in the room at night; the jar's fireflies are sprites
+    hdr = open(f'{CK}/decor.h').read()
+    ents = re.findall(r'\{\{([^}]*)\},\{([^}]*)\}\}', re.search(r'DEC_PAL\[DEC_N\]\[2\]\[DEC_BANDN\]=\{(.*?)\};', hdr, re.S).group(1))
+    want = [int(x) for x in ents[24 - 14][1].split(',')]   # the lantern (24), its night colours
+    sc = BOOT + ['poke32 0300004c 1f4', 'wait 4', p8(K + 3, 24), *p16(SPF, 1), p8(g('fly_n'), 5), *p16(g('fly_kinds'), 7), p8(g('bg_state'), 0), 'wait 30', 'peek 050001e8 24']
+    got = list(struct.unpack('<12H', peeks(run(ROM, sc, copy_save('adult')))[0][1]))
+    check('yard: the ceiling piece keeps its colours at night (no firefly colours over them)', got == want, f'{got} want {want}')
     # v8.2c: running away is a six-shot scene: its room at dawn, a look back from the yard, the meadow path, the
     # stream where wild critters take it in, the empty place in the night sky, the end card
     md0 = int(re.search(r'MD_PAL\[MD_N\]=\{(\d+)', open(f'{CK}/meadow.h').read()).group(1))
