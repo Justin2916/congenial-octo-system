@@ -747,7 +747,7 @@ u32 ext_poops_drawn(void){ return 0; }   // v8.3: the original draws no poops (r
 #define MESS_HERE (*ext_mess_here())
 static void fly_update(u16 pr,u16 keys); static void fly_screen_draw(void); static void fly_start(void); static int fly_rounds_left(void);
 static void lantern_draw(void); static void win_open_pre(void); static void win_open_post(void); static void fly_dance(void); static void fly_morning(void); static void jr_fly_keys(u16 pr);
-#define HELP_PAGES 5
+#define HELP_PAGES 7   // v8.3b: DAY AND NIGHT and GOOD TO KNOW added
 
 // ------------------------------------------------------------------ small utils
 static u32 rnd32(void){ u32 x=G.rng; x^=x<<13; x^=x>>17; x^=x<<5; G.rng=x; return x; }
@@ -4272,8 +4272,8 @@ void hook_update(u32 keys){
       if(SCENE==3 && ANIM_KIND<=1 && (pr&K_A) && ANIM_T>4 && ANIM_T<FEED_END-1 && PET[P_STAGE]>=1 && PET[P_STAGE]<=7){ ANIM_T=FEED_END-1; G.suppress=k; }
       if(SCENE==1 && (pr&K_SELECT) && PET[P_STAGE]!=8){ G.mode=M_EXTRAS; G.cur=0; G.ex_first=0; sfx(0,SEQ_BLIP); return; }
       if(SCENE==0){
-        // the original asks "START OVER WITH A NEW EGG?" - its YES now leads to a second, louder check
-        if(TITLE_CONFIRM==1 && TITLE_CUR==1 && (pr&K_A)){ G.mode=M_SURE; G.sure_cur=1; sfx(0,SEQ_BLIP); break; }
+        // the original asks "START OVER WITH A NEW SEED?" and its YES starts over (v8.3b: no second ARE YOU SURE?
+        // check any more, the owner's call; M_SURE and sure_draw stay unused)
         // a third title choice under NEW EGG: the bestiary (handled here, the original only knows two)
         if(!TITLE_CONFIRM && *(volatile u32*)PET==0x31504B43u){
           if(G.tdex){
@@ -4284,7 +4284,7 @@ void hook_update(u32 keys){
           if(TITLE_CUR==1 && (pr&K_DOWN)){ G.tdex=1; sfx(0,SEQ_BLIP); G.suppress=k; live_update(0); break; }
         } else G.tdex=0;
       }
-      if(SCENE==7){   // HOW TO PLAY: our five pages replace the original three
+      if(SCENE==7){   // HOW TO PLAY: our pages (HELP_PAGES) replace the original three
         if((pr&K_LEFT) && G.help_page>0){ G.help_page--; sfx(0,SEQ_BLIP); }
         if((pr&K_RIGHT) && G.help_page<HELP_PAGES-1){ G.help_page++; sfx(0,SEQ_BLIP); }
         if(pr&(K_A|K_B|K_START)){ sfx(0,SEQ_BLIP); SCENE=6; G.from_help=1; enter_menu(); G.suppress=k; break; }
@@ -4542,12 +4542,16 @@ void hook_bg_copy(void *dst, const void *src){
 }
 
 // ---- HOW TO PLAY pages (drawn in the original's style)
-static const char *const HELP_TITLE[HELP_PAGES]={"HOW TO PLAY","THE ICONS","GROWING UP","OUTSIDE AND THE SHOP","SAYING GOODBYE"};
+static const char *const HELP_TITLE[HELP_PAGES]={"HOW TO PLAY","THE ICONS","DAY AND NIGHT","GOOD TO KNOW","GROWING UP","OUTSIDE AND THE SHOP","SAYING GOODBYE"};
 static const char *const HELP_TEXT[HELP_PAGES][8]={
   {"RAISE A CRITTER FROM A STAR-SEED!","","LEFT/RIGHT/UP/DOWN: PICK AN ICON","A: USE IT     B: CLOSE / BACK",
    "START: MENU (SPEED, SOUND, SAVE)","SELECT: OUTSIDE, BAG, SHOP, JOURNAL","WHEN THE ! ICON LIGHTS UP,","YOUR CRITTER NEEDS SOMETHING."},
   {"FEED  - MEALS FILL HUNGER, SNACKS","        CHEER IT UP (NOT TOO MANY!)","LIGHTS- TURN THEM OFF AT BEDTIME","PLAY  - PICK 1 OF 3 GAMES, WIN COINS",
    "MEDS  - CURE IT WHEN IT'S SICK","CLEAN - WASH AWAY THE POOP","STATUS- SEE HOW IT'S FEELING","PET   - ANSWER WHEN IT CALLS YOU"},
+  {"WHEN IT GETS SLEEPY AT NIGHT,","TURN THE LIGHTS OFF. TURN THEM","ON AGAIN IN THE MORNING: IT","DOESN'T LIKE THE DARK BY DAY.",
+   "SOME NIGHTS A SHOOTING STAR","CROSSES THE SKY: PRESS A TO MAKE","A WISH (+5 COINS). THE MOON","CHANGES OVER EIGHT NIGHTS."},
+  {"COINS: GAMES, THE YARD'S GRASS","AND WISHES. TOO MANY SNACKS MAKE","IT CHUBBY: SALAD AND HOP HOP","HELP. DECOR HELPS ONE KIND OF",
+   "CARE: PLAY, REST, CLEAN, PLANTS.","'LOOKS WEAK...' MEANS CURE AND","FEED IT NOW. SECRET FORMS HAVE","RIDDLES IN THE JOURNAL'S GUIDE."},
   {"HOW WELL IT IS CARED FOR PICKS","ITS TEEN. THE CARE IT GETS MOST","(OR MISSES MOST) PICKS WHAT IT","GROWS INTO - SEE THE STATUS CARD.",
    "20 FORMS IN THE JOURNAL!","DIRTY ROOMS AND SNACK BINGES","MAKE IT SICK. NEGLECT IT TOO LONG","AND IT RUNS AWAY, WITH NO STAR."},
   {"ONCE IT'S A CHILD, IT CAN GO OUT","TO THE YARD: TOYS, FRESH AIR AND","COINS IN THE GRASS. WHILE IT","SLEEPS, SELECT: GARDEN TO GROW",

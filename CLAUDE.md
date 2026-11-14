@@ -346,6 +346,9 @@ Other details:
   - **Journal:** the tabs wrap (L/R), so both arrows always show (`jr_header`; `jtab_last` keeps room for them).
     Icons come from `gen/icons.py`; pieces on a stand (`STANDS`: TV, radio, fishbowl) use their placed drawing, so
     rerun `icongen.py` after changing decor art. The mirror and guitar hang 12 px lower than their source art.
+- **v8.3b (after the v8.3 release):** HOW TO PLAY has 7 pages (`HELP_PAGES`): DAY AND NIGHT and GOOD TO KNOW after THE
+  ICONS (the font has no double quote: use '). NEW SEED from the title asks only the original's "START OVER WITH A NEW
+  SEED?"; its YES starts over (the ARE YOU SURE? step, `M_SURE`/`sure_draw`, is no longer reached).
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its
   grown-up days start): Sunpuff = an Oakhart in the yard with `PET_CLOCK` < 150 on 3 days (`Dex.yard`, the day marker
   in `Life.pad`; "BASKS IN THE MORNING SUN!"); Glimmer = a Dunerose with 8 fireflies in the lantern in one night

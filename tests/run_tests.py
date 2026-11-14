@@ -418,7 +418,7 @@ def t_fixes():
     check('fixes: the status card shows no health bar', red == 0, f'red {red}')
     # naming at hatching: NEW EGG, hatch, type HI, START
     egg = BOOT + ['press START', 'wait 10'] + ['press DOWN', 'wait 3'] * 5 + ['press A', 'wait 5', 'press A', 'waitscene 0', 'wait 30',
-          'press DOWN', 'wait 5', 'press A', 'wait 10', 'press A', 'wait 10', 'press LEFT', 'wait 5', 'press A', 'wait 60', p32(PET + 0x20, 0xef), 'waitscene 5', 'wait 5', 'peek 03000381 24', 'press A', 'wait 15']
+          'press DOWN', 'wait 5', 'press A', 'wait 10', 'press A', 'wait 60', p32(PET + 0x20, 0xef), 'waitscene 5', 'wait 5', 'peek 03000381 24', 'press A', 'wait 15']
     sc = egg + [f'peek {g("mode"):08x} 1'] + ['press B', 'wait 3'] * 6 + ['press UP', 'wait 3'] * 3 + ['press A', 'wait 3', 'press RIGHT', 'wait 3', 'press A', 'wait 3',
           'press START', 'wait 5', f'peek {g("mode"):08x} 1', 'scene', f'peek {g("names"):08x} 8', 'peek 03000381 20', f'savesram {TMP}/named.sav']
     out = run(ROM, sc, copy_save('adult')); v = pk(out)
@@ -488,7 +488,7 @@ def t_unlocks():
     check('unlocks: a new egg starts the shop over', n0 > 4 and n1 == 4 and v[4][1][0] == 1, f'{n0} -> {n1}, level {v[4][1][0]}')
     # so does NEW EGG from the title
     sc = BOOT + ['press START', 'wait 10'] + ['press DOWN', 'wait 3'] * 5 + ['press A', 'wait 5', 'press A', 'waitscene 0', 'wait 30',
-          'press DOWN', 'wait 5', 'press A', 'wait 10', 'press A', 'wait 10', 'press LEFT', 'wait 5', 'press A', 'wait 60', 'scene'] + peek_keep
+          'press DOWN', 'wait 5', 'press A', 'wait 10', 'press A', 'wait 60', 'scene'] + peek_keep
     out = run(ROM, sc, copy_save('adult')); v = pk(out)
     check('unlocks: NEW EGG on the title starts the shop over', v and popcount_keep(v[-3][1]) == 4, out[-300:])
 

@@ -10,7 +10,7 @@ This booklet covers everything in the game. The secret forms, rare moonflowers a
 
 ## Getting started
 
-- **Title screen:** CONTINUE plays your saved critter. NEW SEED starts over with a new star-seed (it asks twice, and your journal is kept). JOURNAL opens the journal.
+- **Title screen:** CONTINUE plays your saved critter. NEW SEED starts over with a new star-seed (it asks once to make sure, and your journal is kept). JOURNAL opens the journal.
 - **Hatching:** keep the star-seed company and it hatches in about 20 seconds. Then give it a name of up to 6 letters. SELECT suggests a name, START accepts it.
 - **Time:** a day in the game lasts about 11 minutes: 7 of daytime and 4 of night. With SPEED: FAST in the START menu, everything runs 2.5 times as fast and a day lasts about 4½ minutes. Time passes in the room and the yard, and stands still in menus, the shop, the bag, the journal and minigames. It only passes while the game is switched on.
 - **Age:** your critter ages one year for every day in the game. The status card shows its age, for example "AGE: 1 YEAR" or "AGE: 5 YEARS".
