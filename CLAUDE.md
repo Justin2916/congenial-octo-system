@@ -338,6 +338,8 @@ Other details:
     `TINT_MAX` 115/256. The critter gets a third of it (`flush_crit_palette`). `tint_now()` skips the title, shop, album,
     journal, farewell, story and runaway screens. The bars' own colours stay (`BAR_COL`: room 160/184, yard 155/174/193,
     the only indices the bars use). Palette checks in tests at clock 400-520 or 0-70 see tinted values.
+    Code that asks "is the room in its night colours?" must use `WALL_NIGHT()` (the original's own colour buffer at
+    0x03000080), never `PAL[C_WALL]`, which the tint changes: that made the critter and egg dark at dawn and dusk.
   - **Profiling:** the emulator's `prof` table is `(pc>>1)&0x1FFFF`, so code above 0x08040000 (e.g. `blit_rows`)
     aliases onto low addresses (it looked like `irq`). For a true profile, build a scratch copy of `test_emulator.c`
     with a bigger table.

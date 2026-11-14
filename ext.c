@@ -1226,6 +1226,10 @@ static void garden_palette(void);
 // the top and bottom bars are part of the room and yard pictures; only they use these colours (checked on screen),
 // so they stay untinted: the room's 160 and 184, the yard's 155, 174 and 193
 #define BAR_COL(i) (G.outside? ((i)==155 || (i)==174 || (i)==193) : ((i)==160 || (i)==184))
+// is the room in its night colours? Read from the original's own UI colours (0x03000080, copied to PAL each frame),
+// not from PAL: v8.3w's tint changes PAL's wall colour, and at dawn and dusk it was read as night (the critter and the
+// egg were drawn in their dark night colours, then snapped back to bright when the tint ended)
+#define WALL_NIGHT() (*(volatile u16*)(0x03000080+2*C_WALL)!=RGB(30,27,22))
 static int garden_palette_on(void);
 // v8.3w: the room takes on the light of the hour: warm at sunset, cool at dawn. Only the room's own colours are tinted
 // (the wall 3-4, the wall picture, the room picture 144-195 and the decor bands), never the critter or the menus.
@@ -1259,8 +1263,8 @@ static void room_tint(void){
 static void set_extra_palette(void){
   PAL[C_DKGREEN]=RGB(6,17,6); PAL[C_DEEPGREEN]=RGB(4,13,8); PAL[C_NGRASS]=RGB(4,10,10); PAL[C_NGRASS2]=RGB(2,7,8);
   PAL[C_LTGREEN]=RGB(15,26,10); PAL[C_NWOOD]=RGB(10,7,6); PAL[C_NWALL]=RGB(12,11,17); PAL[C_TERRA]=RGB(25,11,6); PAL[C_GLASS]=RGB(22,29,31);
-  if(!G.outside){ const u16 *pp = PAL[C_WALL]!=RGB(30,27,22)? PIC_PAL_NIGHT : PIC_PAL_DAY; for(int i=0;i<24;i++) PAL[C_PIC+i]=pp[i]; }   // (outside: the food's)   // 120-143 now belong to the critter
-  { int night = PAL[C_WALL]!=RGB(30,27,22);
+  if(!G.outside){ const u16 *pp = WALL_NIGHT()? PIC_PAL_NIGHT : PIC_PAL_DAY; for(int i=0;i<24;i++) PAL[C_PIC+i]=pp[i]; }   // (outside: the food's)   // 120-143 now belong to the critter
+  { int night = WALL_NIGHT();
     const u16 *q = G.bgx_yard? (night? BGX_YARD_NIGHTPAL : BGX_YARD_DAYPAL) : (night? BGX_ROOM_NIGHTPAL : BGX_ROOM_DAYPAL);
     if(G.mode==M_SHOP || (G.mode==M_DEX && G.jtab==JT_ITEMS)){ for(int i=0;i<ICON_N;i++) PAL[ICON_FIRST+i]=ICON_PAL[i]; }   // the shop shows no room: its icons borrow the range
     else if(G.mode==M_ALBUM || (G.mode==M_DEX && G.jtab==0)){ for(int i=0;i<ALB_N;i++) PAL[ALB_FIRST+i]=ALB_PAL[i]; }   // the album shows many critters on one shared palette
@@ -3258,7 +3262,7 @@ static void eat_update(u16 pr,u16 keys){
 // v8.2b: in the yard the moonflowers keep 40-63, so the food borrows the wall picture's 96-119 (no wall outside)
 static int food_base(void){ return G.outside? C_PIC : FOOD_PAL0; }
 static void food_palette(int f){
-  int dim = PAL[C_WALL]!=RGB(30,27,22);
+  int dim = WALL_NIGHT();
   for(int i=0;i<24;i++){ u16 c=FOOD_PAL[f][i];
     if(dim){ int r=c&31, g=(c>>5)&31, b=(c>>10)&31; r=r*5/8+1; g=g*5/8+1; b=b*5/8+3; if(b>31) b=31; c=(u16)(r|(g<<5)|(b<<10)); }
     PAL[food_base()+i]=c; }
@@ -4492,7 +4496,7 @@ void hook_room_critter(const void *spr,int x,int y,int sc,int flip,int a5){
       if(pose==POSE_IDLE || pose==POSE_BREATHE) pose= s>3? POSE_WALK2 : s<-3? POSE_WALK1 : POSE_IDLE;
     }
     G.room_cx=ex; G.room_cy=y;
-    crit_draw(0, pose, ex, y, sc, 0, PAL[C_WALL]!=RGB(30,27,22));
+    crit_draw(0, pose, ex, y, sc, 0, WALL_NIGHT());
     return;
   }
   int dx=x-G.prev_cx;
@@ -4500,7 +4504,7 @@ void hook_room_critter(const void *spr,int x,int y,int sc,int flip,int a5){
   G.prev_cx=x;
   G.room_cx=x; G.room_cy=y;
   if(f<0){ O_SPRITE(spr,x,y,sc,flip,a5); return; }
-  crit_draw(pet_variant(f), room_pose(flip), x, y, sc, G.facing, PAL[C_WALL]!=RGB(30,27,22));
+  crit_draw(pet_variant(f), room_pose(flip), x, y, sc, G.facing, WALL_NIGHT());
 }
 // the room renderer's background copy is routed here: yard outside, sky in the window, decor inside
 static void garden_still(void);
