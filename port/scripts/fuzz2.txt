@@ -1,0 +1,4 @@
+wait 60
+press A
+waitscene 1
+FUZZ 6000 777
