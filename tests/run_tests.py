@@ -342,7 +342,10 @@ def t_games():
               'press DOWN', 'wait 4', f'peek {g("pick"):08x} 1', 'press B', 'wait 10', 'scene', f'peek {g("mode"):08x} 1'], copy_save('adult'))
     v = pk(out)
     check('games: PLAY opens the game picker', v[0][1][0] == M_MINI and v[1][1][0] == PH_PICK, str(v[:2]))
-    check('games: DOWN moves the picker (4 games)', v[3][1][0] == (v[2][1][0] + 1) % 4, str(v[2:4]))
+    check('games: DOWN moves the picker (3 games: STARGAZER is switched off)', v[3][1][0] == (v[2][1][0] + 1) % 3, str(v[2:4]))
+    # v8.3z: the picker wraps at three: up from the first is LEFT OR RIGHT?, down from it the first again
+    w = pk(run(ROM, BOOT + DAY + OPEN_PLAY + [p8(g('pick'), 0), 'press UP', 'wait 4', f'peek {g("pick"):08x} 1', 'press DOWN', 'wait 4', f'peek {g("pick"):08x} 1'], copy_save('adult')))
+    check('games: the picker wraps at three games (no STARGAZER)', w[0][1][0] == 2 and w[1][1][0] == 0, str(w))
     check('games: B leaves the picker for the room', 'scene 1' in out and v[4][1][0] == 0, out[-200:])
     # PANCAKE TOWER: 14 dead-on drops fill the tower; a good round adds hunger and sets the best stack
     sc = BOOT + DAY + start(G_PANCAKE) + [p8(PET + 6, 2), f'peek {g("tune"):08x} 1']

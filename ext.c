@@ -3297,6 +3297,10 @@ const char blank_food_art[64]=".................................................
 // LEFT OR RIGHT? (play) and STARGAZER (rest). BERRY CATCH retired. (BUBBLE BATH and DUST BUNNIES were tried for clean
 // and dropped after playtests: CLEAN care has the CLEAN icon, SOAP and clean decor.)
 enum { G_PANCAKE, G_HOP, G_GUESS, G_STARS, N_GAMES };
+// v8.3z: STARGAZER is switched off for now (the owner's call; its reward was still open). Its code stays: it is the
+// last game, so the picker just lists the first N_PICK.
+#define STARGAZER_ON 0
+#define N_PICK (STARGAZER_ON? N_GAMES : G_STARS)
 enum { PH_PICK, PH_READY, PH_PLAY, PH_RESULT };
 static const char *const GAME_NAMES[N_GAMES]={"PANCAKE TOWER","HOP HOP","LEFT OR RIGHT?","STARGAZER"};
 static const char *const GAME_HINTS[N_GAMES]={"A: DROP!   B: QUIT","A: JUMP!   B: QUIT","LEFT/RIGHT: GUESS!   B: QUIT",
@@ -3356,7 +3360,7 @@ static void pk_start(void);
 static void st_start(void);
 static void enter_minigame(void){
   G.mode=M_MINI; G.phase=PH_PICK; G.t=0; MSG_TIMER=0;
-  G.pick=(u8)(G.ext.last_game<N_GAMES? G.ext.last_game : 0);
+  G.pick=(u8)(G.ext.last_game<N_PICK? G.ext.last_game : 0);
   prerender_mini();
 }
 static void start_game(int g){
@@ -3536,8 +3540,8 @@ static void mini_update(u16 keys, u16 pr){
   G.t++; if(MSG_TIMER) MSG_TIMER--;
   if(G.phase!=PH_RESULT && (pr&K_B)){ set_msg("OKAY, MAYBE LATER!"); sfx(0,SEQ_BLIP); to_room(keys); return; }
   if(G.phase==PH_PICK){
-    if(pr&K_UP){ G.pick=(u8)(G.pick? G.pick-1 : N_GAMES-1); sfx(0,SEQ_BLIP); }
-    if(pr&K_DOWN){ G.pick=(u8)(G.pick+1>=N_GAMES? 0 : G.pick+1); sfx(0,SEQ_BLIP); }
+    if(pr&K_UP){ G.pick=(u8)(G.pick? G.pick-1 : N_PICK-1); sfx(0,SEQ_BLIP); }
+    if(pr&K_DOWN){ G.pick=(u8)(G.pick+1>=N_PICK? 0 : G.pick+1); sfx(0,SEQ_BLIP); }
     if(pr&(K_A|K_START)){ sfx(0,SEQ_CONFIRM); start_game(G.pick); }
     return;
   }
@@ -3566,7 +3570,7 @@ static void mini_update(u16 keys, u16 pr){
 static void pick_draw(void){
   O_BOX(20,30,200,106);
   text("WHICH GAME?",30,36,C_RED);
-  for(int i=0;i<N_GAMES;i++){ int y=50+i*12; const char *k=KIND_NAME[GAME_KIND[i]];
+  for(int i=0;i<N_PICK;i++){ int y=50+i*12+(N_PICK<N_GAMES? 6 : 0); const char *k=KIND_NAME[GAME_KIND[i]];
     if(G.pick==i) text(">",30,y,C_RED);
     text(GAME_NAMES[i],40,y,C_DTEXT); text(k,210-slen(k)*6,y,C_LILAC); }
   fill(30,98,180,1,C_HINT);
@@ -4538,7 +4542,7 @@ static const char *const HELP_TITLE[HELP_PAGES]={"HOW TO PLAY","THE ICONS","GROW
 static const char *const HELP_TEXT[HELP_PAGES][8]={
   {"RAISE A CRITTER FROM A STAR-SEED!","","LEFT/RIGHT/UP/DOWN: PICK AN ICON","A: USE IT     B: CLOSE / BACK",
    "START: MENU (SPEED, SOUND, SAVE)","SELECT: OUTSIDE, BAG, SHOP, JOURNAL","WHEN THE ! ICON LIGHTS UP,","YOUR CRITTER NEEDS SOMETHING."},
-  {"FEED  - MEALS FILL HUNGER, SNACKS","        CHEER IT UP (NOT TOO MANY!)","LIGHTS- TURN THEM OFF AT BEDTIME","PLAY  - PICK 1 OF 4 GAMES, WIN COINS",
+  {"FEED  - MEALS FILL HUNGER, SNACKS","        CHEER IT UP (NOT TOO MANY!)","LIGHTS- TURN THEM OFF AT BEDTIME","PLAY  - PICK 1 OF 3 GAMES, WIN COINS",
    "MEDS  - CURE IT WHEN IT'S SICK","CLEAN - WASH AWAY THE POOP","STATUS- SEE HOW IT'S FEELING","PET   - ANSWER WHEN IT CALLS YOU"},
   {"HOW WELL IT IS CARED FOR PICKS","ITS TEEN. THE CARE IT GETS MOST","(OR MISSES MOST) PICKS WHAT IT","GROWS INTO - SEE THE STATUS CARD.",
    "20 FORMS IN THE JOURNAL!","DIRTY ROOMS AND SNACK BINGES","MAKE IT SICK. NEGLECT IT TOO LONG","AND IT RUNS AWAY, WITH NO STAR."},

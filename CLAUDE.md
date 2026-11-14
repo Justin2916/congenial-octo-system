@@ -330,6 +330,8 @@ Other details:
     sizes (port_check: ALL IDENTICAL).
   - **Stargazer has six songs (v8.3y):** `ST_ROUNDS` 6 (2 to 7 notes), `COIN_STARS` {0,0,4,8,12,15,18}, its own `RES_STARS`
     (AMAZING! at 4-5, PERFECT! at 6), "ROUND n/6". Its boost (health +20) is still open: the owner finds a hidden stat confusing.
+  - **Stargazer is switched off (v8.3z):** `STARGAZER_ON` 0. It is the last game, so the picker lists only the first
+    `N_PICK` (3; the rows sit 6 px lower). Its code stays and the `games` tests still start it directly (pick 3).
   - **Room and yard tint (v8.3w):** `room_tint()` (end of `set_extra_palette`, after `sky_palette`) blends the room's own
     colours (3-4, the wall picture 96-119 indoors, 144-255) toward warm `DUSK` (clock 400-520: up by 455, full to 490, gone
     by 520) or cool `DAWN` (full to 25, gone by 70), multiplicatively (`tint_col`, targets x256/31: no divides), at most

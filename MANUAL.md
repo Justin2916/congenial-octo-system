@@ -37,7 +37,7 @@ The eight icons sit along the top and bottom of the screen. Move between them wi
 |---|---|
 | FEED | Give a MEAL to fill hunger, or a SNACK to cheer it up. Too many snacks make it overweight and can make it sick. Press A to skip the rest of the eating (it still counts). |
 | LIGHTS | Turn the lights off when it falls asleep, and back on in the morning. Left in the dark while it's awake, it gets glum and slowly loses happiness. |
-| PLAY | Pick one of four minigames and win coins (see **Minigames**). |
+| PLAY | Pick one of three minigames and win coins (see **Minigames**). |
 | MEDS | Cure it when it is sick. Sometimes it needs a second dose. Medicine when it isn't sick only makes it pull a yuck face. |
 | CLEAN | Wash away the mess, in the room or in the yard (each keeps its own). A mess soon makes it sick, though a mess out in the yard can't while it sleeps. |
 | STATUS | Open its status card (see below). |
@@ -54,7 +54,7 @@ STATUS shows how your critter is doing:
   - The **heart line** shows what it gets most of: OUTSIDE, PLANTS, PLAY, or BALANCED when it's a bit of everything. This decides what a well-cared-for critter grows into.
   - The **! line** appears when one need keeps running out lately: HUNGRY, UNHAPPY, MESSY, SICK or LIGHTS ON. Fix that one first.
 
-**Health.** Its health is hidden: there is no meter for it. It only drops while your critter is sick, or while its hunger is empty, for more than a few moments. When it falls below about a third, your critter tells you ("KIWI LOOKS WEAK... IT NEEDS CARE!"): cure it and feed it right away, because if it reaches zero, your critter runs away. The rest of the time it heals slowly by itself, and faster with rest decor or a good round of Stargazer.
+**Health.** Its health is hidden: there is no meter for it. It only drops while your critter is sick, or while its hunger is empty, for more than a few moments. When it falls below about a third, your critter tells you ("KIWI LOOKS WEAK... IT NEEDS CARE!"): cure it and feed it right away, because if it reaches zero, your critter runs away. The rest of the time it heals slowly by itself, and faster with rest decor.
 
 ## Good care
 
@@ -283,7 +283,6 @@ Choose **PLAY**, pick a game with UP and DOWN, and press A. Every round counts a
 | Pancake Tower | Press A to drop each pancake onto the stack. Whatever hangs over the edge falls off. | Pancakes stacked, up to 14 |
 | Hop Hop | Press A to jump the rocks and catch the berries. There are 12 in a round. | Rocks cleared and berries caught, up to 12 |
 | Left or Right? | Guess which way your critter will look, 5 times. | Right guesses, up to 5 |
-| Stargazer | Watch the stars light up, then play the tune back on the +Control Pad. Each song is one note longer. | Songs played back, up to 6 |
 
 **Coins by score**
 
@@ -292,23 +291,21 @@ Choose **PLAY**, pick a game with UP and DOWN, and press A. Every round counts a
 | Pancake Tower | 1–3: 0 · 4–7: 3 · 8–10: 6 · 11–13: 10 · 14: 15 |
 | Hop Hop | 1–2: 0 · 3–5: 3 · 6–8: 6 · 9–11: 12 · 12: 15 |
 | Left or Right? | 0: 0 · 1: 2 · 2: 3 · 3: 5 · 4: 7 · 5: 10 |
-| Stargazer | 0–1: 0 · 2: 4 · 3: 8 · 4: 12 · 5: 15 · 6: 18 |
 
 **Ratings and what they give**
 
-| Rating | Pancake Tower | Hop Hop | Left or Right? | Stargazer | Gives |
-|---|---|---|---|---|---|
-| BETTER LUCK | 0–3 | 0–2 | 0–1 | 0–1 | Coins only |
-| NICE! | 4–10 | 3–8 | 2–3 | 2–3 | Coins only |
-| AMAZING! | 11–13 | 9–11 | 4 | 4–5 | Coins, plus the game's boost |
-| PERFECT! | 14 | 12 | 5 | 6 | The same as AMAZING!, and a perfect round |
+| Rating | Pancake Tower | Hop Hop | Left or Right? | Gives |
+|---|---|---|---|---|
+| BETTER LUCK | 0–3 | 0–2 | 0–1 | Coins only |
+| NICE! | 4–10 | 3–8 | 2–3 | Coins only |
+| AMAZING! | 11–13 | 9–11 | 4 | Coins, plus the game's boost |
+| PERFECT! | 14 | 12 | 5 | The same as AMAZING!, and a perfect round |
 
 | Game | Its boost (AMAZING! or better) |
 |---|---|
 | Pancake Tower | Hunger +1 |
 | Hop Hop | Weight −1 (every round, whatever the score) |
 | Left or Right? | Happy +1 |
-| Stargazer | Health +20 |
 
 A round gives only these two rewards: the coins for its score, and the game's boost.
 
