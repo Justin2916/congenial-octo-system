@@ -1,12 +1,12 @@
-Starfall Meadow v8.4 - release (Nov 14, 2026)
+Starfall Meadow v8.3 - release (Nov 14, 2026)
 
 What is in this package
-- StarfallMeadow_v8.4.gba : the game (plays in any GBA emulator; it saves to 32 KB SRAM). Saves from v8.2 carry on
+- StarfallMeadow_v8.3.gba : the game (plays in any GBA emulator; it saves to 32 KB SRAM). Saves from v8.2 carry on
   (decor moves to its new spots by itself).
 - MANUAL.md, CLAUDE.md (notes for working on the game), the sources (ext.c, orig*.c, start.s) and the generators in
   gen/, tests/run_tests.py (228 checks), build.sh / mkrom.py / link.ld (./build.sh builds it)
 
-What v8.4 adds over v8.2 (the work went by the name v8.3 while in testing; there was no v8.3 release)
+What v8.3 adds over v8.2
 - Built entirely from our own sources: the original Critter Keep now lives in C (orig.c and the lifted
   orig_update.c, orig_render.c, orig_main.c), so the build needs no original ROM and no patching.
 - A faster life: an 11-minute day (8 minutes of day, 3 of night) and about a two-hour life. Hunger and happiness
