@@ -283,7 +283,7 @@ Choose **PLAY**, pick a game with UP and DOWN, and press A. Every round counts a
 | Pancake Tower | Press A to drop each pancake onto the stack. Whatever hangs over the edge falls off. | Pancakes stacked, up to 14 |
 | Hop Hop | Press A to jump the rocks and catch the berries. There are 12 in a round. | Rocks cleared and berries caught, up to 12 |
 | Left or Right? | Guess which way your critter will look, 5 times. | Right guesses, up to 5 |
-| Stargazer | Watch the stars light up, then play the tune back on the +Control Pad. Each song is one note longer. | Songs played back, up to 5 |
+| Stargazer | Watch the stars light up, then play the tune back on the +Control Pad. Each song is one note longer. | Songs played back, up to 6 |
 
 **Coins by score**
 
@@ -292,16 +292,16 @@ Choose **PLAY**, pick a game with UP and DOWN, and press A. Every round counts a
 | Pancake Tower | 1–3: 0 · 4–7: 3 · 8–10: 6 · 11–13: 10 · 14: 15 |
 | Hop Hop | 1–2: 0 · 3–5: 3 · 6–8: 6 · 9–11: 12 · 12: 15 |
 | Left or Right? | 0: 0 · 1: 2 · 2: 3 · 3: 5 · 4: 7 · 5: 10 |
-| Stargazer | 0–1: 0 · 2: 4 · 3: 8 · 4: 12 · 5: 15 |
+| Stargazer | 0–1: 0 · 2: 4 · 3: 8 · 4: 12 · 5: 15 · 6: 18 |
 
 **Ratings and what they give**
 
-| Rating | Pancake Tower | Hop Hop | Left or Right? / Stargazer | Gives |
-|---|---|---|---|---|
-| BETTER LUCK | 0–3 | 0–2 | 0–1 | Coins only |
-| NICE! | 4–10 | 3–8 | 2–3 | Coins only |
-| AMAZING! | 11–13 | 9–11 | 4 | Coins, plus the game's boost |
-| PERFECT! | 14 | 12 | 5 | The same as AMAZING!, and a perfect round |
+| Rating | Pancake Tower | Hop Hop | Left or Right? | Stargazer | Gives |
+|---|---|---|---|---|---|
+| BETTER LUCK | 0–3 | 0–2 | 0–1 | 0–1 | Coins only |
+| NICE! | 4–10 | 3–8 | 2–3 | 2–3 | Coins only |
+| AMAZING! | 11–13 | 9–11 | 4 | 4–5 | Coins, plus the game's boost |
+| PERFECT! | 14 | 12 | 5 | 6 | The same as AMAZING!, and a perfect round |
 
 | Game | Its boost (AMAZING! or better) |
 |---|---|

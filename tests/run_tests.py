@@ -360,19 +360,21 @@ def t_games():
     v = pk(run(ROM, sc, copy_save('adult')))
     check('games: PANCAKE TOWER - an off-centre drop is trimmed', list(v[0][1]) == [48, 38], str(v[0]))
     check('games: PANCAKE TOWER - missing the stack ends the round', v[2][1][0] == PH_RESULT and u32(v[3][1]) == 1, str(v[2:4]))
-    # STARGAZER: play the tune back five times; a good round +20 health
+    # STARGAZER: play the tune back six times (v8.3y: was five); a good round +20 health; a perfect one pays 18 coins
     pre = BOOT + DAY + [*p16(PET + 0x16, 50)] + start(G_STARS)
     seq = pk(run(ROM, pre + [f'peek {g("st_seq"):08x} 8', f'peek {g("tune"):08x} 1'], copy_save('adult')))
     keys = ['UP', 'LEFT', 'RIGHT', 'DOWN']; st = list(seq[0][1])
     check('games: STARGAZER plays its own tune', seq[1][1][0] == 14, str(seq[1]))
     sc = list(pre)
-    for r in range(5):
+    for r in range(6):
         sc.append(f'waitw {g("spawn"):08x} 1')
         sc += [f'press {keys[st[i]]}' for i in range(2 + r)]
-    sc += ['wait 80', f'peek {g("phase"):08x} 1', f'peek {g("score"):08x} 4', 'press A', 'wait 10', f'peek {PET + 0x16:08x} 2']
+    sc += ['wait 80', f'peek {g("phase"):08x} 1', f'peek {g("score"):08x} 4', f'peek {g("ext", "e_coins"):08x} 2', f'peek {g("rating"):08x} 1', 'press A', 'wait 10', f'peek {PET + 0x16:08x} 2', f'peek {g("ext", "e_coins"):08x} 2']
     out = run(ROM, sc, copy_save('adult')); v = pk(out)
-    check('games: STARGAZER - five songs played back', 'timeout' not in out and v[0][1][0] == PH_RESULT and u32(v[1][1]) == 5, str(v[:2]))
-    check('games: STARGAZER - a good round +20 health', v[2][1] == bytes([70, 0]), str(v[2]))
+    check('games: STARGAZER - six songs played back', 'timeout' not in out and v[0][1][0] == PH_RESULT and u32(v[1][1]) == 6, str(v[:2]))
+    c0, c1 = struct.unpack('<H', v[2][1])[0], struct.unpack('<H', v[5][1])[0]
+    check('games: STARGAZER - six songs is PERFECT! and pays 18 coins', v[3][1][0] == 3 and c1 - c0 == 18, f'rating {v[3][1][0]} coins {c0}->{c1}')
+    check('games: STARGAZER - a good round +20 health', v[4][1] == bytes([70, 0]), str(v[4]))
     sc = list(pre) + [f'waitw {g("spawn"):08x} 1', f'press {keys[(st[0] + 1) % 4]}', 'wait 100', f'peek {g("phase"):08x} 1', f'peek {g("score"):08x} 4']
     v = pk(run(ROM, sc, copy_save('adult')))
     check('games: STARGAZER - a wrong star ends it', v[0][1][0] == PH_RESULT and u32(v[1][1]) == 0, str(v))

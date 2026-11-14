@@ -3378,15 +3378,17 @@ static Obj *new_obj(void){ for(int i=0;i<10;i++) if(!G.obj[i].active){ G.obj[i].
 static const u8 COIN_PANCAKE[15]={0,0,0,0,3,3,3,3,6,6,6,10,10,10,15};
 static const u8 COIN_HOP[13]   ={0,0,0,3,3,3,6,6,6,12,12,12,15};
 static const u8 COIN_GUESS[6]  ={0,2,3,5,7,10};      // a luck game: one lucky guess still pays 2
-static const u8 COIN_STARS[6]  ={0,0,4,8,12,15};
+#define ST_ROUNDS 6   // v8.3y: STARGAZER has six songs (2 to 7 notes; st_seq holds 8)
+static const u8 COIN_STARS[ST_ROUNDS+1]={0,0,4,8,12,15,18};
 static const u8 RES_PANCAKE[15]={0,0,0,0,1,1,1,1,1,1,1,2,2,2,3};
 static const u8 RES_HOP[13]    ={0,0,0,1,1,1,1,1,1,2,2,2,3};
-static const u8 RES_FIVE[6]    ={0,0,1,1,2,3};       // LEFT OR RIGHT? and STARGAZER
-static const u8 GAME_TOP[N_GAMES]={14,HOP_N,5,5};
+static const u8 RES_FIVE[6]    ={0,0,1,1,2,3};       // LEFT OR RIGHT?
+static const u8 RES_STARS[ST_ROUNDS+1]={0,0,1,1,2,2,3};   // STARGAZER: AMAZING! at 4-5, PERFECT! at 6
+static const u8 GAME_TOP[N_GAMES]={14,HOP_N,5,ST_ROUNDS};
 static int score_clamped(void){ int s=G.score, m=GAME_TOP[G.game]; return s<0? 0 : s>m? m : s; }
 static int reward_coins(void){ int s=score_clamped();
   switch(G.game){ case G_PANCAKE: return COIN_PANCAKE[s]; case G_HOP: return COIN_HOP[s]; case G_GUESS: return COIN_GUESS[s]; default: return COIN_STARS[s]; } }
-static int score_result(void){ int s=score_clamped(); return G.game==G_PANCAKE? RES_PANCAKE[s] : G.game==G_HOP? RES_HOP[s] : RES_FIVE[s]; }
+static int score_result(void){ int s=score_clamped(); return G.game==G_PANCAKE? RES_PANCAKE[s] : G.game==G_HOP? RES_HOP[s] : G.game==G_STARS? RES_STARS[s] : RES_FIVE[s]; }
 static void mini_finish(void){
   int r=score_result();
   G.rating=(u8)r; G.phase=PH_RESULT; G.t=0;
@@ -3527,7 +3529,7 @@ static void stars_play(u16 pr){
   }
   if(G.reveal==44 && G.spawn==2) sfx(1,SEQ_HAPPY);
   if(--G.reveal>0) return;
-  if(G.spawn==2 && G.round<5){ G.spawn=0; G.look=0; G.reveal=30; }
+  if(G.spawn==2 && G.round<ST_ROUNDS){ G.spawn=0; G.look=0; G.reveal=30; }
   else mini_finish();
 }
 static void mini_update(u16 keys, u16 pr){
@@ -3570,7 +3572,7 @@ static void pick_draw(void){
   fill(30,98,180,1,C_HINT);
   textc(G.pick==G_HOP? "EVERY ROUND:" : "AMAZING! OR BETTER:",120,102,C_DTEXT);   // v8.3x: the coins, and the game's boost
   textc(GAME_BOOST[G.pick],120,112,C_LILAC);
-  { static const u8 TOP_COINS[N_GAMES]={15,15,10,15};
+  { static const u8 TOP_COINS[N_GAMES]={15,15,10,18};
     char b[32]; char *p=scpy(b,"TOP PRIZE: "); p=sint(p,TOP_COINS[G.pick]); scpy(p," COINS");
     int w=slen(b)*6; coin_icon(120-w/2-10,123); text(b,120-w/2+1,123,C_ORANGE); }
 }
@@ -3581,7 +3583,7 @@ static void mini_top(void){
   char *p; u32 key;
   int right;
   if(G.phase==PH_PICK){ right=G.ext.coins; key=0x80000000u|(u32)right; }
-  else { if(G.game==G_GUESS || G.game==G_STARS) right=G.round<5?G.round+1:5;
+  else { if(G.game==G_GUESS || G.game==G_STARS){ int n= G.game==G_STARS? ST_ROUNDS : 5; right=G.round<n?G.round+1:n; }
     else if(G.game==G_PANCAKE) right=0;
     else if(G.game==G_HOP){ right=HOP_N-G.guess; for(int i=0;i<10;i++){ const Obj *q=&G.obj[i];
         if(q->active && (q->type==0? !(q->flip || q->pad) : (q->x>>8) > G.px-10)) right++; } }
@@ -3595,7 +3597,7 @@ static void mini_top(void){
     sint(G.sbuf,G.ext.coins); { int w=slen(G.sbuf)*6; coin_icon(222-w-10,8); texts(G.sbuf,230-w,8,C_LTEXT); } }
   else {
     p=scpy(G.sbuf, G.game==G_PANCAKE? "STACK " : "SCORE "); sint(p,G.score); texts(G.sbuf,10,8,C_ORANGE);
-    if(G.game==G_GUESS || G.game==G_STARS){ p=scpy(G.sbuf,"ROUND "); p=sint(p,right); scpy(p,"/5"); }
+    if(G.game==G_GUESS || G.game==G_STARS){ p=scpy(G.sbuf,"ROUND "); p=sint(p,right); scpy(p, G.game==G_STARS? "/6" : "/5"); }
     else if(G.game==G_PANCAKE) G.sbuf[0]=0;          // no BEST counter: a full tower is 14, so it would just sit there
     else if(G.game==G_HOP){ p=scpy(G.sbuf,"LEFT "); sint(p,right); }
     else { p=scpy(G.sbuf,"TIME "); sint(p,right); }
@@ -3608,7 +3610,7 @@ static const char *mini_label_now(void){
   if(G.phase!=PH_PLAY) return 0;
   if(G.game==G_PANCAKE) return G.spawn==3? (G.pk_land? "OOPS! IT SLID OFF!" : "WHAT A TOWER!") : 0;
   if(G.game==G_GUESS) return G.reveal? 0 : "WHICH WAY WILL IT LOOK?";
-  if(G.game==G_STARS) return G.spawn==0? "WATCH THE STARS..." : G.spawn==1? "YOUR TURN!" : G.spawn==2? (G.round>=5? "FAST ASLEEP!" : "LOVELY!") : G.lastx? "TOO SLOW!" : "OOPS!";
+  if(G.game==G_STARS) return G.spawn==0? "WATCH THE STARS..." : G.spawn==1? "YOUR TURN!" : G.spawn==2? (G.round>=ST_ROUNDS? "FAST ASLEEP!" : "LOVELY!") : G.lastx? "TOO SLOW!" : "OOPS!";
   return 0;
 }
 static void mini_label_bake(void){

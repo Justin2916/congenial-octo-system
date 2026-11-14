@@ -328,6 +328,8 @@ Other details:
     frame that swallowed quick key presses in Stargazer) are baked into SCRATCH_BG instead of drawn every frame. mGBA
     renders per 600 frames, yard: Hop Hop 314 -> 595, Left or Right? 300 -> 516, Stargazer 272 -> 487. `o_draw_text` (orig.c) also writes two pixels at a time and draws whole runs at bigger
     sizes (port_check: ALL IDENTICAL).
+  - **Stargazer has six songs (v8.3y):** `ST_ROUNDS` 6 (2 to 7 notes), `COIN_STARS` {0,0,4,8,12,15,18}, its own `RES_STARS`
+    (AMAZING! at 4-5, PERFECT! at 6), "ROUND n/6". Its boost (health +20) is still open: the owner finds a hidden stat confusing.
   - **Room and yard tint (v8.3w):** `room_tint()` (end of `set_extra_palette`, after `sky_palette`) blends the room's own
     colours (3-4, the wall picture 96-119 indoors, 144-255) toward warm `DUSK` (clock 400-520: up by 455, full to 490, gone
     by 520) or cool `DAWN` (full to 25, gone by 70), multiplicatively (`tint_col`, targets x256/31: no divides), at most
