@@ -1222,7 +1222,40 @@ static void farewell_palette(void){   // the farewell's yard and the runaway's r
 }
 static void story_palette(void);
 static void garden_palette(void);
+#define TINT_MAX 115   // how strong the tint gets at its peak (of 256: about 45%)
+// the top and bottom bars are part of the room and yard pictures; only they use these colours (checked on screen),
+// so they stay untinted: the room's 160 and 184, the yard's 155, 174 and 193
+#define BAR_COL(i) (G.outside? ((i)==155 || (i)==174 || (i)==193) : ((i)==160 || (i)==184))
 static int garden_palette_on(void);
+// v8.3w: the room takes on the light of the hour: warm at sunset, cool at dawn. Only the room's own colours are tinted
+// (the wall 3-4, the wall picture, the room picture 144-195 and the decor bands), never the critter or the menus.
+// A multiplicative tint, so dark stays dark: c -> lerp(c, c*T/31, a).
+static int tint_amount(int *warm){   // 0..256 for this clock step
+  u32 t=PET_CLOCK; if(t>599) t=599;
+  if(t>=400 && t<520){ *warm=1; return t<455? (int)(t-400)*256/55 : t<490? 256 : (int)(520-t)*256/30; }
+  if(t<70){ *warm=0; return t<25? 256 : (int)(70-t)*256/45; }
+  return 0;
+}
+static u16 tint_col(u16 c,const u16 *T,int a){
+  int r=c&31, g=(c>>5)&31, b=(c>>10)&31;
+  int r2=(r*T[0])>>8, g2=(g*T[1])>>8, b2=(b*T[2])>>8;   // (T is the target x256/31: no divides per frame)
+  r+=((r2-r)*a)>>8; g+=((g2-g)*a)>>8; b+=((b2-b)*a)>>8;
+  return (u16)RGB(r,g,b);
+}
+// the tint for this frame (0: none), and its colour; only over the room or the yard by day, dusk or dawn
+static int tint_now(const u16 **T){
+  if(title_showing() || G.mode==M_SHOP || G.mode==M_ALBUM || G.mode==M_DEX || G.mode==M_SENDOFF || G.mode==M_STORY || ra_shot()>=0) return 0;
+  int warm=0, a=tint_amount(&warm); if(!a) return 0;
+  static const u16 DUSK[3]={256,157,99}, DAWN[3]={198,182,256};   // RGB(31,19,12) and RGB(24,22,31), x256/31
+  *T= warm? DUSK : DAWN; return a*TINT_MAX>>8;
+}
+static void room_tint(void){
+  const u16 *T; int a=tint_now(&T); if(!a) return;
+  if(!G.outside){   // the wall and its picture (outside, 96-119 hold the food's art)
+    PAL[C_WALL]=tint_col(PAL[C_WALL],T,a); PAL[C_WALL2]=tint_col(PAL[C_WALL2],T,a);
+    for(int i=C_PIC;i<C_PIC+24;i++) PAL[i]=tint_col(PAL[i],T,a); }
+  for(int i=BGX_FIRST;i<256;i++) if(!BAR_COL(i)) PAL[i]=tint_col(PAL[i],T,a);   // (the bars' colours stay)
+}
 static void set_extra_palette(void){
   PAL[C_DKGREEN]=RGB(6,17,6); PAL[C_DEEPGREEN]=RGB(4,13,8); PAL[C_NGRASS]=RGB(4,10,10); PAL[C_NGRASS2]=RGB(2,7,8);
   PAL[C_LTGREEN]=RGB(15,26,10); PAL[C_NWOOD]=RGB(10,7,6); PAL[C_NWALL]=RGB(12,11,17); PAL[C_TERRA]=RGB(25,11,6); PAL[C_GLASS]=RGB(22,29,31);
@@ -1236,6 +1269,7 @@ static void set_extra_palette(void){
       for(int k=0;k<4;k++) PAL[TBG_FIRST+TBG_TWINKLE+k]=TBG_TW[(k+(G.sky_t>>4))&3]; }
     else { int nb= G.bgx_yard? BGX_N : BGX_ROOM_N; for(int i=0;i<nb;i++) PAL[BGX_FIRST+i]=q[i]; decor_palettes(night); } }   // (v8.3: indoors 196-207 are the fifth decor band)
   sky_palette();
+  room_tint();
   farewell_palette();
   if(G.mode==M_STORY) story_palette();
   else if(garden_palette_on()) garden_palette();
@@ -4317,7 +4351,9 @@ static void crit_palette(const u16 *pal,int n,const u8 *idx,int first,int night)
 }
 // the critter-slot colours are written once, after the whole frame is drawn: if two critters were drawn in one frame
 // (the original title still draws one under ours), the screen could otherwise show the wrong one's colours
-static void flush_crit_palette(void){ for(int i=0;i<G.cpal_n;i++) PAL[CR_SLOT_IDX[i]]=G.cpal[i]; }
+static void flush_crit_palette(void){
+  const u16 *T; int a=tint_now(&T)/3;   // v8.3w: the critter takes a third of the room's tint, so it stands in the same light
+  for(int i=0;i<G.cpal_n;i++) PAL[CR_SLOT_IDX[i]]= a? tint_col(G.cpal[i],T,a) : G.cpal[i]; }
 // rows: (first,last) opaque column per source row; scales S -> D with nearest sampling; optional mirror
 static void blit_rows(const u8 *pix,const u8 *rows,int S,int D,int x,int y,int flip){
   u32 step=((u32)S<<16)/(u32)D, sy=step>>1;

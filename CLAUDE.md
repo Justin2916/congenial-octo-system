@@ -328,6 +328,12 @@ Other details:
     frame that swallowed quick key presses in Stargazer) are baked into SCRATCH_BG instead of drawn every frame. mGBA
     renders per 600 frames, yard: Hop Hop 314 -> 595, Left or Right? 300 -> 516, Stargazer 272 -> 487. `o_draw_text` (orig.c) also writes two pixels at a time and draws whole runs at bigger
     sizes (port_check: ALL IDENTICAL).
+  - **Room and yard tint (v8.3w):** `room_tint()` (end of `set_extra_palette`, after `sky_palette`) blends the room's own
+    colours (3-4, the wall picture 96-119 indoors, 144-255) toward warm `DUSK` (clock 400-520: up by 455, full to 490, gone
+    by 520) or cool `DAWN` (full to 25, gone by 70), multiplicatively (`tint_col`, targets x256/31: no divides), at most
+    `TINT_MAX` 115/256. The critter gets a third of it (`flush_crit_palette`). `tint_now()` skips the title, shop, album,
+    journal, farewell, story and runaway screens. The bars' own colours stay (`BAR_COL`: room 160/184, yard 155/174/193,
+    the only indices the bars use). Palette checks in tests at clock 400-520 or 0-70 see tinted values.
   - **Profiling:** the emulator's `prof` table is `(pc>>1)&0x1FFFF`, so code above 0x08040000 (e.g. `blit_rows`)
     aliases onto low addresses (it looked like `irq`). For a true profile, build a scratch copy of `test_emulator.c`
     with a bigger table.
