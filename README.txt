@@ -1,3 +1,40 @@
+Starfall Meadow v8.4 - release (Nov 14, 2026)
+
+What is in this package
+- StarfallMeadow_v8.4.gba : the game (plays in any GBA emulator; it saves to 32 KB SRAM). Saves from v8.2 carry on
+  (decor moves to its new spots by itself).
+- MANUAL.md, CLAUDE.md (notes for working on the game), the sources (ext.c, orig*.c, start.s) and the generators in
+  gen/, tests/run_tests.py (228 checks), build.sh / mkrom.py / link.ld (./build.sh builds it)
+
+What v8.4 adds over v8.2 (the work went by the name v8.3 while in testing; there was no v8.3 release)
+- Built entirely from our own sources: the original Critter Keep now lives in C (orig.c and the lifted
+  orig_update.c, orig_render.c, orig_main.c), so the build needs no original ROM and no patching.
+- A faster life: an 11-minute day (8 minutes of day, 3 of night) and about a two-hour life. Hunger and happiness
+  drain faster, and the growth targets are a third lower to match.
+- Weight in pounds on the status card, with a lightest weight for each stage (5 / 10 / 20 / 30 LB).
+- Bond is gone. The status card shows HUNGER and HAPPY. Answering a call gives happy +1 (plain petting purrs),
+  and a gift has a surprise inside: a seed, coins, a treat or, rarely, a decor piece.
+- The room, rearranged into themed spots: the bed (or beanbag) under the window, with the toy box at its foot; the
+  fireplace, TV (on a low cabinet), radio (on a side table), arcade or piano under the picture; a new corner for the
+  plant or the fishbowl (on its own table); the wall; and the ceiling. Pieces stand against the back wall with soft
+  shadows. Nestle needs all five room spots.
+- The firefly jar has its own stand, which comes with a critter's first firefly. At dawn the jar floats to the
+  window for the release and back.
+- The room and the yard glow orange at sunset and lavender at dawn.
+- Poops in the room sit on the floor in 2.5D, clear of the decor.
+- Night-yard comforts: START and SELECT work out there (BAG, SHOP, CLEAN UP when the yard needs it, JOURNAL), a
+  firefly round ends back in the yard, and fireflies drift over the night garden.
+- The SELECT menu shows only what works. A skips the rest of a meal or snack.
+- Minigames: much smoother (Hop Hop runs at full speed again). A round pays coins by score, and AMAZING! or better
+  adds the game's own boost (Pancake Tower hunger +1, Left or Right? happy +1; Hop Hop's weight -1 every round).
+  No bonus coins.
+- The journal: tabs wrap round (arrows at both ends), new icons for the redesigned decor, corrected descriptions.
+- Smaller things: lights off by day makes it unhappy, the sick symbol shows while it sleeps, secret forms wait
+  for the 4th grown-up day, new rules for Sunpuff, Glimmer and Zippit, black cuts into and out of the title.
+- Switched off for now, with their code kept for later: the bedtime stories and the Stargazer minigame.
+- Save version unchanged (15).
+
+----------------------------------------------------------------------------------------------------------------
 Starfall Meadow v8.2 - release (Nov 12, 2026)
 
 What is in this package
