@@ -951,7 +951,8 @@ def t_yard():
     hdr = open(f'{CK}/decor.h').read()
     ents = re.findall(r'\{\{([^}]*)\},\{([^}]*)\}\}', re.search(r'DEC_PAL\[DEC_N\]\[2\]\[DEC_BANDN\]=\{(.*?)\};', hdr, re.S).group(1))
     want = [int(x) for x in ents[24 - 14][1].split(',')]   # the lantern (24), its night colours
-    sc = BOOT + ['poke32 0300004c 1f4', 'wait 4', p8(K + 3, 24), p8(P1, 16), p8(g('fly_n'), 5), *p16(g('fly_kinds'), 7), p8(g('bg_state'), 0), 'wait 30', 'peek 050001e8 24']
+    # (v8.3w: at clock 530, past the sunset tint, which ends at 520)
+    sc = BOOT + ['poke32 0300004c 212', 'wait 4', p8(K + 3, 24), p8(P1, 16), p8(g('fly_n'), 5), *p16(g('fly_kinds'), 7), p8(g('bg_state'), 0), 'wait 30', 'peek 050001e8 24']
     got = list(struct.unpack('<12H', peeks(run(ROM, sc, copy_save('adult')))[0][1]))
     check('yard: the ceiling piece keeps its colours at night (no firefly colours over them)', got == want, f'{got} want {want}')
     # v8.3: themed spots. An old save's pieces move to their own spots (the fishbowl to the new corner; the plant, whose
