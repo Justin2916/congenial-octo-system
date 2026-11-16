@@ -91,7 +91,7 @@ Other details:
     did before v8.3, so care keeps the same real-time pace (the `fidelity` checks). PET's cooldown (`P16(0x40)`, set
     when petting raises happiness) is set to 90 in the original's own code (`orig_update.c`, was 60) and counts down
     every tick: 90 s.
-  - The clock runs in `M_NONE`, `M_EXTRAS`, `M_NAME`, `M_GARDEN` and `M_FLY`. It is paused everywhere else.
+  - The clock runs in `M_NONE`, `M_EXTRAS`, `M_NAME`, `M_GARDEN`, `M_FLY` and (v8.3d) a minigame round. It is paused everywhere else.
 - **Display:**
   - The game uses Mode 4 (8-bit bitmap) with page flipping. Draw through `DRAW_TARGET`.
   - `pset` is a read-modify-write of 16 bits, so it is slow.
@@ -351,6 +351,11 @@ Other details:
   SEED?"; its YES starts over (the ARE YOU SURE? step, `M_SURE`/`sure_draw`, is no longer reached).
 - **Food (v8.3c):** every shop food adds weight except salad (-2): apple, fish, milk and cookie +1 (were 0); pizza is
   hunger +2 (was +3), weight +2. Cake, candy and salad unchanged.
+- **v8.3d:** `menu_undim()`: with the lights off, while a menu is open (SELECT, bag, shop, START, journal), every UI colour the
+  dark room doesn't use (it uses 3-5, 8, 29, 30, 35) goes back to its daytime value, so icons and the coin aren't black.
+  Time passes in a minigame round (`mini_update` calls `sim_frame`, which runs in scene 8 while `M_MINI`); bedtime, a
+  runaway, `sim_msg` messages and the fussing beeps wait until the round is over. The moon's phase is `MOON_PH(day)`
+  = (day + `Garden.spare[0]`) & 7, a random offset set per critter in `garden_reset` (0x100 | offset; old saves 0).
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its
   grown-up days start): Sunpuff = an Oakhart in the yard with `PET_CLOCK` < 150 on 3 days (`Dex.yard`, the day marker
   in `Life.pad`; "BASKS IN THE MORNING SUN!"); Glimmer = a Dunerose with 8 fireflies in the lantern in one night

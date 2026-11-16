@@ -750,6 +750,7 @@ static void lantern_draw(void); static void win_open_pre(void); static void win_
 #define HELP_PAGES 7   // v8.3b: DAY AND NIGHT and GOOD TO KNOW added
 
 // ------------------------------------------------------------------ small utils
+#define MOON_PH(d) (((d)+G.gdn.spare[0])&7)   // the moon's phase on day d: 0 full, 4 new (v8.3d: offset per critter)
 static u32 rnd32(void){ u32 x=G.rng; x^=x<<13; x^=x>>17; x^=x<<5; G.rng=x; return x; }
 static int rnd(int n){ return (int)(((rnd32()>>16) * (u32)n) >> 16); }
 static int clampi(int v,int lo,int hi){ return v<lo?lo:(v>hi?hi:v); }
@@ -1260,6 +1261,17 @@ static void room_tint(void){
     for(int i=C_PIC;i<C_PIC+24;i++) PAL[i]=tint_col(PAL[i],T,a); }
   for(int i=BGX_FIRST;i<256;i++) if(!BAR_COL(i)) PAL[i]=tint_col(PAL[i],T,a);   // (the bars' colours stay)
 }
+// v8.3d: with the lights off the original dims its 40 UI colours, and the menus' icons (the coin, the bag's items)
+// went nearly black. While a menu is open, every UI colour the dark room itself doesn't use goes back to its daytime
+// value (the room uses 3-5, 8, 29, 30 and 35, checked on screen; they stay dim so the room stays dark behind)
+static void menu_undim(void){
+  if(!(G.mode==M_EXTRAS || G.mode==M_BAG || G.mode==M_SHOP || G.mode==M_MENU || G.mode==M_DEX)) return;
+  if(!(*(volatile u8*)0x03000078==1 && PET[0x0D] && PET[4]!=8)) return;   // (the original's own test for "dim")
+  const u16 *pair=(const u16*)0x0800FB6C + 2*(*(volatile u32*)0x0300007C);
+  for(int i=0;i<40;i++){
+    if(i==3 || i==4 || i==5 || i==8 || i==29 || i==30 || i==35) continue;
+    PAL[i]= i==17? pair[0] : i==18? pair[1] : ((const u16*)0x0800FB1C)[i]; }   // (the original's base colours and mood pairs)
+}
 static void set_extra_palette(void){
   PAL[C_DKGREEN]=RGB(6,17,6); PAL[C_DEEPGREEN]=RGB(4,13,8); PAL[C_NGRASS]=RGB(4,10,10); PAL[C_NGRASS2]=RGB(2,7,8);
   PAL[C_LTGREEN]=RGB(15,26,10); PAL[C_NWOOD]=RGB(10,7,6); PAL[C_NWALL]=RGB(12,11,17); PAL[C_TERRA]=RGB(25,11,6); PAL[C_GLASS]=RGB(22,29,31);
@@ -1273,6 +1285,7 @@ static void set_extra_palette(void){
       for(int k=0;k<4;k++) PAL[TBG_FIRST+TBG_TWINKLE+k]=TBG_TW[(k+(G.sky_t>>4))&3]; }
     else { int nb= G.bgx_yard? BGX_N : BGX_ROOM_N; for(int i=0;i<nb;i++) PAL[BGX_FIRST+i]=q[i]; decor_palettes(night); } }   // (v8.3: indoors 196-207 are the fifth decor band)
   sky_palette();
+  menu_undim();
   room_tint();
   farewell_palette();
   if(G.mode==M_STORY) story_palette();
@@ -1388,7 +1401,7 @@ static void draw_sky(int window){
   if(t>=478){ int tt=(int)t-478; int u=tt*512/122-256; int x=-12+tt*264/122, y=36+((52*u*u)>>16);
     // v8.1: the moon's phase changes over eight nights (0 full, 4 new); the shadowed part is left to the sky
     static const s8 OFF[8]={99,11,8,4,0,-4,-8,-11};
-    int ph=G.ext.day&7, off=OFF[ph];
+    int ph=MOON_PH(G.ext.day), off=OFF[ph];
     if(sky_visible(x-7,y-7,x+7,y+7)) for(int dy=-7;dy<=7;dy++){ int w=HW7[dy+7]; for(int dx=-w;dx<=w;dx++){
       int ex=dx-off; if(ph && (ph==4 || ex*ex+dy*dy<=46)) continue; sky_pset(x+dx,y+dy,C_MOON); } } }
   // drifting clouds
@@ -1563,7 +1576,9 @@ static void spr_add(int cx,int cy,int size,int tile,int bank,int aff,int dbl,int
 
 static void keep_from_v9(void);
 static void journal_from_album(void);
-static void garden_reset(void){ memset(G.gdn.p,0,sizeof(G.gdn.p)); G.gdn.seeds=3; G.gdn.vis_day=0xFF; G.gdn.vis_n=0; G.gdn.news=0; G.gdn.ok=1; }
+// v8.3d: each critter's moon starts at a random phase (Garden.spare[0]: 0x100 | the offset; old saves read 0: as before)
+static void garden_reset(void){ G.gdn.spare[0]=(u16)(0x100|((rnd(8)+FRAMES)&7));   // (FRAMES: when the button was pressed)
+  memset(G.gdn.p,0,sizeof(G.gdn.p)); G.gdn.seeds=3; G.gdn.vis_day=0xFF; G.gdn.vis_n=0; G.gdn.news=0; G.gdn.ok=1; }
 // v8.3: the spots became themed (and a fifth, the right-hand corner, was added in Deco.pad): a piece left in a spot
 // that isn't its own moves to its own, or goes back in the bag (it stays owned) when that one is taken
 static void deco_migrate(void){
@@ -2290,7 +2305,8 @@ static u32 xs_back(u32 y){   // the step before y (xorshift is reversible)
   x=y; for(int i=0;i<3;i++) x=y^(x<<13); return x;
 }
 static void mistake(void){ if(PET[P_MISTAKES]<250) PET[P_MISTAKES]++; if(PET[P_MISTAKES2]<250) PET[P_MISTAKES2]++; }
-static void sim_msg(const char *s){ int i=0; while(s[i] && i<37){ MSG_BUF[i]=s[i]; i++; } MSG_BUF[i]=0; MSG_TIMER=101; }
+static void sim_msg(const char *s){ if(G.mode==M_MINI) return; int i=0;   // (v8.3d: none over a game)
+  while(s[i] && i<37){ MSG_BUF[i]=s[i]; i++; } MSG_BUF[i]=0; MSG_TIMER=101; }
 static void sim_save(void){   // the critter record only, like the original (the extension's own data saves when it changes)
   P32(0)=PET_MAGIC; u32 h=0x5EED; for(int i=0;i<0x48;i++) h=h*31+PET[i]; P32(0x48)=h; O_SAVE(PET,0x4C); }
 static void evolve_to(int target){ ANIM_T=0; ANIM_KIND=7; ANIM_ARG=(u32)target; SCENE=3; sfx(1,SEQ_EVOLVE); }
@@ -2330,7 +2346,7 @@ static void sim_tick(void){
   int ri=rate_index(st), pbase= st==1? 120 : 165;
   int day=P32(0x24)<480, sleeping, awake;
   u8 asleep=PET[P_ASLEEP];
-  if(!asleep && !day){                                        // bedtime
+  if(!asleep && !day && G.mode!=M_MINI){                       // bedtime (v8.3d: after a minigame round, not during it)
     P16(0x3E)=0; PET[P_ASLEEP]=1; if(PET[P_CALL]) PET[P_CALL]=0;
     sim_msg("GETTING SLEEPY... LIGHTS OFF?"); sfx(0,SEQ_ALERT); P16(0x46)=0;
     asleep=1;
@@ -2377,19 +2393,19 @@ static void sim_tick(void){
   // v8.1: health stays hidden, but once it falls below a third the critter says so (once, until it is well again)
   if(dmg && P16(0x16)<34 && P16(0x16) && !G.weak_warned){ G.weak_warned=1; set_msg_name(" LOOKS WEAK... IT NEEDS CARE!"); sfx(0,SEQ_ALERT); }
   else if(P16(0x16)>=60) G.weak_warned=0;
-  if(!healed && P16(0x16)==0){                                // it ran out of health
+  if(!healed && P16(0x16)==0 && G.mode!=M_MINI){                // it ran out of health (v8.3d: not mid-game; it leaves after)
     G.gone_form=(u8)form_index(); SCENE=9; PET[P_STAGE]=8; GONE_T=0; O_SOUND(0,0,0,0); sfx(1,SEQ_GONE); sim_save(); return;
   }
   if(!sleeping){                                              // awake: it fusses while it needs something
     int need= !hunger || !happy || MESS_HERE>2 || sick;   // (the mess where it is)
-    if((need || PET[P_CALL]) && ++P16(0x46)>=45){ sfx(0,SEQ_ALERT); P16(0x46)=0; }
+    if((need || PET[P_CALL]) && ++P16(0x46)>=45){ if(G.mode!=M_MINI) sfx(0,SEQ_ALERT); P16(0x46)=0; }   // (no beeps over a game)
     if(SCENE==1) sim_grow(st);                                // and grows up only while awake in its room
   }
   (void)awake;
 }
 // once a frame, before the original's update (scenes 1-5, like the original's own clock)
 static void sim_frame(void){
-  u32 sc=SCENE; if(sc<1 || sc>5) return;
+  u32 sc=SCENE; if((sc<1 || sc>5) && G.mode!=M_MINI) return;   // (v8.3d: a minigame is the original's scene 8)
   u32 n=TICK_CNT+1; TICK_CNT=n;
   if((int)n < (fast_mode()? TICK_FRAMES_FAST : TICK_FRAMES)) return;
   TICK_CNT=0;
@@ -3541,6 +3557,7 @@ static void stars_play(u16 pr){
   else mini_finish();
 }
 static void mini_update(u16 keys, u16 pr){
+  if(G.phase!=PH_PICK) sim_frame();   // v8.3d: time passes during a round (bedtime waits until it's over)
   G.t++; if(MSG_TIMER) MSG_TIMER--;
   if(G.phase!=PH_RESULT && (pr&K_B)){ set_msg("OKAY, MAYBE LATER!"); sfx(0,SEQ_BLIP); to_room(keys); return; }
   if(G.phase==PH_PICK){
@@ -3844,7 +3861,7 @@ static const u8 PATCH_X[3]={80,132,152};
 static const u8 PATCH_Y[3]={110,104,127};   // the bottom of each soil mound
 #define GROUND_Y 128                         // where the ground visitors walk: in front of all three
 static const char *const GK_NAME[GK_N]={"SILVER","ROSE","GOLD","SKY","MINT","STARBLOOM","MOON LILY","TWINGLOW","AURORA"};
-static int moon_phase(void){ return G.ext.day&7; }                     // 0 full, 4 new: eight nights round
+static int moon_phase(void){ return MOON_PH(G.ext.day); }                     // 0 full, 4 new: eight nights round
 static int g_found(int b){ return (int)((G.gdn.found>>b)&1u); }
 static int g_found_count(void){ int n=0; for(int i=0;i<G_FOUND_N;i++) n+=g_found(i); return n; }
 static void g_find(int b){ G.gdn.found|=1u<<b; }
@@ -3867,7 +3884,7 @@ static int care_colour(void){
   u32 r=rnd(tot); for(int i=0;i<5;i++){ if(r<s[i]) return i; r-=s[i]; } return GK_SILVER;
 }
 static void garden_bloom(Patch *p){
-  int wish = (u8)(G.more.spare[0]-1)==p->pday && G.more.spare[0], moon = (p->pday&7)==0;
+  int wish = (u8)(G.more.spare[0]-1)==p->pday && G.more.spare[0], moon = MOON_PH(p->pday)==0;
   int k;
   if(rnd(20)==0) k=GK_AURORA;
   else if(moon && rnd(3)==0) k=GK_MOON;                     // v8.2b: the rare chances differ (lily 1/3, star 1/2, twin 1/5)
@@ -4919,7 +4936,7 @@ static void fly_tonight(void){   // decides tonight's kinds the first time it's 
   G.more.spare[6]=(u16)(G.ext.day+1);
   u16 m=7;                                                  // the three common ones
   int a=3+(rnd(5)+G.ext.day*2)%5, b=3+(rnd(4)+G.ext.day)%4; if(b>=a) b++; m|=(u16)((1u<<a)|(1u<<b));   // two of the five uncommon ones
-  if((G.ext.day&7)==0) m|=1u<<8;                            // a full moon: moonglow
+  if(MOON_PH(G.ext.day)==0) m|=1u<<8;                            // a full moon: moonglow
   if(g_blooms()>=2 && rnd(10)==0) m|=1u<<11;               // starfly: about one night in ten, with two or more blooms
   G.more.spare[7]=(u16)(m<<4);
   if(G.fly_night!=(u16)(G.ext.day+1)){ G.fly_night=(u16)(G.ext.day+1); G.fly_n=0; G.fly_kinds=0; }

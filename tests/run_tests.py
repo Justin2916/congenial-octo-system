@@ -46,7 +46,7 @@ def offsets():
               'obj': 'State,obj', 'st_seq': 'State,st_seq', 'tune': 'State,tune', 'rating': 'State,rating', 'pk_w': 'State,pk_w',
               'keep': 'State,keep', 'k_un0': 'Keep,un0', 'k_un1': 'Keep,un1', 'k_best': 'Keep,best', 'k_ok': 'Keep,ok',
               'd_unlock': 'Deco,unlock_lvl', 'names': 'State,names', 'nm': 'State,nm', 'want_name': 'State,want_name', 'nm_x': 'State,nm_x', 'd_owned': 'Deco,owned', 'd_pad': 'Deco,pad', 'e_toys': 'Ext,toys', 'd_vit': 'Deco,vit_day',
-              'jr': 'State,jr', 'jtab': 'State,jtab', 'jstar': 'State,jstar', 'jcare': 'State,jcare', 'j_s': 'Journal,s', 'j_coins': 'Journal,coins', 'j_games': 'Journal,games', 'so_pend': 'State,sendoff_pending', 'retired': 'Life,retired', 'l_pad': 'Life,pad', 'more': 'State,more', 'm_rn': 'More,rn', 'm_rmiss': 'More,rmiss', 'jitem': 'State,jitem', 'm_found0': 'More,found0', 'm_found_ok': 'More,found_ok', 'm_wishes': 'More,wishes', 'wish_t': 'State,wish_t', 'wish_cd': 'State,wish_cd', 'm_spare': 'More,spare', 'e_inv': 'Ext,inv', 'dex_cur': 'State,dex_cur', 'stock': 'State,stock', 'st_cur': 'State,st_cur', 'st_page': 'State,st_page', 'm_stories': 'More,stories', 'st_pad': 'State,st_pad', 'rng': 'State,rng', 'gdn': 'State,gdn', 'gcur': 'State,gcur', 'g_found': 'Garden,found', 'g_seeds': 'Garden,seeds', 'g_vis_n': 'Garden,vis_n', 'g_vis': 'Garden,vis', 'g_vis_day': 'Garden,vis_day', 'e_day': 'Ext,day', 'gpad': 'State,gpad', 'gdetail': 'State,gdetail', 'bg_state': 'State,bg_state', 'weak_warned': 'State,weak_warned', 'outside': 'State,outside', 'gpad2': 'State,gpad2', 'dex_from': 'State,dex_from', 'gmsg': 'State,gmsg', 'ex_yard': 'State,ex_yard', 'jt_first': 'State,jt_first', 'fly': 'State,fly', 'fly_t': 'State,fly_t', 'fly_kinds': 'State,fly_kinds', 'fly_night': 'State,fly_night', 'fly_rel': 'State,fly_rel', 'fly_n': 'State,fly_n', 'fly_state': 'State,fly_state', 'fly_card': 'State,fly_card', 'jx': 'State,jx', 'jy': 'State,jy', 'jfly': 'State,jfly', 'f_x': 'Fly,x', 'f_y': 'Fly,y', 'f_k': 'Fly,k', 'f_t': 'Fly,t', 'f_live': 'Fly,live', 'spr_n': 'State,spr_n', 'spr_live': 'State,spr_live', 'spr_win': 'State,spr_win', 'win': 'State,win', 'm_pad0': 'More,pad0', 'm_pad1': 'More,pad1', 'gwater': 'State,gwater', 'e_adult': 'Ext,adult_day', 'gcur': 'State,gcur', 'gone_t': 'State,gone_t', 'jrec': 'State,jrec', 'sky_t': 'State,sky_t', 'spr_shown': 'State,spr_shown', 'room_cx': 'State,room_cx', 'room_cy': 'State,room_cy', 'ex_first': 'State,ex_first', 'cur': 'State,cur', 'jar_t': 'State,jar_t', 'jar_back': 'State,jar_back', 'st_baked': 'State,st_baked'}
+              'jr': 'State,jr', 'jtab': 'State,jtab', 'jstar': 'State,jstar', 'jcare': 'State,jcare', 'j_s': 'Journal,s', 'j_coins': 'Journal,coins', 'j_games': 'Journal,games', 'so_pend': 'State,sendoff_pending', 'retired': 'Life,retired', 'l_pad': 'Life,pad', 'more': 'State,more', 'm_rn': 'More,rn', 'm_rmiss': 'More,rmiss', 'jitem': 'State,jitem', 'm_found0': 'More,found0', 'm_found_ok': 'More,found_ok', 'm_wishes': 'More,wishes', 'wish_t': 'State,wish_t', 'wish_cd': 'State,wish_cd', 'm_spare': 'More,spare', 'e_inv': 'Ext,inv', 'dex_cur': 'State,dex_cur', 'stock': 'State,stock', 'st_cur': 'State,st_cur', 'st_page': 'State,st_page', 'm_stories': 'More,stories', 'st_pad': 'State,st_pad', 'rng': 'State,rng', 'gdn': 'State,gdn', 'gcur': 'State,gcur', 'g_found': 'Garden,found', 'g_seeds': 'Garden,seeds', 'g_vis_n': 'Garden,vis_n', 'g_vis': 'Garden,vis', 'g_vis_day': 'Garden,vis_day', 'g_spare': 'Garden,spare', 'e_day': 'Ext,day', 'gpad': 'State,gpad', 'gdetail': 'State,gdetail', 'bg_state': 'State,bg_state', 'weak_warned': 'State,weak_warned', 'outside': 'State,outside', 'gpad2': 'State,gpad2', 'dex_from': 'State,dex_from', 'gmsg': 'State,gmsg', 'ex_yard': 'State,ex_yard', 'jt_first': 'State,jt_first', 'fly': 'State,fly', 'fly_t': 'State,fly_t', 'fly_kinds': 'State,fly_kinds', 'fly_night': 'State,fly_night', 'fly_rel': 'State,fly_rel', 'fly_n': 'State,fly_n', 'fly_state': 'State,fly_state', 'fly_card': 'State,fly_card', 'jx': 'State,jx', 'jy': 'State,jy', 'jfly': 'State,jfly', 'f_x': 'Fly,x', 'f_y': 'Fly,y', 'f_k': 'Fly,k', 'f_t': 'Fly,t', 'f_live': 'Fly,live', 'spr_n': 'State,spr_n', 'spr_live': 'State,spr_live', 'spr_win': 'State,spr_win', 'win': 'State,win', 'm_pad0': 'More,pad0', 'm_pad1': 'More,pad1', 'gwater': 'State,gwater', 'e_adult': 'Ext,adult_day', 'gcur': 'State,gcur', 'gone_t': 'State,gone_t', 'jrec': 'State,jrec', 'sky_t': 'State,sky_t', 'spr_shown': 'State,spr_shown', 'room_cx': 'State,room_cx', 'room_cy': 'State,room_cy', 'ex_first': 'State,ex_first', 'cur': 'State,cur', 'jar_t': 'State,jar_t', 'jar_back': 'State,jar_back', 'st_baked': 'State,st_baked'}
     src = f'#include "{CK}/ext.c"\nconst unsigned TEST_OFFS[] = {{ ' + ', '.join(f'__builtin_offsetof({v})' for v in fields.values()) + ' };\n'
     c, o, b = f'{TMP}/offs.c', f'{TMP}/offs.o', f'{TMP}/offs.bin'
     open(c, 'w').write(src)
@@ -377,7 +377,7 @@ def t_games():
     check('games: STARGAZER - six songs played back', 'timeout' not in out and v[0][1][0] == PH_RESULT and u32(v[1][1]) == 6, str(v[:2]))
     c0, c1 = struct.unpack('<H', v[2][1])[0], struct.unpack('<H', v[5][1])[0]
     check('games: STARGAZER - six songs is PERFECT! and pays 18 coins', v[3][1][0] == 3 and c1 - c0 == 18, f'rating {v[3][1][0]} coins {c0}->{c1}')
-    check('games: STARGAZER - a good round +20 health', v[4][1] == bytes([70, 0]), str(v[4]))
+    check('games: STARGAZER - a good round +20 health (v8.3d: time passes during it, so it heals a little more)', 70 <= struct.unpack('<H', v[4][1])[0] <= 80, str(v[4]))
     sc = list(pre) + [f'waitw {g("spawn"):08x} 1', f'press {keys[(st[0] + 1) % 4]}', 'wait 100', f'peek {g("phase"):08x} 1', f'peek {g("score"):08x} 4']
     v = pk(run(ROM, sc, copy_save('adult')))
     check('games: STARGAZER - a wrong star ends it', v[0][1][0] == PH_RESULT and u32(v[1][1]) == 0, str(v))
@@ -388,6 +388,11 @@ def t_games():
     v = pk(run(ROM, sc, copy_save('adult'))); c0, c1 = struct.unpack('<H', v[0][1])[0], struct.unpack('<H', v[4][1])[0]
     check('games: HOP HOP - jumping every hurdle and catching every berry is a perfect 12 (PERFECT!), +15 coins (no bonus coins since v8.3t)',
           v[1][1][0] == PH_RESULT and u32(v[2][1]) == 12 and v[3][1][0] == 3 and c1 - c0 == 15, f'{v[1:4]} coins {c0}->{c1}')
+    # v8.3d: time passes during a round, but bedtime waits until it's over: start just before nightfall (step 470)
+    sc = BOOT + DAY + ['poke32 0300004c 1d6', 'wait 5'] + start(G_HOP) + ['wait 900', 'peek 0300004c 4', f'peek {PET + 12:08x} 1',
+          f'peek {g("phase"):08x} 1', 'press A', 'wait 10', 'press A', 'wait 200', f'peek {PET + 12:08x} 1']
+    v = pk(run(ROM, sc, copy_save('adult')))
+    check('games: time passes during a round, and bedtime waits until the score has been seen', u32(v[0][1]) >= 480 and v[1][1][0] == 0 and v[2][1][0] == PH_RESULT and v[3][1][0] == 1, str(v))
     # v8.1: doing nothing in HOP HOP scores 0 (a rock that touches it while it flashes is a miss) and pays nothing
     sc = BOOT + DAY + start(G_HOP) + [f'peek {g("ext", "e_coins"):08x} 2', 'wait 900', f'peek {g("score"):08x} 4', f'peek {g("rating"):08x} 1', 'press A', 'wait 10', f'peek {g("ext", "e_coins"):08x} 2']
     v = pk(run(ROM, sc, copy_save('adult'))); c0, c1 = struct.unpack('<H', v[0][1])[0], struct.unpack('<H', v[3][1])[0]
@@ -486,6 +491,13 @@ def t_unlocks():
     sc = BOOT + peek_keep + [p8(PET + 4, 8), 'wait 5', p8(PET + 4, 0), 'wait 10'] + peek_keep
     v = pk(run(ROM, sc, copy_save('adult'))); n0, n1 = popcount_keep(v[0][1]), popcount_keep(v[3][1])
     check('unlocks: a new egg starts the shop over', n0 > 4 and n1 == 4 and v[4][1][0] == 1, f'{n0} -> {n1}, level {v[4][1][0]}')
+    # v8.3d: a new egg's moon starts at a random phase (Garden.spare[0] = 0x100 | the offset), so its first night isn't always full
+    ph = []
+    for w in (30, 37):
+        sc = BOOT + ['press START', 'wait 10'] + ['press DOWN', 'wait 3'] * 5 + ['press A', 'wait 5', 'press A', 'waitscene 0', f'wait {w}',
+              'press DOWN', 'wait 5', 'press A', 'wait 10', 'press A', 'wait 60', f'peek {g("gdn", "g_spare"):08x} 2']
+        ph.append(struct.unpack('<H', pk(run(ROM, sc, copy_save('adult')))[-1][1])[0])
+    check('unlocks: a new egg\'s moon starts at a random phase', all(p >> 8 == 1 for p in ph) and ph[0] != ph[1], str([hex(p) for p in ph]))
     # so does NEW EGG from the title
     sc = BOOT + ['press START', 'wait 10'] + ['press DOWN', 'wait 3'] * 5 + ['press A', 'wait 5', 'press A', 'waitscene 0', 'wait 30',
           'press DOWN', 'wait 5', 'press A', 'wait 10', 'press A', 'wait 60', 'scene'] + peek_keep
