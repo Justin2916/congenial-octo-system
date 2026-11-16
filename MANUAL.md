@@ -204,14 +204,14 @@ Now and then, as your critter wanders past a piece of decor, it uses it and you 
 
 | Item | Coins | What it does |
 |---|---|---|
-| Apple | 8 | Hunger +1. A garden in the yard grows one free each day. |
-| Fish | 14 | Hunger +2. A pond in the yard catches one each day. |
+| Apple | 8 | Hunger +1, weight +1. A garden in the yard grows one free each day. |
+| Fish | 14 | Hunger +2, weight +1. A pond in the yard catches one each day. |
 | Cake | 18 | Happy +2, weight +2. |
 | Candy | 6 | Happy +1, weight +1. |
 | Salad | 10 | Hunger +1, weight −2. |
-| Pizza | 20 | Hunger +3, weight +2. |
-| Milk | 10 | Hunger +1. |
-| Cookie | 6 | Happy +1, no weight gained. |
+| Pizza | 20 | Hunger +2, weight +2. |
+| Milk | 10 | Hunger +1, weight +1. |
+| Cookie | 6 | Happy +1, weight +1. |
 | Pond (yard) | 170 | Catches one free fish a day (while the bag has room) and gives hunger +1. |
 
 **PLAY**
@@ -338,7 +338,7 @@ The journal keeps a record of every critter and is never cleared. Open it from t
 
 **Why can't I go outside?** It has to be at least a child, awake, healthy, and with the lights on. At night while it sleeps, the choice becomes GARDEN instead.
 
-**It's overweight. What do I do?** Go easy on cake, candy and pizza. Salad lowers its weight, and every round of Hop Hop trims it a little.
+**It's overweight. What do I do?** Every food from the shop adds a little weight except salad; go easy on cake, candy and pizza. Salad lowers its weight, and every round of Hop Hop trims it a little.
 
 **I gave it medicine and it made a face.** It wasn't sick. Medicine only helps a sick critter.
 
