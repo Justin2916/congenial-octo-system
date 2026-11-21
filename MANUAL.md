@@ -212,67 +212,67 @@ Now and then, as your critter wanders past a piece of decor, it uses it and you 
 | Pizza | 20 | Hunger +2, weight +2. |
 | Milk | 10 | Hunger +1, weight +1. |
 | Cookie | 6 | Happy +1, weight +1. |
-| Pond (yard) | 170 | Catches one free fish a day (while the bag has room) and gives hunger +1. |
+| Pond (yard) | 70 | Catches one free fish a day (while the bag has room) and gives hunger +1. |
 
 **PLAY**
 
 | Item | Coins | What it does |
 |---|---|---|
 | Gift | 45 | Happy +1, and a surprise inside: a garden seed (half the time), 10–20 coins, a treat for the bag, or now and then a decor piece you don't own yet. |
-| Ball (yard toy) | 60 | It kicks the ball around; every kick counts as play. Every 4 plays: happy +1. |
-| Bubbles (yard toy) | 45 | Bubbles drift up to chase; every pop counts as play. |
-| Frisbee (yard toy) | 75 | A catch counts as double play. |
-| Radio | 110 | Dancing counts as play. |
-| Toybox | 90 | Playing with its toys counts as play. |
-| TV | 160 | Cartoons count as play. Only with the lights on. |
-| Piano | 170 | Music to play: counts as play. |
-| Arcade | 180 | Retro games count as play. Only with the lights on. |
-| Guitar | 120 | Strumming counts as play. |
-| Disco ball (ceiling) | 140 | Dancing counts as play. |
-| Swing (yard) | 140 | Swinging counts as play. |
-| Sandbox (yard) | 100 | Building castles counts as play. |
-| Trampoline (yard) | 130 | Bouncing counts as play. |
-| Slide (yard) | 160 | Sliding counts as play. |
+| Ball (yard toy) | 35 | It kicks the ball around; every kick counts as play. Every 4 plays: happy +1. |
+| Bubbles (yard toy) | 30 | Bubbles drift up to chase; every pop counts as play. |
+| Frisbee (yard toy) | 40 | A catch counts as double play. |
+| Radio | 60 | Dancing counts as play. |
+| Toybox | 45 | Playing with its toys counts as play. |
+| TV | 65 | Cartoons count as play. Only with the lights on. |
+| Piano | 70 | Music to play: counts as play. |
+| Arcade | 70 | Retro games count as play. Only with the lights on. |
+| Guitar | 60 | Strumming counts as play. |
+| Disco ball (ceiling) | 60 | Dancing counts as play. |
+| Swing (yard) | 60 | Swinging counts as play. |
+| Sandbox (yard) | 60 | Building castles counts as play. |
+| Trampoline (yard) | 60 | Bouncing counts as play. |
+| Slide (yard) | 65 | Sliding counts as play. |
 
 **CLEAN**
 
 | Item | Coins | What it does |
 |---|---|---|
 | Soap | 15 | A bubble bath: cleans up any mess. |
-| Sprinkler (yard toy) | 110 | Running through the spray counts as play and keeps it clean. |
-| Mirror | 90 | Funny faces: a mess takes longer to make it sick. |
-| Birdbath (yard) | 120 | Birds visit: a mess takes longer to make it sick. |
+| Sprinkler (yard toy) | 45 | Running through the spray counts as play and keeps it clean. |
+| Mirror | 45 | Funny faces: a mess takes longer to make it sick. |
+| Birdbath (yard) | 60 | Birds visit: a mess takes longer to make it sick. |
 
 **REST**
 
 | Item | Coins | What it does |
 |---|---|---|
 | Vitamin | 40 | Cures sickness, then keeps it from getting sick for the rest of the day. |
-| Bed | 120 | Bouncing heals it a little. It wakes up happy +1 every day. |
-| Fishbowl | 150 | Watching the fish heals it a little. |
-| Bookshelf | 130 | A shelf of books: reading heals it a little. |
-| Beanbag | 85 | Flopping on it heals it a little. |
-| Fireplace | 160 | A warm fire heals it a little. |
-| Lantern (ceiling) | 70 | A cozy glow heals it a little. |
+| Bed | 60 | Bouncing heals it a little. It wakes up happy +1 every day. |
+| Fishbowl | 65 | Watching the fish heals it a little. |
+| Bookshelf | 60 | A shelf of books: reading heals it a little. |
+| Beanbag | 45 | Flopping on it heals it a little. |
+| Fireplace | 70 | A warm fire heals it a little. |
+| Lantern (ceiling) | 40 | A cozy glow heals it a little. |
 
 **OUTSIDE**
 
 | Item | Coins | What it does |
 |---|---|---|
-| Kite (yard toy) | 90 | Fresh air makes it happy more often while it flies. |
-| Pinwheel (yard toy) | 65 | Coins turn up more often, up to 4 a day. |
-| Plant | 70 | Grows each day. Sniffing it counts as time with plants. |
-| Garden (yard) | 150 | Grows one free apple a day (while the bag has room); counts as time with plants. |
-| Flowerbed (yard) | 90 | Butterflies visit: chasing them counts as time with plants. |
+| Kite (yard toy) | 45 | Fresh air makes it happy more often while it flies. |
+| Pinwheel (yard toy) | 35 | Coins turn up more often, up to 4 a day. |
+| Plant | 40 | Grows each day. Sniffing it counts as time with plants. |
+| Garden (yard) | 65 | Grows one free apple a day (while the bag has room); counts as time with plants. |
+| Flowerbed (yard) | 45 | Butterflies visit: chasing them counts as time with plants. |
 
 **DECOR** (just to look at)
 
 | Item | Coins | What it does |
 |---|---|---|
-| Portrait | 100 | Its own picture, to admire. Just to look at. |
-| Clock | 80 | Shows the time of day. |
-| Mobile (ceiling) | 80 | Stars that spin. |
-| Plane (ceiling) | 95 | A little plane on a string. |
+| Portrait | 50 | Its own picture, to admire. Just to look at. |
+| Clock | 40 | Shows the time of day. |
+| Mobile (ceiling) | 40 | Stars that spin. |
+| Plane (ceiling) | 50 | A little plane on a string. |
 
 ## Minigames
 
