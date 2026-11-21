@@ -35,7 +35,7 @@ def offsets():
     fields = {'ext': 'State,ext', 'life': 'State,life', 'deco': 'State,deco', 'album': 'State,album', 'dex': 'State,dex',
               'check_special': 'State,check_special', 'save_seq': 'State,save_seq', 'last_clock': 'State,last_clock',
               'e_day': 'Ext,day', 'e_special': 'Ext,special', 'e_adult_day': 'Ext,adult_day', 'e_coins': 'Ext,coins',
-              'd_phase': 'Dex,phase', 'd_side': 'Dex,side', 'd_adult': 'Dex,adult', 'd_teen_day': 'Dex,teen_day',
+              'd_phase': 'Dex,phase', 'd_side': 'Dex,side', 'd_adult': 'Dex,adult', 'd_seen': 'Dex,seen', 'd_teen_day': 'Dex,teen_day',
               'd_mess_day': 'Dex,mess_day', 'd_games': 'Dex,games', 'd_yard': 'Dex,yard', 'd_c_good': 'Dex,c_good',
               'd_c_bad': 'Dex,c_bad', 'd_c_sad': 'Dex,c_sad', 'd_c_mess': 'Dex,c_mess', 'k_slot': 'Deco,slot',
               'care': 'State,care', 'c_grow': 'Care,grow', 'c_adult': 'Care,adult', 'c_miss_day': 'Care,miss_day',

@@ -31,8 +31,7 @@ def F_FLUFFBUD_V8(c, pose):
     bunny_head(c, pose, dy, sx, sy, 'puff', 'puff2', 'fur', 'inner', 'face')
     v8_blossom(c, 31.5, 13.5+dy, 2.6, 'flower', 'ctr', n=8, rr=0.5)                # a dandelion tucked by its ear
     c.ellipse(29.5, 15.5+dy, 1.8, 0.8, 'leaf', rot=0.6)
-    if pose in ('idle', 'happy'):
-        for (x, y) in ((8, 14), (41, 9), (44, 20)): v8_seed(c, x, y+dy*0.5, 0.9)
+    # (v8.3e: its three dandelion seeds are no longer part of the art: ext.c's fluff_seeds() lets them fly off when it laughs)
     face(c, pose, 24, 4.2, 23.5+dy, 24, 27.6+dy, style='round', mo='smile', blush=True)
 form('FLUFFBUD', FLUFF, F_FLUFFBUD_V8)
 

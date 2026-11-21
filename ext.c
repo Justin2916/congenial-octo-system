@@ -529,7 +529,7 @@ static const Form FORMS[N_FORMS] = {
  /* 2*/ {"SPROUTLE",0,ST_CHILD,1,0,740,
         "IT SUNBATHES TO GROW|ITS LEAVES. HOW IT IS|CARED FOR NOW DECIDES|WHAT IT BECOMES.", "WHAT A BLIPLET GROWS|INTO."},
  /* 3*/ {"FLUFFBUD",1,ST_ADULT,0,0,620,
-        "A BUNNY AS SOFT AS A|DANDELION CLOCK. IT|NEVER SAYS NO TO A|GAME, AND SHEDS SEEDS|WHEN IT LAUGHS.", HINT_GOOD"|PLAY LOTS OF GAMES."},
+        "A FLUFFY BUNNY WITH A|DANDELION-PUFF MANE.|IT NEVER SAYS NO TO A|GAME, AND SHEDS SEEDS|WHEN IT LAUGHS.", HINT_GOOD"|PLAY LOTS OF GAMES."},
  /* 4*/ {"FRILLO",1,ST_ADULT,2,0,330,
         "ITS GILLS ARE LITTLE|FERN FRONDS THAT PERK|UP WHEN IT IS HAPPY.|IT LIKES A BIT OF|EVERYTHING.", HINT_GOOD"|CARE FOR IT EVENLY."},
  /* 5*/ {"STARWING",1,ST_SECRET,1,0,560,
@@ -734,6 +734,7 @@ typedef struct {
   u16 decor_cd67[2];                // v8.3: the use cooldowns of spots 6 and 7 (the first six are decor_cd, kept where it was)
   u32 mini_key;                     // v8.3: what the minigame's top bar shows in SCRATCH_BG (0 = redraw)
   u32 mini_lbl;                     // v8.3: the game's label baked into SCRATCH_BG (its address, 0 = none)
+  u8 fb_t, fb_pad[3];               // v8.3e: Fluffbud's seeds: frames since they lifted off (0 = none in the air)
 } State;
 
 #define G (*(State*)0x0203E000u)
@@ -4501,6 +4502,31 @@ static int room_pose(int flip){
   return auto_pose();
 }
 // the room's critter draw call is routed here so we know where the critter stands
+// v8.3e: Fluffbud's three dandelion seeds aren't part of its art any more (they flickered when it blinked): when it
+// laughs (its happy pose) they lift off its puff and drift up and away, fading out. In the art's 48-px space they start
+// at (8,14), (41,9) and (44,20); each drifts its own way with a little sway.
+#define FB_T 84
+static void fluff_seeds(int x,int y,int sc,int flip,int pose){
+  int glad= pose==POSE_HAPPY || pose==POSE_LOVE;   // (laughing, or loving a treat or a pat)
+  if(G.fb_t) G.fb_t++; else if(glad) G.fb_t=1;
+  if(G.fb_t>FB_T){ G.fb_t= glad? G.fb_t-1 : 0; if(!G.fb_t) return; }   // (while it still laughs, they've gone: wait)
+  if(G.fb_t>=FB_T) return;
+  static const s8 SX[3]={8,41,44}, SY[3]={14,9,20}, VX[3]={-6,3,9}, VY[3]={-10,-12,-7};   // (velocities in 1/16 px a frame)
+  static const s8 SW[16]={0,1,2,2,3,2,2,1,0,-1,-2,-2,-3,-2,-2,-1};
+  int t=G.fb_t;
+  for(int i=0;i<3;i++){
+    if(t>56 && ((t+i)&1)) continue;                       // fading out: every other frame
+    int ax=SX[i]*sc/3, ay=SY[i]*sc/3;                     // (the room draws it 48 px wide at sc 3)
+    int sx= flip? x+16*sc-ax : x+ax;
+    int vx= flip? -VX[i] : VX[i];
+    int px=sx+((vx*t)>>4)+(SW[(t/3+i*5)&15]>>1), py=y+ay+((VY[i]*t)>>4);
+    if(px<2 || px>237 || py<30 || py>130) continue;
+    // a seed: a little umbrella of fluff on a short stem
+    pset(px,py+1,C_LTEXT); pset(px,py+2,C_TAN);
+    pset(px-2,py-1,C_WHITE); pset(px-1,py-1,C_WHITE); pset(px,py-1,C_WHITE); pset(px+1,py-1,C_WHITE); pset(px+2,py-1,C_WHITE);
+    pset(px-1,py,C_WHITE); pset(px,py,C_WHITE); pset(px+1,py,C_WHITE);
+  }
+}
 void hook_room_critter(const void *spr,int x,int y,int sc,int flip,int a5){
   int f=crit_form(spr);
   if(f==0){   // the egg: the original jiggles it 12px every couple of frames; draw that as a slow, gentle rock instead
@@ -4524,7 +4550,8 @@ void hook_room_critter(const void *spr,int x,int y,int sc,int flip,int a5){
   G.prev_cx=x;
   G.room_cx=x; G.room_cy=y;
   if(f<0){ O_SPRITE(spr,x,y,sc,flip,a5); return; }
-  crit_draw(pet_variant(f), room_pose(flip), x, y, sc, G.facing, WALL_NIGHT());
+  { int pose=room_pose(flip); crit_draw(pet_variant(f), pose, x, y, sc, G.facing, WALL_NIGHT());
+    if(f==F_FLUFFBUD) fluff_seeds(x, y, sc, G.facing, pose); else G.fb_t=0; }
 }
 // the room renderer's background copy is routed here: yard outside, sky in the window, decor inside
 static void garden_still(void);

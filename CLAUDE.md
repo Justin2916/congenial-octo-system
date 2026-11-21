@@ -359,6 +359,10 @@ Other details:
 - **v8.3e coins:** `COIN_PANCAKE` {0,1,1,1,5,5,5,5,8,8,8,12,12,12,15}, `COIN_HOP` {0,1,1,5,5,5,8,8,8,12,12,12,15},
   `COIN_GUESS` {0,3,5,7,9,10}: the middle scores pay more, the tops unchanged. A minigame is `care_play(2)` (was 4), so
   playing for coins doesn't push every critter to Fluffbud.
+- **v8.3e Fluffbud:** its three dandelion seeds left the art (`gen/v8forms.py`; they flickered when it blinked). `fluff_seeds()`
+  (after `crit_draw` in `hook_room_critter`) lets them lift off and drift away when it's happy or loving (`G.fb_t`, `FB_T`
+  frames). Its journal line: "A FLUFFY BUNNY WITH A DANDELION-PUFF MANE...". The bag's scroll arrows are drawn V shapes
+  on the right, in their own gaps above and below the list (the box is 8 px taller; the font has no ^).
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its
   grown-up days start): Sunpuff = an Oakhart in the yard with `PET_CLOCK` < 150 on 3 days (`Dex.yard`, the day marker
   in `Life.pad`; "BASKS IN THE MORNING SUN!"); Glimmer = a Dunerose with 8 fireflies in the lantern in one night
