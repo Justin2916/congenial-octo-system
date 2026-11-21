@@ -1,0 +1,15 @@
+wait 60
+press A
+waitscene 1
+press START
+TRAIL 60
+press DOWN
+TRAIL 20
+press A
+TRAIL 200
+press B
+TRAIL 60
+press SELECT
+TRAIL 60
+press B
+TRAIL 60

@@ -1,0 +1,18 @@
+wait 60
+press A
+waitscene 1
+poke8 0300003b 1
+press RIGHT
+press RIGHT
+press A
+TRAIL 200
+press A
+TRAIL 300
+FUZZ 3000 4242
+press RIGHT
+press RIGHT
+press A
+TRAIL 100
+press RIGHT
+press A
+TRAIL 900

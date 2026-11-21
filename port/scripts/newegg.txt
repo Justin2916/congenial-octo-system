@@ -1,0 +1,12 @@
+TRAIL 120
+press DOWN
+TRAIL 10
+press A
+TRAIL 30
+press A
+TRAIL 600
+press A
+TRAIL 100
+press A
+TRAIL 300
+FUZZ 8000 31337

@@ -1,0 +1,18 @@
+# build outputs (build.sh)
+ext.o
+orig.o
+orig_update.o
+orig_render.o
+ext.elf
+ext.bin
+mkrom.log
+start.o
+orig_main.o
+orig_data.bin
+orig_datainit.bin
+CritterKeep.gba
+emu
+__pycache__/
+*.wav
+*.mp3
+mgba_shot
