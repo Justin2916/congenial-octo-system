@@ -254,9 +254,9 @@ def title_image():
     hills(img, [(110, 3, 0.045, 0.6, (58, 48, 110), (96, 76, 150)), (116, 2.5, 0.07, 2.0, (42, 70, 92), (70, 110, 120))])
     for (x, b, h) in ((62, 112, 13), (70, 113, 9), (156, 113, 11), (166, 112, 15), (176, 114, 8)): pine(img, x, b, h)
     dome(img, 120, 232, 196, 116)
-    tree(img, 30, 124, 58, 1)                     # big tree on the left
-    tree(img, 228, 110, 30, 3, LEAF2)             # small one behind the house
-    cottage(img, 196, 98)
+    tree(img, 30, 131, 60, 1)                     # big tree on the left (v8.3e: its trunk in the hill, not floating)
+    tree(img, 216, 130, 36, 3, LEAF2)             # small one behind the house (v8.3e: standing on the hill)
+    cottage(img, 196, 104)                        # (v8.3e: 6 px lower, on the slope)
     fence(img, 170, 194, 126)
     bush(img, 62, 126, 9, (236, 90, 120), 4)
     bush(img, 176, 136, 8, (130, 170, 255), 5)
