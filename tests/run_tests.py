@@ -718,13 +718,15 @@ def t_fly():
     check('fly: after a round, back to the yard; three rounds a night, then no more', v[0][0] == 13 and v[1][0] == 2 and v[2][0] == 13 and v[3][0] == 13 and bytes(v[4]).startswith(b'NO MORE FIREFLIES TONIGHT.'), str(v))
     # tonight's kinds: the three common ones, two of the five others; a full moon brings moonglow; no starfly with no blooms
     seen = set(); moon = None; star = 0
+    # (v8.3d: the moon's phase has a per-critter offset, Garden.spare[0]: set to 0 here, so day 8 is the full moon)
+    full = 8
     for day in (8, 9, 10, 11, 12, 13):
-        v = peeks(run(ROM, BOOT + [p8(DAY, day), f'wait {1 + day * 7}'] + night + yard + ['press R', 'wait 6', f'peek {SP + 14:08x} 2'], copy_save('adult')))
+        v = peeks(run(ROM, BOOT + [*p16(g('gdn', 'g_spare'), 0x100), p8(DAY, day), f'wait {1 + day * 7}'] + night + yard + ['press R', 'wait 6', f'peek {SP + 14:08x} 2'], copy_save('adult')))
         m = struct.unpack('<H', v[0][1])[0] >> 4; seen.add(m)
         unc = bin(m & 0xF8).count('1')
-        if day == 8: moon = m
+        if day == full: moon = m
         star |= m & 0x800
-        check(f'fly: night {day}: the three common kinds and two of the others', m & 7 == 7 and unc == 2 and not (m & 0x200 and day != 8), hex(m))
+        check(f'fly: night {day}: the three common kinds and two of the others', m & 7 == 7 and unc == 2 and not (m & 0x200 and day != full), hex(m))
     check('fly: a full moon brings the moonglow, other nights not', moon & 0x100 and all(not (m & 0x100) for m in seen if m != moon), str([hex(m) for m in seen]))
     check('fly: no starfly without two moonflowers in bloom', not star, '')
     check('fly: the uncommon pair changes from night to night', len(seen) >= 3, str([hex(m) for m in seen]))
