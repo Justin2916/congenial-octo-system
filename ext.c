@@ -3241,12 +3241,12 @@ static void bag_update(u16 pr, u16 keys){
 }
 static void bag_draw(void){
   int rows = G.bag_n>5? 5 : G.bag_n; if(rows<2) rows=2;
-  O_BOX(24,29,192,36+rows*12);
+  O_BOX(24,29,192,44+rows*12);   // (v8.3e: 8 px taller, for the arrows' own gaps above and below the list)
   text("BAG",34,35,C_RED);
   coin_icon(166,35); sint(G.sbuf,G.ext.coins); text(G.sbuf,176,35,C_DTEXT);
   if(!G.bag_n){ textc("NOTHING HERE YET!",120,50,C_DTEXT); textc("BUY THINGS AT THE SHOP.",120,62,C_LILAC); return; }
   for(int r=0;r<5 && G.bag_top+r<G.bag_n;r++){
-    int idx=G.bag_top+r, it=G.bag_list[idx], y=46+r*12;
+    int idx=G.bag_top+r, it=G.bag_list[idx], y=50+r*12;
     if(idx==G.cur) text(">",32,y+2,C_RED);
     item_art(it,40,y,1);
     text(ITEMS[it].name,54,y+2,C_DTEXT);
@@ -3254,14 +3254,16 @@ static void bag_draw(void){
     if(st) text(st,202-slen(st)*6,y+2,C_LILAC);
     else { char *p=scpy(G.sbuf,"X"); sint(p,G.ext.inv[it]); text(G.sbuf,202-slen(G.sbuf)*6,y+2,C_LILAC); }
   }
-  if(G.bag_top>0) text("^",206,48,C_LILAC);
-  if(G.bag_top+5<G.bag_n) text("V",206,96,C_LILAC);
+  // v8.3e: thin V-shaped arrows on the right, in their own gaps above and below the list (the font has no ^: drawn)
+  for(int k=0;k<4;k++){ int y0=43+k, y1=114-k;
+    if(G.bag_top>0){ pset(206-k,y0,C_LILAC); pset(206+k,y0,C_LILAC); }              // ^: narrow at the top
+    if(G.bag_top+5<G.bag_n){ pset(206-k,y1,C_LILAC); pset(206+k,y1,C_LILAC); } }   // V: narrow at the bottom
   int it=G.bag_list[G.cur];
   const char *d = IS_TOY(it)? (G.ext.active_toy==it? "A: PUT IT AWAY" : "A: TAKE IT TO THE YARD")
                 : IS_DECOR(it)? (deco_has(it)? "A: PUT IT AWAY" : YARD_SLOT(DECOR_SLOT(it))? "A: PLACE IT IN THE YARD" : "A: PLACE IT IN THE ROOM")
                 : ITEMS[it].desc;
   if(!IS_TOY(it) && !IS_DECOR(it)){ char *p=scpy(G.sbuf2,KIND_NAME[ITEM_KIND[it]]); p=scpy(p,": "); scpy(p,d); d=G.sbuf2; }   // v8: its kind of care
-  textc(d,120,50+rows*12,C_DTEXT);
+  textc(d,120,58+rows*12,C_DTEXT);
 }
 static void eat_update(u16 pr,u16 keys){
   G.t++;
