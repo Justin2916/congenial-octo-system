@@ -1905,8 +1905,8 @@ static void draw_decor(int anim){
         if(!anim){ fill(184,104,7,22,C_OUTLINE); fill(185,104,5,22,C_GRAY); fill(179,124,17,4,C_OUTLINE); fill(180,124,15,3,C_GRAY);
           fill(171,96,33,9,C_OUTLINE); fill(172,97,31,7,C_GRAY); fill(174,97,27,3,C_SKY); break; }
         int ph=(int)(G.sky_t>>6)&7; if(ph==7) break;     // sometimes the bird flies off
-        int bx = 174 + ((ph*5)%22), hop = ((G.sky_t>>3)&3)==0;
-        fill(bx,91-hop,5,4,C_OUTLINE); fill(bx+1,92-hop,3,2,C_BROWN2); pset(bx+5,92-hop,C_ORANGE); pset(bx+3,92-hop,C_OUTLINE);
+        int bx = xfx(e,174 + ((ph*5)%22)), by = xfy(e,91), hop = ((G.sky_t>>3)&3)==0;   // (v8.3e: it moved back by the fence)
+        fill(bx,by-hop,5,4,C_OUTLINE); fill(bx+1,by+1-hop,3,2,C_BROWN2); pset(bx+5,by+1-hop,C_ORANGE); pset(bx+3,by+1-hop,C_OUTLINE);
         break; }
       case IT_GARDEN: {
         if(anim) break;
@@ -2034,8 +2034,9 @@ static void draw_decor(int anim){
           break; }
         int ph=(int)(G.sky_t>>5)&7, fx= ph<5? 174 : 192, fy= ph<5? 117 : 121, hop=((G.sky_t>>2)&15)==0;
         if(ph==4 || ph==7) { fx=183; fy=112; }
+        fx=xfx(e,fx); fy=xfy(e,fy);   // (v8.3e: it moved back by the fence)
         fill(fx,fy-hop,6,3,C_OUTLINE); fill(fx+1,fy-hop,4,2,C_GREEN); pset(fx+1,fy-1-hop,C_OUTLINE); pset(fx+4,fy-1-hop,C_OUTLINE);
-        if(((G.sky_t>>4)&7)==3) ring(192,121,3,C_PALEBLUE);
+        if(((G.sky_t>>4)&7)==3) ring(xfx(e,192),xfy(e,121),2,C_PALEBLUE);
         break; }
       case IT_FLOWERS: {
         if(!anim){
@@ -2048,7 +2049,7 @@ static void draw_decor(int anim){
         static const s8 SY[16]={0,1,2,3,3,2,1,0,-1,-2,-3,-3,-2,-1,0,0};
         for(int i=0;i<2;i++){
           u32 t=G.sky_t+i*90; int bx=(int)((t>>1)%60u); if(bx>=30) bx=59-bx; bx+=168+i*10;
-          int by=96+i*6+SY[(t>>2)&15], open=((t>>2)&1);
+          bx=xfx(e,bx); int by=xfy(e,96+i*6)+SY[(t>>2)&15], open=((t>>2)&1);   // (v8.3e: it moved back by the fence)
           int c= i? C_GOLD : C_LILAC;
           if(open){ fill(bx-3,by,3,3,c); fill(bx+1,by,3,3,c); } else { fill(bx-1,by-1,1,3,c); fill(bx+1,by-1,1,3,c); }
           pset(bx,by,C_OUTLINE); pset(bx,by+1,C_OUTLINE);

@@ -546,6 +546,11 @@ PLACE = {
     'FISHBOWL':  (0.75, NCX, 93, side_table(NCX-10, 21, 93, 106), 116),    # (its own wooden base is dropped: it has a table)
     'CLOCK': ('shift', WALL_DX, 0), 'BOOKSHELF': ('shift', WALL_DX, 0), 'PORTRAIT': ('shift', WALL_DX, 0),
     'MIRROR': ('shift', WALL_DX, 12), 'GUITAR': ('shift', WALL_DX, 12),    # (they hung higher than the others)
+    # v8.3e: the yard's pieces stand back by the fence at 3/4 size, like the room's (the swing stays on its branch;
+    # the toys stay in the middle of the yard); by the tree x 52, by the house x 186, their feet at y 104
+    'SANDBOX': (0.75, 52, 104, None, None), 'TRAMPOLINE': (0.75, 52, 104, None, None), 'SLIDE': (0.75, 54, 104, None, None),
+    'BIRDBATH': (0.75, 186, 104, None, None), 'GARDEN': (0.75, 186, 104, None, None), 'POND': (0.75, 186, 105, None, None),
+    'FLOWERS': (0.75, 186, 104, None, None),
 }
 XF = {}                                               # name -> (source x0, y0, new x0, y0, scale x4): for ext.c's animations
 def _bbox(c):

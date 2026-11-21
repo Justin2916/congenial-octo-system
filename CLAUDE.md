@@ -363,6 +363,10 @@ Other details:
   (after `crit_draw` in `hook_room_critter`) lets them lift off and drift away when it's happy or loving (`G.fb_t`, `FB_T`
   frames). Its journal line: "A FLUFFY BUNNY WITH A DANDELION-PUFF MANE...". The bag's scroll arrows are drawn V shapes
   on the right, in their own gaps above and below the list (the box is 8 px taller; the font has no ^).
+- **v8.3e yard and title:** the yard's pieces stand back by the fence at 3/4 size (`PLACE` in `gen/decor.py`: by the tree
+  x 52-54, by the house x 186, feet at y 104); the swing stays on its branch and the toys keep `TOY_X` in the middle. The
+  birdbath's bird, the pond's frog and ripple and the flowerbed's butterflies go through `xfx`/`xfy`. The yard's poop
+  spots (x 86-122) stay clear. Title (`gen/title.py`): the trees and the house stand on the hill.
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its
   grown-up days start): Sunpuff = an Oakhart in the yard with `PET_CLOCK` < 150 on 3 days (`Dex.yard`, the day marker
   in `Life.pad`; "BASKS IN THE MORNING SUN!"); Glimmer = a Dunerose with 8 fireflies in the lantern in one night
