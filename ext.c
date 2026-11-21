@@ -1720,6 +1720,7 @@ static void poops_at(int n,const u8 *X,const u8 *Y,const u8 *SZ){
   for(int o=0;o<4;o++){ int i=ORDER[o]; if(i>=n) continue;
     int s=SZ[i], w= s==0? POOP_FRONT_W : s==1? POOP_MID_W : POOP_BACK_W, h= s==0? POOP_FRONT_H : s==1? POOP_MID_H : POOP_BACK_H;
     int x=X[i], y=Y[i]-h+1;
+    if(SCENE==3 && *(volatile u32*)0x03000298==3 && (int)*(volatile u32*)0x0300029C*5-16 > x+w) continue;   // v8.3e: CLEAN's wave (ANIM_KIND 3, ANIM_T) has washed this one away
     for(int r=0;r<h;r++) for(int cc=0;cc<w;cc++){ int v= s==0? POOP_FRONT[r][cc] : s==1? POOP_MID[r][cc] : POOP_BACK[r][cc]; if(v) pset(x+cc,y+r,v); } }
 }
 static void yard_poops(void){   // back (y 104), middle right (116), middle left (120), front (131)
@@ -4528,6 +4529,33 @@ static void fluff_seeds(int x,int y,int sc,int flip,int pose){
     pset(px-1,py,C_WHITE); pset(px,py,C_WHITE); pset(px+1,py,C_WHITE);
   }
 }
+// v8.3e: CLEAN: a wave washes across the floor (indoors from y 101, the grass outside from y 97, stopping at the house)
+// with a foamy front and bubbles, then rushes off; sparkles twinkle on the clean floor after. Timed by the original's
+// own clock for the animation (ANIM_T 0..~70). The water is every other pixel, so the floor shows through.
+static void clean_wave(void){
+  int t=(int)ANIM_T, top= G.outside? 97 : 101, xmax= G.outside? 212 : 240;
+  int front=t*5-16, back= t<26? -999 : (t-26)*8;
+  static const s8 WOB[16]={0,1,2,3,3,2,1,0,-1,-2,-3,-3,-2,-1,0,0};
+  volatile u16 *v=(volatile u16*)DRAW_TARGET;
+  if(front>-6 && back<xmax) for(int y=top;y<133;y++){
+    int lean=(y-top)>>2, fx=front+WOB[(y+t)&15]+lean, bx=back+(WOB[(y*3+t)&15]>>1);
+    int x0= bx<0? 0 : bx, x1= fx>xmax? xmax : fx;
+    volatile u16 *row=v+y*120;
+    u16 m=(y&1)? 0xFF00 : 0x00FF, w=(u16)((y&1)? (C_SKY<<8) : C_SKY);
+    for(int x=(x0>>1);x<((x1+1)>>1);x++) row[x]=(u16)((row[x]&~m)|w);    // the water: every other pixel
+    for(int x=fx-4;x<=fx+1;x++) if(x>=0 && x<xmax && x>=bx) pset(x,y,((x+y)%3)? C_WHITE : C_PALEBLUE);   // its foamy front
+    if(back>-900 && bx>=0 && bx<xmax) pset(bx,y,C_PALEBLUE);
+  }
+  for(int i=0;i<10;i++){                                  // bubbles riding the wave
+    int bx=front-6-((i*37+t*3)%48), by=top+3+((i*13)%(130-top));
+    if(bx>back+2 && bx>1 && bx<xmax-2){ pset(bx,by-1,C_WHITE); pset(bx-1,by,C_WHITE); pset(bx+1,by,C_WHITE); pset(bx,by+1,C_WHITE); }
+  }
+  if(t>=50){                                              // the clean floor sparkles
+    static const u8 SPX[8]={40,70,96,120,150,160,185,200}, SPY[8]={8,12,22,6,26,15,22,4};
+    for(int i=0;i<8;i++){ if(SPX[i]>=xmax || (((t>>2)+i)&3)==0) continue; int x=SPX[i], y=top+SPY[i];
+      pset(x,y,C_WHITE); pset(x-1,y,C_LTYEL); pset(x+1,y,C_LTYEL); pset(x,y-1,C_LTYEL); pset(x,y+1,C_LTYEL); }
+  }
+}
 void hook_room_critter(const void *spr,int x,int y,int sc,int flip,int a5){
   int f=crit_form(spr);
   if(f==0){   // the egg: the original jiggles it 12px every couple of frames; draw that as a slow, gentle rock instead
@@ -5401,6 +5429,7 @@ void hook_render(void){
     if(G.mode==M_MENU) SCENE=1;              // our menu replaces the original's box
     O_RENDER();
     SCENE=sc;
+    if(sc==3 && ANIM_KIND==3) clean_wave();   // v8.3e: CLEAN washes a wave over the floor (the original's bar is gone)
     // v8.3: asleep and sick, the sick symbol shows beside the Zs (the original only draws it while it is awake).
     // In colour 11, which the lights-off dimming leaves bright.
     if(sc==1 && G.mode==M_NONE && !G.outside && PET[P_ASLEEP] && PET[P_SICK] && PET[P_STAGE]>=1 && PET[P_STAGE]<=7){

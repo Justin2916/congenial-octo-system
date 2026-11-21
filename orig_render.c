@@ -15095,7 +15095,8 @@ L_08009a98: ;  { u32 X_=(u32)(r5), Y_=(u32)(2u); unsigned long long W_=(unsigned
                { unsigned long long rv=((unsigned long long(*)(u32,u32,u32,u32,u32,u32))&o_hline)(r0,r1,r2,r3,*(volatile u32*)sp,*(volatile u32*)(sp+4)); r0=(u32)rv; r1=(u32)(rv>>32); }   /* o_hline */ /* 09aba bl #0x800f2a4 */
                r2=*(volatile u32*)((sp+224));                                                                       /* 09abe ldr r2, [sp, #0xe0] */
                goto L_08009a7c;                                                                                     /* 09ac0 b #0x8009a7c */
-L_08009ae4: ;  { u32 X_=(u32)(r5), Y_=(~(u32)(1u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r4=R_; } /* 09ae4 subs r4, r5, #1 */
+L_08009ae4: ;  goto L_0800acc6;   /* EDITED v8.3e: CLEAN's blue bar and its specks are skipped; ext.c's clean_wave() draws a wave over the floor */
+               { u32 X_=(u32)(r5), Y_=(~(u32)(1u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r4=R_; } /* 09ae4 subs r4, r5, #1 */
                { u32 X_=(u32)(r5), Y_=(~(u32)(28u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r5=R_; } /* 09ae6 subs r5, #0x1c */
                *(volatile u32*)((sp+248))=(u32)r5;                                                                  /* 09ae8 str r5, [sp, #0xf8] */
                r6=64u; N=(r6)>>31; Z=(r6)==0;                                                                       /* 09aea movs r6, #0x40 */

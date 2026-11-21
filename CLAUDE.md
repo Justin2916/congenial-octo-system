@@ -367,6 +367,9 @@ Other details:
   x 52-54, by the house x 186, feet at y 104); the swing stays on its branch and the toys keep `TOY_X` in the middle. The
   birdbath's bird, the pond's frog and ripple and the flowerbed's butterflies go through `xfx`/`xfy`. The yard's poop
   spots (x 86-122) stay clear. Title (`gen/title.py`): the trees and the house stand on the hill.
+- **v8.3e CLEAN:** `orig_render.c` skips the original's blue bar for `ANIM_KIND` 3 (EDITED at `L_08009ae4`); `clean_wave()`
+  (in `hook_render`, after `O_RENDER`) washes a dithered wave over the floor (room y 101-132, yard y 97-132 and x < 212),
+  timed by `ANIM_T` (front `t*5-16`), with foam, bubbles and sparkles; `poops_at` hides each poop once the front passes it.
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its
   grown-up days start): Sunpuff = an Oakhart in the yard with `PET_CLOCK` < 150 on 3 days (`Dex.yard`, the day marker
   in `Life.pad`; "BASKS IN THE MORNING SUN!"); Glimmer = a Dunerose with 8 fireflies in the lantern in one night
