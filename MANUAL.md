@@ -288,9 +288,9 @@ Choose **PLAY**, pick a game with UP and DOWN, and press A. Every round counts a
 
 | Game | Coins |
 |---|---|
-| Pancake Tower | 1–3: 0 · 4–7: 3 · 8–10: 6 · 11–13: 10 · 14: 15 |
-| Hop Hop | 1–2: 0 · 3–5: 3 · 6–8: 6 · 9–11: 12 · 12: 15 |
-| Left or Right? | 0: 0 · 1: 2 · 2: 3 · 3: 5 · 4: 7 · 5: 10 |
+| Pancake Tower | 1–3: 1 · 4–7: 5 · 8–10: 8 · 11–13: 12 · 14: 15 |
+| Hop Hop | 1–2: 1 · 3–5: 5 · 6–8: 8 · 9–11: 12 · 12: 15 |
+| Left or Right? | 0: 0 · 1: 3 · 2: 5 · 3: 7 · 4: 9 · 5: 10 |
 
 **Ratings and what they give**
 

@@ -356,6 +356,9 @@ Other details:
   Time passes in a minigame round (`mini_update` calls `sim_frame`, which runs in scene 8 while `M_MINI`); bedtime, a
   runaway, `sim_msg` messages and the fussing beeps wait until the round is over. The moon's phase is `MOON_PH(day)`
   = (day + `Garden.spare[0]`) & 7, a random offset set per critter in `garden_reset` (0x100 | offset; old saves 0).
+- **v8.3e coins:** `COIN_PANCAKE` {0,1,1,1,5,5,5,5,8,8,8,12,12,12,15}, `COIN_HOP` {0,1,1,5,5,5,8,8,8,12,12,12,15},
+  `COIN_GUESS` {0,3,5,7,9,10}: the middle scores pay more, the tops unchanged. A minigame is `care_play(2)` (was 4), so
+  playing for coins doesn't push every critter to Fluffbud.
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its
   grown-up days start): Sunpuff = an Oakhart in the yard with `PET_CLOCK` < 150 on 3 days (`Dex.yard`, the day marker
   in `Life.pad`; "BASKS IN THE MORNING SUN!"); Glimmer = a Dunerose with 8 fireflies in the lantern in one night

@@ -3399,9 +3399,10 @@ static Obj *new_obj(void){ for(int i=0;i<10;i++) if(!G.obj[i].active){ G.obj[i].
 #define HOP_N 12   // HOP HOP: hurdles and berries in a round - clear them all for a perfect score
 // v8.1: coins by score, set per game (the player's tables), and the result each score gets:
 // 0 BETTER LUCK, 1 NICE!, 2 AMAZING!, 3 PERFECT! (the top score)
-static const u8 COIN_PANCAKE[15]={0,0,0,0,3,3,3,3,6,6,6,10,10,10,15};
-static const u8 COIN_HOP[13]   ={0,0,0,3,3,3,6,6,6,12,12,12,15};
-static const u8 COIN_GUESS[6]  ={0,2,3,5,7,10};      // a luck game: one lucky guess still pays 2
+// v8.3e: the middle scores pay more (the owner usually scores in the middle); the top prizes are unchanged
+static const u8 COIN_PANCAKE[15]={0,1,1,1,5,5,5,5,8,8,8,12,12,12,15};
+static const u8 COIN_HOP[13]   ={0,1,1,5,5,5,8,8,8,12,12,12,15};
+static const u8 COIN_GUESS[6]  ={0,3,5,7,9,10};      // a luck game: one lucky guess still pays 2
 #define ST_ROUNDS 6   // v8.3y: STARGAZER has six songs (2 to 7 notes; st_seq holds 8)
 static const u8 COIN_STARS[ST_ROUNDS+1]={0,0,4,8,12,15,18};
 static const u8 RES_PANCAKE[15]={0,0,0,0,1,1,1,1,1,1,1,2,2,2,3};
@@ -3416,7 +3417,7 @@ static int score_result(void){ int s=score_clamped(); return G.game==G_PANCAKE? 
 static void mini_finish(void){
   int r=score_result();
   G.rating=(u8)r; G.phase=PH_RESULT; G.t=0;
-  care_play(4); if(G.jr.games<65535) G.jr.games++; save_all();   // a minigame counts as a lot of play
+  care_play(2); if(G.jr.games<65535) G.jr.games++; save_all();   // a minigame counts as play (v8.3e: 2, was 4: playing for coins shouldn't decide the form)
   sfx(0, r>=2? SEQ_FANFARE : r==1? SEQ_HAPPY : SEQ_DENY);
 }
 static void mini_apply(u16 keys){
