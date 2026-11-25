@@ -736,6 +736,8 @@ typedef struct {
   u32 mini_key;                     // v8.3: what the minigame's top bar shows in SCRATCH_BG (0 = redraw)
   u32 mini_lbl;                     // v8.3: the game's label baked into SCRATCH_BG (its address, 0 = none)
   u8 fb_t, fb_pad[3];               // v8.3e: Fluffbud's seeds: frames since they lifted off (0 = none in the air)
+  u8 gclean, gc_pad[3];             // v8.3f: the night yard's CLEAN UP wave: its frame (0 = none)
+#define GCLEAN_END 72                 // (frames the wave lasts)
 } State;
 
 #define G (*(State*)0x0203E000u)
@@ -1721,7 +1723,8 @@ static void poops_at(int n,const u8 *X,const u8 *Y,const u8 *SZ){
   for(int o=0;o<4;o++){ int i=ORDER[o]; if(i>=n) continue;
     int s=SZ[i], w= s==0? POOP_FRONT_W : s==1? POOP_MID_W : POOP_BACK_W, h= s==0? POOP_FRONT_H : s==1? POOP_MID_H : POOP_BACK_H;
     int x=X[i], y=Y[i]-h+1;
-    if(SCENE==3 && *(volatile u32*)0x03000298==3 && (int)*(volatile u32*)0x0300029C*5-16 > x+w) continue;   // v8.3e: CLEAN's wave (ANIM_KIND 3, ANIM_T) has washed this one away
+    if(SCENE==3 && *(volatile u32*)0x03000298==3 && (int)*(volatile u32*)0x0300029C*5-16 > x+w) continue;
+    if(G.gclean && G.mode==M_GARDEN && G.gclean*5-16 > x+w) continue;   // v8.3f: the night yard's CLEAN UP wave   // v8.3e: CLEAN's wave (ANIM_KIND 3, ANIM_T) has washed this one away
     for(int r=0;r<h;r++) for(int cc=0;cc<w;cc++){ int v= s==0? POOP_FRONT[r][cc] : s==1? POOP_MID[r][cc] : POOP_BACK[r][cc]; if(v) pset(x+cc,y+r,v); } }
 }
 static void yard_poops(void){   // back (y 104), middle right (116), middle left (120), front (131)
@@ -2960,7 +2963,7 @@ static void extras_update(u16 pr, u16 keys){
     else if(id==EX_BAG || id==EX_SHOP){ G.ex_yard=0; G.ex_first=0; G.bs_yard=1; if(id==EX_BAG) enter_bag(); else enter_shop(); }   // v8.3
     else if(id==EX_CLEAN){   // v8.3: clean the yard at night, while it sleeps inside
       G.ex_yard=0; G.mode=M_GARDEN; G.gui_key=0; G.ex_first=0;
-      G.more.pad0=0; G.yp_n=0; garden_msg("ALL CLEAN OUT HERE!"); sfx(1,SEQ_HAPPY); }
+      G.gclean=1; G.gpad2=0; }   // v8.3f: the wave washes over the grass first (garden_update finishes it)
     return; }
   if(id==EX_JOURNAL){ sfx(0,SEQ_JOURNAL); dex_open(3); return; }   // v8.1: the journal lives here now
   if(id==EX_OUT){
@@ -3915,12 +3918,13 @@ static void garden_morning(void){   // the night is over: watered plants grow, b
   if(any) save_all();
 }
 // ---- drawing
-static void gdraw(int id,int x,int y,const u8 *pet,int mono){
+static void gdraw_f(int id,int x,int y,const u8 *pet,int mono,int flip){   // flip: mirrored left to right
   const GSpr *s=&GSPR[id]; const u8 *p=GPIX+s->off;
   for(int r=0;r<s->h;r++) for(int c=0;c<s->w;c++){ int v=*p++; if(!v) continue;
     if(v<8) v= pet? pet[v-1] : GP_K;
-    pset(x+c,y+r, mono? mono : v); }
+    pset(x+(flip? s->w-1-c : c),y+r, mono? mono : v); }
 }
+#define gdraw(id,x,y,pet,mono) gdraw_f(id,x,y,pet,mono,0)
 static void gdraw_aurora(int x,int y,int t){   // the petals as slow bands of colour, rippling upward like an aurora's curtains
   const GSpr *s=&GSPR[GS_BLOOM0]; const u8 *p=GPIX+s->off;
   for(int r=0;r<s->h;r++) for(int c=0;c<s->w;c++){ int v=*p++; if(!v) continue;
@@ -4007,19 +4011,21 @@ static void luna_glow(int cx,int cy,int t){
 }
 static void visitor_draw(int v,int t){
   const GVis *V=&GVIS[v]; int fi=V->seq[(t/6)%V->seq_n], id=V->first+fi; const GSpr *s=&GSPR[id];
-  int b=first_bloom(), bx=PATCH_X[b], hy=PATCH_Y[b]-21, x=0, y=0;   // (hy: the top of that bloom's head)
+  int b=first_bloom(), bx=PATCH_X[b], hy=PATCH_Y[b]-21, x=0, y=0, fl=0;   // (hy: the top of that bloom's head)
   switch(v){
     case 0: x=bx-6+SINE16[((t>>2)+4)&15]*12/8; y=hy-3+SINE16[(t>>2)&15]*6/8; break;            // moth: round a bloom
     case 1: x=110+SINE16[(t>>4)&15]*5; y=92+SINE16[((t>>3)+5)&15]; break;                      // firefly: drifting
     case 2: x=92; y=GROUND_Y-1-s->h+GHOP_FROG[(t/6)%8]; break;                                 // frog: by the path
-    case 3: x=(int)((t>>2)%300)-30; y=GROUND_Y+1-s->h; break;                                   // hedgehog: trundling past
+    case 3: { int p=(int)((t>>2)%340u); x= p<170? p-34 : 305-p; fl= p>=170; y=GROUND_Y+1-s->h; break; }   // hedgehog: in from the
+            // tree side, it turns before the house and trundles back (v8.3f: it used to walk off through the house)
     case 4: x=(int)((t*2)%320)-40; y=36+SINE16[(t>>3)&15]/2; break;                            // bat: across the sky
     case 5: x=100; y=79-s->h; break;                                                           // owl: on a fence post
-    case 6: x=40+(int)((t>>5)%120); y=GROUND_Y+2-s->h; break;                                   // snail: very slowly
+    case 6: { int p=(int)((t>>5)%200u); x= p<100? 30+p : 229-p; fl= p>=100; y=GROUND_Y+2-s->h; break; }   // snail: very slowly,
+            // there and back (v8.3f: it used to jump back to the start)
     case 7: x=164; y=GROUND_Y-s->h+GHOP_CRICKET[(t/6)%8]; break;                                // cricket
     case 8: x=bx+10+SINE16[(t>>3)&15]/2; y=hy-19+SINE16[((t>>2)+3)&15]/3; luna_glow(x+7,y+7,t); break;   // luna moth
     case 9: x=128; y=GROUND_Y+1-s->h; break; }                                                  // silver fox
-  gdraw(id,x,y,0,0);
+  gdraw_f(id,x,y,0,0,fl);
 }
 // ---- the night garden screen
 static void build_bg(int want);
@@ -4029,7 +4035,7 @@ static void copy_rect(int x0,int y0,int x1,int y1){ x0&=~3; x1=(x1+3)&~3;
   for(int y=y0;y<y1;y++){ const u32 *s=(const u32*)(SCRATCH_BG+y*240+x0); u32 *d=(u32*)((u8*)DRAW_TARGET+y*240+x0); for(int x=x0;x<x1;x+=4) *d++=*s++; } }
 static int garden_ok(void){ return is_night() && PET[P_ASLEEP] && PET[P_STAGE]<=7; }
 static void garden_open(void){
-  G.gui_key=0; G.mode=M_GARDEN; G.gcur=0; G.gt=0; G.gwater=0; G.gmsg_t=0; G.outside=1; G.bg_state=0; G.gpad2=0; sfx(0,SEQ_DOOR);
+  G.gui_key=0; G.mode=M_GARDEN; G.gcur=0; G.gt=0; G.gwater=0; G.gclean=0; G.gmsg_t=0; G.outside=1; G.bg_state=0; G.gpad2=0; sfx(0,SEQ_DOOR);
   garden_pick_visitors();
   Garden *g=&G.gdn;
   if(g->news&4) garden_msg("A NEW MOONFLOWER BLOOMED!");
@@ -4045,6 +4051,9 @@ static void garden_update(u16 pr,u16 keys){
   live_update(0);   // v8.1: the clock keeps running out in the yard, so the night still ends
   if(SCENE!=1){ G.outside=0; G.bg_state=0; G.mode=M_NONE; return; }   // (e.g. a farewell)
   G.gt++; if(G.gmsg_t) G.gmsg_t--;
+  if(G.gclean){   // v8.3f: CLEAN UP's wave: keys wait, then the yard is clean
+    if(++G.gclean>=GCLEAN_END){ G.gclean=0; G.more.pad0=0; G.yp_n=0; garden_msg("ALL CLEAN OUT HERE!"); sfx(1,SEQ_HAPPY); }
+    G.suppress=keys; return; }
   if(G.gwater){ G.gwater--;   // v8.2b: the watering can is out: wait for it
     if(G.gwater==CAN_WET){ G.bg_state=0; garden_msg("WATERED IT!"); sfx(0,SEQ_COIN); }
     if(G.gwater) return; }
@@ -4092,6 +4101,7 @@ static void garden_words(void){   // the bars, their words and any message: draw
   DRAW_TARGET=sv;
 }
 static void yard_fireflies(void);
+static void clean_wave_at(int t,int top,int xmax,const u8 *col);
 static void garden_screen_draw(void){
   if(G.bg_state!=4) build_bg(4);
   { const Patch *p=&G.gdn.p[G.gcur];
@@ -4101,6 +4111,7 @@ static void garden_screen_draw(void){
   O_DMACOPY(DRAW_TARGET, YARD_BG);
   draw_sky(0); garden_draw(1); draw_decor(1); yard_poops();
   for(int i=0;i<G.gdn.vis_n;i++) visitor_draw(G.gdn.vis[i],(int)G.gt);
+  if(G.gclean){ static const u8 C[5]={GP_SKY2,GP_W,GP_SKY1,GP_W,GP_Y}; clean_wave_at(G.gclean,97,212,C); }   // v8.3f (garden colours: the UI's are dimmed at night)
   if(G.gpad2 && !G.gwater){ int x=PATCH_X[G.gcur], y=PATCH_Y[G.gcur]-(G.gdn.p[G.gcur].stage==4? 36 : G.gdn.p[G.gcur].stage==3? 21 : 13)-((G.gt>>3)&1);   // the cursor (tending)
     for(int k=0;k<4;k++){ fill(x-3+k,y+k,7-2*k,1,GP_Y); pset(x-4+k,y+k,GP_K); pset(x+4-k,y+k,GP_K); } pset(x,y+4,GP_K); }
   if(G.gwater) can_draw(PATCH_X[G.gcur],PATCH_Y[G.gcur],CAN_T-G.gwater);   // v8.2b: the watering can
@@ -4533,8 +4544,7 @@ static void fluff_seeds(int x,int y,int sc,int flip,int pose){
 // v8.3e: CLEAN: a wave washes across the floor (indoors from y 101, the grass outside from y 97, stopping at the house)
 // with a foamy front and bubbles, then rushes off; sparkles twinkle on the clean floor after. Timed by the original's
 // own clock for the animation (ANIM_T 0..~70). The water is every other pixel, so the floor shows through.
-static void clean_wave(void){
-  int t=(int)ANIM_T, top= G.outside? 97 : 101, xmax= G.outside? 212 : 240;
+static void clean_wave_at(int t,int top,int xmax,const u8 *col){   // col: water, foam, foam 2, sparkle, sparkle edge
   int front=t*5-16, back= t<26? -999 : (t-26)*8;
   static const s8 WOB[16]={0,1,2,3,3,2,1,0,-1,-2,-3,-3,-2,-1,0,0};
   volatile u16 *v=(volatile u16*)DRAW_TARGET;
@@ -4542,21 +4552,22 @@ static void clean_wave(void){
     int lean=(y-top)>>2, fx=front+WOB[(y+t)&15]+lean, bx=back+(WOB[(y*3+t)&15]>>1);
     int x0= bx<0? 0 : bx, x1= fx>xmax? xmax : fx;
     volatile u16 *row=v+y*120;
-    u16 m=(y&1)? 0xFF00 : 0x00FF, w=(u16)((y&1)? (C_SKY<<8) : C_SKY);
+    u16 m=(y&1)? 0xFF00 : 0x00FF, w=(u16)((y&1)? (col[0]<<8) : col[0]);
     for(int x=(x0>>1);x<((x1+1)>>1);x++) row[x]=(u16)((row[x]&~m)|w);    // the water: every other pixel
-    for(int x=fx-4;x<=fx+1;x++) if(x>=0 && x<xmax && x>=bx) pset(x,y,((x+y)%3)? C_WHITE : C_PALEBLUE);   // its foamy front
-    if(back>-900 && bx>=0 && bx<xmax) pset(bx,y,C_PALEBLUE);
+    for(int x=fx-4;x<=fx+1;x++) if(x>=0 && x<xmax && x>=bx) pset(x,y,((x+y)%3)? col[1] : col[2]);   // its foamy front
+    if(back>-900 && bx>=0 && bx<xmax) pset(bx,y,col[2]);
   }
   for(int i=0;i<10;i++){                                  // bubbles riding the wave
     int bx=front-6-((i*37+t*3)%48), by=top+3+((i*13)%(130-top));
-    if(bx>back+2 && bx>1 && bx<xmax-2){ pset(bx,by-1,C_WHITE); pset(bx-1,by,C_WHITE); pset(bx+1,by,C_WHITE); pset(bx,by+1,C_WHITE); }
+    if(bx>back+2 && bx>1 && bx<xmax-2){ pset(bx,by-1,col[1]); pset(bx-1,by,col[1]); pset(bx+1,by,col[1]); pset(bx,by+1,col[1]); }
   }
   if(t>=50){                                              // the clean floor sparkles
     static const u8 SPX[8]={40,70,96,120,150,160,185,200}, SPY[8]={8,12,22,6,26,15,22,4};
     for(int i=0;i<8;i++){ if(SPX[i]>=xmax || (((t>>2)+i)&3)==0) continue; int x=SPX[i], y=top+SPY[i];
-      pset(x,y,C_WHITE); pset(x-1,y,C_LTYEL); pset(x+1,y,C_LTYEL); pset(x,y-1,C_LTYEL); pset(x,y+1,C_LTYEL); }
+      pset(x,y,col[3]); pset(x-1,y,col[4]); pset(x+1,y,col[4]); pset(x,y-1,col[4]); pset(x,y+1,col[4]); }
   }
 }
+static void clean_wave(void){ static const u8 C[5]={C_SKY,C_WHITE,C_PALEBLUE,C_WHITE,C_LTYEL}; clean_wave_at((int)ANIM_T, G.outside? 97 : 101, G.outside? 212 : 240, C); }
 void hook_room_critter(const void *spr,int x,int y,int sc,int flip,int a5){
   int f=crit_form(spr);
   if(f==0){   // the egg: the original jiggles it 12px every couple of frames; draw that as a slow, gentle rock instead

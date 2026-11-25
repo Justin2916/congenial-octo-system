@@ -372,6 +372,10 @@ Other details:
   timed by `ANIM_T` (front `t*5-16`), with foam, bubbles and sparkles; `poops_at` hides each poop once the front passes it.
 - **v8.3e prices:** toys and decor cost about half (the shop totals 1,750, was 3,705): toys 30-45, small decor 40-50,
   medium 60, big 65-70. Food and care items unchanged.
+- **v8.3f:** the night yard's CLEAN UP plays the wave too: `G.gclean` counts its frames (to `GCLEAN_END` 72) in
+  `garden_update` (keys wait), `garden_screen_draw` draws `clean_wave_at(t,top,xmax,col)` in garden colours (the UI's
+  are dimmed at night), and the mess clears when it ends. Walking night visitors never cross the house: the hedgehog
+  and the snail go there and back from the tree side and turn round (`gdraw_f(..., flip)`), the hedgehog by x 136.
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its
   grown-up days start): Sunpuff = an Oakhart in the yard with `PET_CLOCK` < 150 on 3 days (`Dex.yard`, the day marker
   in `Life.pad`; "BASKS IN THE MORNING SUN!"); Glimmer = a Dunerose with 8 fireflies in the lantern in one night
