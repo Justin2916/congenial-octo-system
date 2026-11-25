@@ -46,7 +46,7 @@ def offsets():
               'obj': 'State,obj', 'st_seq': 'State,st_seq', 'tune': 'State,tune', 'rating': 'State,rating', 'pk_w': 'State,pk_w',
               'keep': 'State,keep', 'k_un0': 'Keep,un0', 'k_un1': 'Keep,un1', 'k_best': 'Keep,best', 'k_ok': 'Keep,ok',
               'd_unlock': 'Deco,unlock_lvl', 'names': 'State,names', 'nm': 'State,nm', 'want_name': 'State,want_name', 'nm_x': 'State,nm_x', 'd_owned': 'Deco,owned', 'd_pad': 'Deco,pad', 'e_toys': 'Ext,toys', 'e_atoy': 'Ext,active_toy', 'd_vit': 'Deco,vit_day',
-              'jr': 'State,jr', 'jtab': 'State,jtab', 'jstar': 'State,jstar', 'jcare': 'State,jcare', 'j_s': 'Journal,s', 'j_coins': 'Journal,coins', 'j_games': 'Journal,games', 'so_pend': 'State,sendoff_pending', 'retired': 'Life,retired', 'l_pad': 'Life,pad', 'more': 'State,more', 'm_rn': 'More,rn', 'm_rmiss': 'More,rmiss', 'jitem': 'State,jitem', 'm_found0': 'More,found0', 'm_found_ok': 'More,found_ok', 'm_wishes': 'More,wishes', 'wish_t': 'State,wish_t', 'wish_cd': 'State,wish_cd', 'm_spare': 'More,spare', 'e_inv': 'Ext,inv', 'dex_cur': 'State,dex_cur', 'stock': 'State,stock', 'st_cur': 'State,st_cur', 'st_page': 'State,st_page', 'm_stories': 'More,stories', 'st_pad': 'State,st_pad', 'rng': 'State,rng', 'gdn': 'State,gdn', 'gcur': 'State,gcur', 'g_found': 'Garden,found', 'g_seeds': 'Garden,seeds', 'g_vis_n': 'Garden,vis_n', 'g_vis': 'Garden,vis', 'g_vis_day': 'Garden,vis_day', 'g_spare': 'Garden,spare', 'e_day': 'Ext,day', 'gpad': 'State,gpad', 'gdetail': 'State,gdetail', 'bg_state': 'State,bg_state', 'weak_warned': 'State,weak_warned', 'outside': 'State,outside', 'gpad2': 'State,gpad2', 'dex_from': 'State,dex_from', 'gmsg': 'State,gmsg', 'ex_yard': 'State,ex_yard', 'jt_first': 'State,jt_first', 'fly': 'State,fly', 'fly_t': 'State,fly_t', 'fly_kinds': 'State,fly_kinds', 'fly_night': 'State,fly_night', 'fly_rel': 'State,fly_rel', 'fly_n': 'State,fly_n', 'fly_state': 'State,fly_state', 'fly_card': 'State,fly_card', 'jx': 'State,jx', 'jy': 'State,jy', 'jfly': 'State,jfly', 'f_x': 'Fly,x', 'f_y': 'Fly,y', 'f_k': 'Fly,k', 'f_t': 'Fly,t', 'f_live': 'Fly,live', 'spr_n': 'State,spr_n', 'spr_live': 'State,spr_live', 'spr_win': 'State,spr_win', 'win': 'State,win', 'm_pad0': 'More,pad0', 'm_pad1': 'More,pad1', 'gwater': 'State,gwater', 'e_adult': 'Ext,adult_day', 'gcur': 'State,gcur', 'gone_t': 'State,gone_t', 'jrec': 'State,jrec', 'sky_t': 'State,sky_t', 'spr_shown': 'State,spr_shown', 'room_cx': 'State,room_cx', 'room_cy': 'State,room_cy', 'ex_first': 'State,ex_first', 'cur': 'State,cur', 'jar_t': 'State,jar_t', 'jar_back': 'State,jar_back', 'st_baked': 'State,st_baked', 'gclean': 'State,gclean', 'gt': 'State,gt'}
+              'jr': 'State,jr', 'jtab': 'State,jtab', 'jstar': 'State,jstar', 'jcare': 'State,jcare', 'j_s': 'Journal,s', 'j_coins': 'Journal,coins', 'j_games': 'Journal,games', 'so_pend': 'State,sendoff_pending', 'retired': 'Life,retired', 'l_pad': 'Life,pad', 'more': 'State,more', 'm_rn': 'More,rn', 'm_rmiss': 'More,rmiss', 'jitem': 'State,jitem', 'm_found0': 'More,found0', 'm_found_ok': 'More,found_ok', 'm_wishes': 'More,wishes', 'wish_t': 'State,wish_t', 'wish_cd': 'State,wish_cd', 'm_spare': 'More,spare', 'e_inv': 'Ext,inv', 'dex_cur': 'State,dex_cur', 'stock': 'State,stock', 'st_cur': 'State,st_cur', 'st_page': 'State,st_page', 'm_stories': 'More,stories', 'st_pad': 'State,st_pad', 'rng': 'State,rng', 'gdn': 'State,gdn', 'gcur': 'State,gcur', 'g_found': 'Garden,found', 'g_seeds': 'Garden,seeds', 'g_vis_n': 'Garden,vis_n', 'g_vis': 'Garden,vis', 'g_vis_day': 'Garden,vis_day', 'g_spare': 'Garden,spare', 'e_day': 'Ext,day', 'gpad': 'State,gpad', 'gdetail': 'State,gdetail', 'bg_state': 'State,bg_state', 'weak_warned': 'State,weak_warned', 'outside': 'State,outside', 'gpad2': 'State,gpad2', 'dex_from': 'State,dex_from', 'gmsg': 'State,gmsg', 'ex_yard': 'State,ex_yard', 'jt_first': 'State,jt_first', 'fly': 'State,fly', 'fly_t': 'State,fly_t', 'fly_kinds': 'State,fly_kinds', 'fly_night': 'State,fly_night', 'fly_rel': 'State,fly_rel', 'fly_n': 'State,fly_n', 'fly_state': 'State,fly_state', 'fly_card': 'State,fly_card', 'jx': 'State,jx', 'jy': 'State,jy', 'jfly': 'State,jfly', 'f_x': 'Fly,x', 'f_y': 'Fly,y', 'f_k': 'Fly,k', 'f_t': 'Fly,t', 'f_live': 'Fly,live', 'spr_n': 'State,spr_n', 'spr_live': 'State,spr_live', 'spr_win': 'State,spr_win', 'win': 'State,win', 'm_pad0': 'More,pad0', 'm_pad1': 'More,pad1', 'gwater': 'State,gwater', 'e_adult': 'Ext,adult_day', 'gcur': 'State,gcur', 'gone_t': 'State,gone_t', 'jrec': 'State,jrec', 'sky_t': 'State,sky_t', 'spr_shown': 'State,spr_shown', 'room_cx': 'State,room_cx', 'room_cy': 'State,room_cy', 'ex_first': 'State,ex_first', 'cur': 'State,cur', 'jar_t': 'State,jar_t', 'jar_back': 'State,jar_back', 'st_baked': 'State,st_baked', 'gclean': 'State,gclean', 'gt': 'State,gt', 'zz_dx': 'State,zz_dx'}
     src = f'#include "{CK}/ext.c"\nconst unsigned TEST_OFFS[] = {{ ' + ', '.join(f'__builtin_offsetof({v})' for v in fields.values()) + ' };\n'
     c, o, b = f'{TMP}/offs.c', f'{TMP}/offs.o', f'{TMP}/offs.bin'
     open(c, 'w').write(src)
@@ -452,6 +452,31 @@ def t_fixes():
     out = run(ROM, sc, copy_save('adult')); v = [x[1] for x in peeks(out)]
     sc_ = re.findall(r'scene (\d+)', out)
     check('fixes: v8.3: after a snack the feed menu opens again on SNACK, and B closes it', sc_[-2:] == ['2', '1'] and v[0][0] == 1, f'{sc_} {v}')
+    # v8.3f: 4 snacks in a row never upset its tummy; the 5th can (a coin flip), and a snack no longer restarts the
+    # countdown that lets the snack count fall (P16(0x42), one less every 135 s)
+    SN = PET + 0x11
+    one = ['press A', 'waitscene 3', 'waitscene 2', 'wait 4']
+    sc = BOOT + DAY + [p8(PET + 6, 1), p8(PET + 7, 0), p8(PET + 10, 0), p8(SN, 0), 'press A', 'wait 10', 'press DOWN', 'wait 6'] + one * 4 + \
+         [f'peek {SN:08x} 1', f'peek {PET + 10:08x} 1']
+    v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('fixes: v8.3f: four snacks in a row (count 4) never make it sick', v == [4, 0], str(v))
+    res = []
+    for w in range(8):
+        sc = BOOT + DAY + [f'wait {1 + w * 7}', p8(PET + 6, 1), p8(PET + 7, 0), p8(PET + 10, 0), p8(SN, 4), *p16(PET + 0x42, 100),
+                           'press A', 'wait 10', 'press DOWN', 'wait 6'] + one + [f'peek {SN:08x} 1', f'peek {PET + 10:08x} 1', f'peek {PET + 0x42:08x} 2']
+        v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
+        res.append((v[0][0], v[1][0], v[2][0] | v[2][1] << 8))
+    check('fixes: v8.3f: the 5th snack in a row can make it sick (sometimes), and keeps the countdown going',
+          all(r[0] == 5 and r[2] >= 100 for r in res) and any(r[1] for r in res) and not all(r[1] for r in res), str(res))
+    # v8.3f: asleep at night with a bed (or a beanbag) under the window, it sleeps on it, smaller; the Zs move with it
+    K = g('deco', 'k_slot'); res = []
+    for it in (14, 32, 0xFF):   # bed, beanbag, nothing there
+        sc = ['wait 30', *[p8(K + i, 0xFF) for i in range(6)], p8(K, it), 'press A', 'waitscene 1', 'poke32 0300004c 1f4',
+              p8(PET + 12, 1), 'wait 60', f'peek {g("room_cx"):08x} 2', f'peek {g("zz_dx"):08x} 2']
+        v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
+        res.append((int.from_bytes(v[0], 'little', signed=True), int.from_bytes(v[1], 'little', signed=True)))
+    check('fixes: v8.3f: asleep, it lies on its bed or beanbag (left of the jar), and the Zs follow; with neither it stays put',
+          res[0][0] < 40 and res[1][0] < 40 and res[0][1] != 0 and res[1][1] != 0 and res[2][1] == 0 and res[2][0] > 60, str(res))
     # v8.3: awake by day with the lights off it gets glum: an extra happy heart every 2 minutes (with a message)
     res = []
     for lights in (1, 0):

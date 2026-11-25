@@ -1572,13 +1572,13 @@ L_0800181a: ;  { u32 X_=(u32)(r1), Y_=(u32)(2u); unsigned long long W_=(unsigned
                *(volatile u8*)((r0+9))=(u8)r1;                                                                      /* 0181c strb r1, [r0, #9] */
 L_0800181e: ;  r2=66u; N=(r2)>>31; Z=(r2)==0;                                                                       /* 0181e movs r2, #0x42 */
                r1=0u; N=(r1)>>31; Z=(r1)==0;                                                                        /* 01820 movs r1, #0 */
-               *(volatile u16*)((r0+r2))=(u16)r1;                                                                   /* 01822 strh r1, [r0, r2] */
+               /* EDITED v8.3f: a snack no longer restarts the snack countdown (was: P16(0x42)=0) */                                                                   /* 01822 strh r1, [r0, r2] */
                r2=*(volatile u8*)((r0+17));                                                                         /* 01824 ldrb r2, [r0, #0x11] */
                { u32 X_=(u32)(r2), Y_=(u32)(1u); unsigned long long W_=(unsigned long long)X_+Y_+(u32)0; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; r2=R_; } /* 01826 adds r2, r2, #1 */
                *(volatile u8*)((r0+17))=(u8)r2;                                                                     /* 01828 strb r2, [r0, #0x11] */
                r3=255u; N=(r3)>>31; Z=(r3)==0;                                                                      /* 0182a movs r3, #0xff */
                r3=(u32)(r3&(r2)); N=(r3)>>31; Z=(r3)==0;                                                            /* 0182c ands r3, r2 */
-               { u32 X_=(u32)(r3), Y_=(~(u32)(4u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; } /* 0182e cmp r3, #4 */
+               { u32 X_=(u32)(r3), Y_=(~(u32)(5u)); unsigned long long W_=(unsigned long long)X_+Y_+(u32)1; u32 R_=(u32)W_; N=R_>>31; Z=R_==0; C=(u32)(W_>>32); V=((~(X_^Y_))&(X_^R_))>>31; } /* 0182e cmp r3, #4 -- EDITED v8.3f: #5, the 5th snack in a row can upset its tummy (was the 4th) */
                if(C) goto L_08001834;                                                                               /* 01830 bhs #0x8001834 */
 L_08001832: ;  goto L_08001a22;                                                                                     /* 01832 b #0x8001a22 */
 L_08001834: ;  r2=0x03000000u;                                                                                      /* 01834 ldr r2, [pc, #0x378] */

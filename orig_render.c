@@ -19,6 +19,7 @@ extern char o_sdivmod[];
 extern char o_udiv[];
 extern char o_udivmod[];
 u32 ext_mess_drawn(void);   /* ext.c */
+u32 ext_zz_dx(void); u32 ext_zz_dy(void);   /* ext.c: the Zs follow the critter onto its bed (v8.3f) */
 u32 ext_poops_drawn(void);  /* ext.c */
 void o_game_render(void){
   u32 r0=0,r1=0,r2=0,r3=0,r4=0,r5=0,r6=0,r7=0,r8=0,r9=0,r10=0,r11=0,r12=0,lr=0; u32 N=0,Z=0,C=0,V=0;
@@ -9954,6 +9955,7 @@ L_0800704e: ;  *(volatile u32*)(sp)=(u32)r0;                                    
                r3=11u; N=(r3)>>31; Z=(r3)==0;                                                                       /* 07064 movs r3, #0xb */
                r1=r5; N=(r1)>>31; Z=(r1)==0;                                                                        /* 07066 movs r1, r5 */
                *(volatile u32*)((sp+244))=(u32)r3;                                                                  /* 07068 str r3, [sp, #0xf4] */
+               r1+=ext_zz_dx(); r2+=ext_zz_dy();   /* EDITED v8.3f: asleep on its bed, the Zs move with it */
                { unsigned long long rv=((unsigned long long(*)(u32,u32,u32,u32,u32,u32))&o_draw_text)(r0,r1,r2,r3,*(volatile u32*)sp,*(volatile u32*)(sp+4)); r0=(u32)rv; r1=(u32)(rv>>32); }   /* o_draw_text */ /* 0706a bl #0x800ec74 */
                r0=0x03000018u;                                                                                      /* 0706e ldr r0, [pc, #0xb4] */
                r0=*(volatile u32*)(r0);                                                                             /* 07070 ldr r0, [r0] */
@@ -9975,6 +9977,7 @@ L_08007086: ;  *(volatile u32*)(sp)=(u32)r0;                                    
                r0=0x08010975u;                                                                                      /* 07092 ldr r0, [pc, #0x94] */
                r1=r3; N=(r1)>>31; Z=(r1)==0;                                                                        /* 07094 movs r1, r3 */
                r3=*(volatile u32*)((sp+244));                                                                       /* 07096 ldr r3, [sp, #0xf4] */
+               r1+=ext_zz_dx(); r2+=ext_zz_dy();   /* EDITED v8.3f: asleep on its bed, the Zs move with it */
                { unsigned long long rv=((unsigned long long(*)(u32,u32,u32,u32,u32,u32))&o_draw_text)(r0,r1,r2,r3,*(volatile u32*)sp,*(volatile u32*)(sp+4)); r0=(u32)rv; r1=(u32)(rv>>32); }   /* o_draw_text */ /* 07098 bl #0x800ec74 */
                r0=0x03000018u;                                                                                      /* 0709c ldr r0, [pc, #0x84] */
                r0=*(volatile u32*)(r0);                                                                             /* 0709e ldr r0, [r0] */
@@ -9993,6 +9996,7 @@ L_080070b0: ;  *(volatile u32*)(sp)=(u32)r6;                                    
                r0=0x08010975u;                                                                                      /* 070ba ldr r0, [pc, #0x6c] */
                r1=r3; N=(r1)>>31; Z=(r1)==0;                                                                        /* 070bc movs r1, r3 */
                r3=*(volatile u32*)((sp+244));                                                                       /* 070be ldr r3, [sp, #0xf4] */
+               r1+=ext_zz_dx(); r2+=ext_zz_dy();   /* EDITED v8.3f: asleep on its bed, the Zs move with it */
                { unsigned long long rv=((unsigned long long(*)(u32,u32,u32,u32,u32,u32))&o_draw_text)(r0,r1,r2,r3,*(volatile u32*)sp,*(volatile u32*)(sp+4)); r0=(u32)rv; r1=(u32)(rv>>32); }   /* o_draw_text */ /* 070c0 bl #0x800ec74 */
 L_080070c4: ;  r5=*(volatile u32*)((sp+160));                                                                       /* 070c4 ldr r5, [sp, #0xa0] */
 L_080070c6: ;  r0=0x03000020u;                                                                                      /* 070c6 ldr r0, [pc, #0x3c] */

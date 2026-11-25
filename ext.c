@@ -737,6 +737,7 @@ typedef struct {
   u32 mini_lbl;                     // v8.3: the game's label baked into SCRATCH_BG (its address, 0 = none)
   u8 fb_t, fb_pad[3];               // v8.3e: Fluffbud's seeds: frames since they lifted off (0 = none in the air)
   u8 gclean, gc_pad[3];             // v8.3f: the night yard's CLEAN UP wave: its frame (0 = none)
+  s16 zz_dx, zz_dy;                 // v8.3f: asleep on its bed, how far the Zs move with it (orig_render.c reads them)
 #define GCLEAN_END 72                 // (frames the wave lasts)
 } State;
 
@@ -746,6 +747,8 @@ typedef struct {
 // reads and clears the mess where the critter is through ext_mess_here(), and draws the room's through
 // ext_mess_drawn(), so nothing is swapped any more. More.pad1 bit 1, the old swap flag, is unused.)
 volatile u8 *ext_mess_here(void){ return G.outside? (volatile u8*)&G.more.pad0 : PET+P_POOP; }
+u32 ext_zz_dx(void){ return (u32)(int)G.zz_dx; }   // v8.3f: the original draws the Zs; these move them onto the bed
+u32 ext_zz_dy(void){ return (u32)(int)G.zz_dy; }
 u32 ext_mess_drawn(void){ return G.outside? 0 : PET[P_POOP]; }   // the room's mess, for the original's call-icon check
 u32 ext_poops_drawn(void){ return 0; }   // v8.3: the original draws no poops (room_poops and yard_poops draw them)
 #define MESS_HERE (*ext_mess_here())
@@ -4014,7 +4017,7 @@ static void visitor_draw(int v,int t){
   int b=first_bloom(), bx=PATCH_X[b], hy=PATCH_Y[b]-21, x=0, y=0, fl=0;   // (hy: the top of that bloom's head)
   switch(v){
     case 0: x=bx-6+SINE16[((t>>2)+4)&15]*12/8; y=hy-3+SINE16[(t>>2)&15]*6/8; break;            // moth: round a bloom
-    case 1: x=110+SINE16[(t>>4)&15]*5; y=92+SINE16[((t>>3)+5)&15]; break;                      // firefly: drifting
+    case 1: x=54; y=GROUND_Y-s->h; break;                                                       // mole (v8.3f, was the firefly): in its mound by the tree side
     case 2: x=92; y=GROUND_Y-1-s->h+GHOP_FROG[(t/6)%8]; break;                                 // frog: by the path
     case 3: { int p=(int)((t>>2)%340u); x= p<170? p-34 : 305-p; fl= p>=170; y=GROUND_Y+1-s->h; break; }   // hedgehog: in from the
             // tree side, it turns before the house and trundles back (v8.3f: it used to walk off through the house)
@@ -4568,6 +4571,26 @@ static void clean_wave_at(int t,int top,int xmax,const u8 *col){   // col: water
   }
 }
 static void clean_wave(void){ static const u8 C[5]={C_SKY,C_WHITE,C_PALEBLUE,C_WHITE,C_LTYEL}; clean_wave_at((int)ANIM_T, G.outside? 97 : 101, G.outside? 212 : 240, C); }
+// v8.3f: at night, with a bed or a beanbag under the window, it sleeps on it: drawn smaller (48 px on the bed, 42 on the
+// beanbag, from its 64 px room art), its feet on the mattress or the cushion. The Zs (the original's) and the sick symbol
+// follow it. The jar's stand is always to the right of the piece (STAND_X), so it never covers the jar.
+#define BED_CX 45
+#define BED_FEET 106
+#define BEAN_CX 42
+#define BEAN_FEET 110
+static int sleep_on_bed(int f,int x,int y,int sc){
+  if(!PET[P_ASLEEP] || G.outside || sc!=4) return 0;
+  int it=deco_get(0), D, cx, feet;
+  if(it==IT_BED){ D=48; cx=BED_CX; feet=BED_FEET; } else if(it==IT_BEANBAG){ D=42; cx=BEAN_CX; feet=BEAN_FEET; } else return 0;
+  int bx=cx-D/2, by=feet-D;
+  G.prev_cx=x; G.walk_t=0;
+  G.room_cx=bx-14; G.room_cy=by+2;            // (the sick symbol sits at room_cx+38, room_cy-20: left of the Zs, as usual)
+  G.zz_dx=(s16)(bx+((D*54)>>6)-(x+54)); G.zz_dy=(s16)(by-y+4);   // (the original puts the Zs at x+54 of its 64 px box)
+  int v=pet_variant(f), pose=room_pose(0);
+  crit_palette(CR_PAL[v],CR_SLOTS,CR_SLOT_IDX,0,WALL_NIGHT());
+  blit_rows(CR_PIX+CR_PIXOFF[v][pose][3], CR_ROWS+2*CR_ROWOFF[v][pose][3], 64, D, bx, by, 0);
+  return 1;
+}
 void hook_room_critter(const void *spr,int x,int y,int sc,int flip,int a5){
   int f=crit_form(spr);
   if(f==0){   // the egg: the original jiggles it 12px every couple of frames; draw that as a slow, gentle rock instead
@@ -4586,6 +4609,8 @@ void hook_room_critter(const void *spr,int x,int y,int sc,int flip,int a5){
     crit_draw(0, pose, ex, y, sc, 0, WALL_NIGHT());
     return;
   }
+  G.zz_dx=G.zz_dy=0;
+  if(f>0 && sleep_on_bed(f,x,y,sc)) return;   // v8.3f: asleep, it lies on its bed or beanbag
   int dx=x-G.prev_cx;
   if(dx && dx>-8 && dx<8){ G.walk_t=12; G.facing=(u8)(dx>0); } else if(G.walk_t) G.walk_t--;   // the game moves the critter around: step, and face where it goes
   G.prev_cx=x;
@@ -4872,7 +4897,7 @@ static const char *const GK_TEXT[GK_N]={
   "WATER IT EVERY|NIGHT TILL IT BLOOMS|(1 IN 5). ITS TWO|COLOURS ARE NEW|EVERY TIME!", "ANY MOONFLOWER MAY|BLOOM AS AN AURORA:|1 IN 20." };
 static const char *const GK_RIDDLE[4]={"WHAT FALLS, IS|WISHED ON, AND GROWS?","IT WAITS FOR THE|NIGHT WITH NO|MISSING PIECE.",
   "NOT ONE NIGHT|FORGOTTEN, NOT ONE|NIGHT DRY.","NO RIDDLE CAN TELL|YOU. ONLY LUCK."};
-static const char *const GV_TEXT[GV_N]={"FLUTTERS ROUND AND|ROUND THE GLOW.","BLINKS ITS LITTLE|LANTERN BACK AT THE|FLOWERS.",
+static const char *const GV_TEXT[GV_N]={"FLUTTERS ROUND AND|ROUND THE GLOW.","POPS UP FROM ITS|MOUND TO SNIFF THE|NIGHT AIR.",
   "SITS BY THE PATH,|PUFFING AND HOPPING.","TRUNDLES BY ON ITS|NIGHT ROUNDS,|SNIFFING.","SWOOPS OVER THE|YARD AFTER MOTHS.",
   "KEEPS WATCH FROM|THE FENCE ALL NIGHT.","TAKES ALL NIGHT TO|CROSS THE GARDEN.","CHIRPS A SONG FOR|THE MOONFLOWERS.",
   "A RARE, PALE GREEN|MOTH THAT GLOWS|LIKE MOONLIGHT.","A RARE, SHY GUEST.|IT ONLY COMES WHEN|TWO OR MORE GLOW."};

@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 228 checks (as of v8.3).
+`python3 tests/run_tests.py <sections...>`. There are 232 checks (as of v8.3f).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
@@ -376,6 +376,14 @@ Other details:
   `garden_update` (keys wait), `garden_screen_draw` draws `clean_wave_at(t,top,xmax,col)` in garden colours (the UI's
   are dimmed at night), and the mess clears when it ends. Walking night visitors never cross the house: the hedgehog
   and the snail go there and back from the tree side and turn round (`gdraw_f(..., flip)`), the hedgehog by x 136.
+- **v8.3g:** the **mole** replaces the firefly visitor (index 1, so `Garden.found`'s bit for it now means the mole;
+  `gen/garden_art.py` `MOLE`, 7 frames in its mound: peeking, up, sniffing, looking left and right; drawn at x 54).
+  **Snacks:** the original's snack counter (`PET[0x11]`, called `P_MEDS` in ext.c) rolls for a tummy ache from the
+  5th snack in a row (was the 4th), and a snack no longer restarts its countdown (`P16(0x42)`: one less every 135 s);
+  both EDITED in `orig_update.c`. **Sleeping on the bed:** `sleep_on_bed()` (in `hook_room_critter`): asleep in the room
+  with the bed or beanbag in spot 0, the critter's 64 px room art is drawn at 48 px on the bed (`BED_CX`/`BED_FEET`) or
+  42 on the beanbag; `G.zz_dx/zz_dy` move the original's Zs with it (`ext_zz_dx()`/`ext_zz_dy()`, EDITED in
+  `orig_render.c`), and `room_cx/cy` put the sick symbol beside them. Checked with all 42 critter art entries.
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its
   grown-up days start): Sunpuff = an Oakhart in the yard with `PET_CLOCK` < 150 on 3 days (`Dex.yard`, the day marker
   in `Life.pad`; "BASKS IN THE MORNING SUN!"); Glimmer = a Dunerose with 8 fireflies in the lantern in one night

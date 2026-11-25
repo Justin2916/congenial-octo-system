@@ -35,7 +35,7 @@ The eight icons sit along the top and bottom of the screen. Move between them wi
 
 | Icon | What it does |
 |---|---|
-| FEED | Give a MEAL to fill hunger, or a SNACK to cheer it up. Too many snacks make it overweight and can make it sick. Press A to skip the rest of the eating (it still counts). |
+| FEED | Give a MEAL to fill hunger, or a SNACK to cheer it up. Too many snacks make it overweight, and a fifth snack in a row can upset its tummy (four in a row are always fine). Press A to skip the rest of the eating (it still counts). |
 | LIGHTS | Turn the lights off when it falls asleep, and back on in the morning. Left in the dark while it's awake, it gets glum and slowly loses happiness. |
 | PLAY | Pick one of three minigames and win coins (see **Minigames**). |
 | MEDS | Cure it when it is sick. Sometimes it needs a second dose. Medicine when it isn't sick only makes it pull a yuck face. |
@@ -147,7 +147,7 @@ A night without water doesn't harm it; it just waits a night longer. Blooms are 
 
 **Rare forms.** Now and then a bloom opens as something rarer: **Starbloom**, **Moon Lily**, **Twinglow** or **Aurora**. A rare form is only decided when it blooms, so it's always a surprise. Each one has a riddle in the journal's GARDEN tab. The Twinglow grows two blooms on one stem, in two colours that are different every time.
 
-**Night visitors.** While at least one moonflower glows, visitors come to see them: one to three each night, more when more are in bloom. There are eight regulars (moth, firefly, frog, hedgehog, bat, owl, snail and cricket) and two rare guests (the luna moth and the silver fox). The fox is shy, and only comes when two or more flowers glow.
+**Night visitors.** While at least one moonflower glows, visitors come to see them: one to three each night, more when more are in bloom. There are eight regulars (moth, mole, frog, hedgehog, bat, owl, snail and cricket) and two rare guests (the luna moth and the silver fox). The fox is shy, and only comes when two or more flowers glow.
 
 ## Fireflies
 
@@ -189,7 +189,7 @@ You can hold up to 9,999 coins.
 - **Food and care items:** use them straight from the bag.
 - **Yard toys:** take one out to the yard at a time.
 - **Decor:** place it in its spot. Each spot holds one piece, and each piece has its own spot:
-  - **By the window** (comfort): the bed or the beanbag. The toy box goes at the foot of the bed, so it needs the bed.
+  - **By the window** (comfort): the bed or the beanbag. At night your critter curls up on it to sleep. The toy box goes at the foot of the bed, so it needs the bed.
   - **Under the picture** (fun and cozy): the fireplace, the TV on its low cabinet, the radio on its side table, the arcade or the piano.
   - **The corner** (nature): the plant, or the fishbowl on its little table.
   - **The wall**: the clock, the bookshelf, the portrait, the mirror or the guitar.

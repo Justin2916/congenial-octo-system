@@ -872,8 +872,57 @@ HEDGEHOG_FR = [0, 1, 0, 1, 2, 0, 2, 0]
 # moon lily, as first drawn: a dark night-blue bloom holding a crescent moon and a little star
 
 
+# v8.3f: the mole replaces the firefly visitor (fireflies already fill the yard every night). Front view, 16x13: the
+# mole in rows 0-9 above its mound (rows 10-12). It pops up between the flowers, sniffs, looks left and right, ducks.
+_MOLE_UP = [
+ '......kkkk......',
+ '....kkzzzzkk....',
+ '...kzzzzzzzzk...',
+ '..kzzzzzzzzzzk..',
+ '..kzzkzzzzkzzk..',
+ '..kzzzzzzzzzzk..',
+ '...kzzzppzzzk...',
+ '.kkkzzpwppzzkkk.',
+ 'kpppkzzzzzzkpppk',
+ 'kwkwkkkkkkkkwkwk']
+_MOLE_SNIFF = [
+ '......kkkk......',
+ '....kkzzzzkk....',
+ '...kzzzzzzzzk...',
+ '..kzzzzzzzzzzk..',
+ '..kzzkzzzzkzzk..',
+ '..kzzzzppzzzzk..',
+ '...kzzpwppzzk...',
+ '.kkkzzzppzzzkkk.',
+ 'kpppkzzzzzzkpppk',
+ 'kwkwkkkkkkkkwkwk']
+_MOLE_LEFT = [
+ '......kkkk......',
+ '....kkzzzzkk....',
+ '...kzzzzzzzzk...',
+ '..kzzzzzzzzzzk..',
+ '..kkzzzkzzzzzk..',
+ '..kzzzzzzzzzzk..',
+ '.kppzzzzzzzzk...',
+ 'kpwppzzzzzzzkkk.',
+ 'kpppkzzzzzzkpppk',
+ 'kwkwkkkkkkkkwkwk']
+_MOLE_RIGHT = [r[::-1] for r in _MOLE_LEFT]
+_MOUND = [
+ '..kkSSdSSdSSkk..',
+ '.kSSdSSbSSSdSSk.',
+ 'kSSdSSSdSSSdSSSk']
+def _mole(src, up):   # up: how many of the mole's rows show above the mound (0-10)
+    rows = ['.' * 16] * 10
+    for i in range(up): rows[10 - up + i] = src[i]
+    return rows + _MOUND
+MOLE = [_mole(_MOLE_UP, 0), _mole(_MOLE_UP, 3), _mole(_MOLE_UP, 6), _mole(_MOLE_UP, 10),
+        _mole(_MOLE_SNIFF, 10), _mole(_MOLE_LEFT, 10), _mole(_MOLE_RIGHT, 10)]
+# (0 the mound, 1-2 peeking, 3 up, 4 sniffing, 5 looking left, 6 right) - about 4 s round, then a rest in the mound
+MOLE_FR = [0, 0, 0, 0, 0, 1, 2, 3, 3, 4, 3, 4, 3, 5, 5, 5, 3, 6, 6, 6, 3, 4, 3, 3, 2, 1, 0, 0, 0, 0]
+
 VISITORS = [   # name, frames, sequence, rare
- ('MOTH', MOTH, MOTH_FR, 0), ('FIREFLY', FIREFLY, FIREFLY_FR, 0), ('FROG', FROG, FROG_FR, 0),
+ ('MOTH', MOTH, MOTH_FR, 0), ('MOLE', MOLE, MOLE_FR, 0), ('FROG', FROG, FROG_FR, 0),
  ('HEDGEHOG', HEDGEHOG, HEDGEHOG_FR, 0), ('BAT', BAT, BAT_FR, 0), ('OWL', OWL, OWL_FR, 0),
  ('SNAIL', SNAIL, SNAIL_FR, 0), ('CRICKET', CRICKET, CRICKET_FR, 0),
  ('LUNA MOTH', LUNA, LUNA_FR, 1), ('SILVER FOX', FOX, FOX_FR, 1),
