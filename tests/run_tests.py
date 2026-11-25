@@ -454,7 +454,11 @@ def t_fixes():
     check('fixes: v8.3: after a snack the feed menu opens again on SNACK, and B closes it', sc_[-2:] == ['2', '1'] and v[0][0] == 1, f'{sc_} {v}')
     # v8.3f: 4 snacks in a row never upset its tummy; the 5th can (a coin flip), and a snack no longer restarts the
     # countdown that lets the snack count fall (P16(0x42), one less every 135 s)
-    SN = PET + 0x11
+    SN = PET + 0x11; M1 = g('more', 'm_pad1')
+    # v8.3g: an older save's snack count (built up under the old rule) is cleared once; after that it's kept
+    sc = BOOT + DAY + [p8(M1, 0), p8(SN, 4), 'wait 70', f'peek {SN:08x} 1', f'peek {M1:08x} 1', p8(SN, 4), 'wait 70', f'peek {SN:08x} 1']
+    v = [x[1][0] for x in peeks(run(ROM, sc, copy_save('adult')))]
+    check('fixes: v8.3g: a snack count left in an older save is cleared once, then kept', v[0] == 0 and v[1] & 0x20 and v[2] == 4, str(v))
     one = ['press A', 'waitscene 3', 'waitscene 2', 'wait 4']
     sc = BOOT + DAY + [p8(PET + 6, 1), p8(PET + 7, 0), p8(PET + 10, 0), p8(SN, 0), 'press A', 'wait 10', 'press DOWN', 'wait 6'] + one * 4 + \
          [f'peek {SN:08x} 1', f'peek {PET + 10:08x} 1']
@@ -462,7 +466,7 @@ def t_fixes():
     check('fixes: v8.3f: four snacks in a row (count 4) never make it sick', v == [4, 0], str(v))
     res = []
     for w in range(8):
-        sc = BOOT + DAY + [f'wait {1 + w * 7}', p8(PET + 6, 1), p8(PET + 7, 0), p8(PET + 10, 0), p8(SN, 4), *p16(PET + 0x42, 100),
+        sc = BOOT + DAY + [f'wait {1 + w * 7}', p8(PET + 6, 1), p8(PET + 7, 0), p8(PET + 10, 0), p8(SN, 4), *p16(PET + 0x42, 100), p8(M1, 0x20),
                            'press A', 'wait 10', 'press DOWN', 'wait 6'] + one + [f'peek {SN:08x} 1', f'peek {PET + 10:08x} 1', f'peek {PET + 0x42:08x} 2']
         v = [x[1] for x in peeks(run(ROM, sc, copy_save('adult')))]
         res.append((v[0][0], v[1][0], v[2][0] | v[2][1] << 8))

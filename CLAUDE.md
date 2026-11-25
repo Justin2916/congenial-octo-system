@@ -46,7 +46,7 @@ in the extension uses the RAM just after it, but check the size if you add a lot
 The test emulator: `./emu` (built by `build.sh`). Usage: `emu rom.gba script [sram]`. It writes SRAM back
 to the save file, so always copy a save first (the tests do this).
 
-`python3 tests/run_tests.py <sections...>`. There are 232 checks (as of v8.3f).
+`python3 tests/run_tests.py <sections...>`. There are 234 checks (as of v8.3g).
 Run them in batches, each taking up to about 10 minutes:
 
 1. `fidelity`: since v8.3, the care pace (seconds per hunger and happy heart); the old v7 clock match is retired
@@ -384,6 +384,8 @@ Other details:
   with the bed or beanbag in spot 0, the critter's 64 px room art is drawn at 48 px on the bed (`BED_CX`/`BED_FEET`) or
   42 on the beanbag; `G.zz_dx/zz_dy` move the original's Zs with it (`ext_zz_dx()`/`ext_zz_dy()`, EDITED in
   `orig_render.c`), and `room_cx/cy` put the sick symbol beside them. Checked with all 42 critter art entries.
+  `More.pad1` bit 5: set the first time `sim_tick` runs on a save, which then clears the snack count once (an older
+  save could hold a count built up under the old rule).
 - **New good-side secret rules** (grown-up only, counted while `grown_now()`, reset by `secret_counts_reset()` when its
   grown-up days start): Sunpuff = an Oakhart in the yard with `PET_CLOCK` < 150 on 3 days (`Dex.yard`, the day marker
   in `Life.pad`; "BASKS IN THE MORNING SUN!"); Glimmer = a Dunerose with 8 fireflies in the lantern in one night

@@ -2394,7 +2394,9 @@ static void sim_tick(void){
   }
   int sick=0;
   if(PET[P_SICK]){ sick=1; if(P16(0x3C)<1000){ if(++P16(0x3C)==180) mistake(); } }
-  if(PET[P_MEDS]){ if(++P16(0x42)>=135){ P16(0x42)=0; PET[P_MEDS]--; } }
+  if(!(G.more.pad1&0x20)){ G.more.pad1|=0x20; PET[P_MEDS]=0; P16(0x42)=0; }   // v8.3g: once per save, clear a snack count left from
+                                                                            // the old rule (each snack restarted its countdown)
+  if(PET[P_MEDS]){ if(++P16(0x42)>=135){ P16(0x42)=0; PET[P_MEDS]--; } }   // (P_MEDS is the original's snack count)
   if(P16(0x40)) P16(0x40)--;   // PET's cooldown: the original's game_update sets 90 (one-second ticks)
   u16 ht=++P16(0x44);
   int sv_starve= starve>45, dmg= (sick && P16(0x3C)>45)? (sv_starve? 2 : 1) : (sv_starve? 1 : 0), healed=0;
